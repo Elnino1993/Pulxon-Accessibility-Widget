@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_OPTIONS, parseDataAttributes, resolveOptions } from './options';
+import { DEFAULT_OPTIONS, parseDataAttributes, resolveOptions, type WidgetOptions } from './options';
 
 function script(attrs: Record<string, string>): HTMLScriptElement {
   const el = document.createElement('script');
@@ -59,6 +59,18 @@ describe('resolveOptions', () => {
     expect(options.color).toBe('#000000');
     expect(options.lang).toBe(DEFAULT_OPTIONS.lang);
     expect(options.position).toBe('bottom-right');
+  });
+
+  it('ignores an invalid color, position or size', () => {
+    const options = resolveOptions({
+      color: 'red;background:url(x)',
+      position: 'middle' as unknown as WidgetOptions['position'],
+      size: 'huge' as unknown as WidgetOptions['size'],
+    });
+    expect(options.color).toBe(DEFAULT_OPTIONS.color);
+    expect(options.position).toBe(DEFAULT_OPTIONS.position);
+    expect(options.size).toBe(DEFAULT_OPTIONS.size);
+    expect(resolveOptions({ color: '#abc' }, { color: 'nope' }).color).toBe('#abc');
   });
 
   it('lets later parts override earlier ones', () => {

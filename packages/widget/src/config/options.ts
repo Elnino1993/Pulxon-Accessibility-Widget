@@ -79,12 +79,19 @@ export function parseDataAttributes(el: HTMLElement | null): Partial<WidgetOptio
   return out;
 }
 
+function isValidOption(key: string, value: unknown): boolean {
+  if (key === 'color') return typeof value === 'string' && HEX_COLOR.test(value);
+  if (key === 'position') return typeof value === 'string' && isPosition(value);
+  if (key === 'size') return value === 'small' || value === 'medium' || value === 'large';
+  return true;
+}
+
 export function resolveOptions(...parts: Array<Partial<WidgetOptions>>): WidgetOptions {
   const result: WidgetOptions = { ...DEFAULT_OPTIONS };
   const target = result as unknown as Record<string, unknown>;
   for (const part of parts) {
     for (const [key, value] of Object.entries(part)) {
-      if (value !== undefined) target[key] = value;
+      if (value !== undefined && isValidOption(key, value)) target[key] = value;
     }
   }
   return result;
