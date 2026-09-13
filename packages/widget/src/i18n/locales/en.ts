@@ -1,0 +1,18 @@
+export const en = {
+  'widget.open': 'Open accessibility menu',
+  'panel.title': 'Accessibility',
+  'panel.close': 'Close accessibility menu',
+  'panel.reset': 'Reset all settings',
+  'panel.profiles': 'Profiles',
+  'panel.poweredBy': 'Powered by Pulxon',
+  'link.newTab': '(opens in a new tab)',
+  'group.text': 'Text',
+  'group.color': 'Color',
+  'group.navigation': 'Navigation',
+  'group.reading': 'Reading',
+  'group.distraction': 'Distractions',
+  'feature.highlightLinks': 'Highlight links',
+  'feature.pauseAnimations': 'Pause animations',
+  'level.off': 'Off',
+  'level.of': 'Level {current} of {total}',
+} as const;
