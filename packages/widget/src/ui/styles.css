@@ -1,5 +1,5 @@
 :host {
-  all: initial;
+  all: initial !important;
 }
 
 *,
