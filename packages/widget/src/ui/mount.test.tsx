@@ -72,7 +72,7 @@ describe('mountUI', () => {
 
   it('exposes a readable foreground color for the accent', () => {
     expect(setup({ color: '#ffd400' }).launcher()?.parentElement?.style.getPropertyValue('--pulxon-on-accent')).toBe(
-      '#111111',
+      '#000000',
     );
     expect(setup({ color: '#1f4bff' }).launcher()?.parentElement?.style.getPropertyValue('--pulxon-on-accent')).toBe(
       '#ffffff',

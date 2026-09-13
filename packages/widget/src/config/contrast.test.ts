@@ -14,12 +14,18 @@ describe('contrast helpers', () => {
 
   it('picks the higher-contrast foreground for an accent', () => {
     expect(readableOn('#1f4bff')).toBe('#ffffff');
-    expect(readableOn('#ffd400')).toBe('#111111');
+    expect(readableOn('#ffd400')).toBe('#000000');
+  });
+
+  it('keeps at least 4.5:1 for mid-gray accents', () => {
+    for (const accent of ['#797979', '#767676']) {
+      expect(contrastRatio(accent, readableOn(accent))).toBeGreaterThanOrEqual(4.5);
+    }
   });
 
   it('supports 3-digit hex colors', () => {
     expect(relativeLuminance('#fff')).toBeCloseTo(1, 5);
-    expect(readableOn('#ff0')).toBe('#111111');
+    expect(readableOn('#ff0')).toBe('#000000');
     expect(readableOn('#00f')).toBe('#ffffff');
   });
 });
