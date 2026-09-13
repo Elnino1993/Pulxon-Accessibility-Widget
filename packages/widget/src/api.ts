@@ -38,17 +38,27 @@ export function createPublicApi({ version, controller, store, ui, emitter, onDes
   const api: PulxonApi = {
     version,
     open: () => {
-      if (!ui.isOpen()) ui.toggle();
+      if (!destroyed && !ui.isOpen()) ui.toggle();
     },
-    close: () => ui.close(),
-    toggle: () => ui.toggle(),
-    reset: () => controller.reset(),
-    enable: (id, level) => controller.enable(id, level),
-    disable: (id) => controller.disable(id),
-    toggleFeature: (id) => controller.toggle(id),
-    setProfile: (id) => controller.setProfile(id),
+    close: () => {
+      if (!destroyed) ui.close();
+    },
+    toggle: () => {
+      if (!destroyed) ui.toggle();
+    },
+    reset: () => {
+      if (!destroyed) controller.reset();
+    },
+    enable: (id, level) => !destroyed && controller.enable(id, level),
+    disable: (id) => {
+      if (!destroyed) controller.disable(id);
+    },
+    toggleFeature: (id) => {
+      if (!destroyed) controller.toggle(id);
+    },
+    setProfile: (id) => !destroyed && controller.setProfile(id),
     getSettings: () => store.get(),
-    on: (type, listener) => emitter.on(type, listener),
+    on: (type, listener) => (destroyed ? () => undefined : emitter.on(type, listener)),
     destroy: () => {
       if (destroyed) return;
       destroyed = true;

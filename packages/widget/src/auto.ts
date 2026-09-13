@@ -23,7 +23,14 @@ function boot(doc: Document): void {
 
   const start = (): void => {
     try {
-      const api = createWidget({ options, document: doc });
+      const api = createWidget({
+        options,
+        document: doc,
+        onDestroy: () => {
+          delete win.Pulxon;
+          doc.documentElement.removeAttribute(LOADED_ATTR);
+        },
+      });
       win.Pulxon = api;
       doc.dispatchEvent(new win.CustomEvent('pulxon:ready', { detail: api }));
     } catch (error) {

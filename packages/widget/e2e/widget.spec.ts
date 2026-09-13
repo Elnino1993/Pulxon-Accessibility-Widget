@@ -129,3 +129,19 @@ test('ignores a second copy of the script', async ({ page }) => {
   await page.waitForFunction(() => 'Pulxon' in window);
   await expect(page.locator('#pulxon-root')).toHaveCount(1);
 });
+
+test('destroy releases the global so the widget can boot again', async ({ page }) => {
+  await loadWidget(page);
+  await page.evaluate(() => window.Pulxon?.destroy());
+  expect(await page.evaluate(() => 'Pulxon' in window)).toBe(false);
+  expect(await page.evaluate(() => document.documentElement.hasAttribute('data-pulxon-loaded'))).toBe(false);
+  await expect(page.locator('#pulxon-root')).toHaveCount(0);
+
+  await page.evaluate(() => {
+    const script = document.createElement('script');
+    script.src = '/pulxon.min.js';
+    document.body.appendChild(script);
+  });
+  await page.waitForFunction(() => 'Pulxon' in window);
+  await expect(page.locator('#pulxon-root')).toHaveCount(1);
+});

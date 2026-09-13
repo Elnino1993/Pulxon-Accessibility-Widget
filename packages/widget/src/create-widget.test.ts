@@ -106,6 +106,41 @@ describe('createWidget', () => {
     expect(mountPoint?.getAttribute('lang')).toBe('es');
   });
 
+  it('turns the API into no-ops after destroy', () => {
+    const api = start();
+    api.destroy();
+    expect(api.enable('highlight-links')).toBe(false);
+    expect(hasStyle('highlight-links')).toBe(false);
+    expect(api.setProfile(null)).toBe(false);
+    const listener = vi.fn();
+    const off = api.on('change', listener);
+    expect(typeof off).toBe('function');
+    expect(() => off()).not.toThrow();
+    expect(() => {
+      api.open();
+      api.toggle();
+      api.close();
+      api.reset();
+      api.disable('highlight-links');
+      api.toggleFeature('highlight-links');
+    }).not.toThrow();
+    expect(hasStyle('highlight-links')).toBe(false);
+    expect(document.getElementById('pulxon-root')).toBeNull();
+    expect(api.version).toBe(VERSION);
+    expect(api.getSettings().features).toEqual({});
+  });
+
+  it('calls onDestroy exactly once', () => {
+    const onDestroy = vi.fn();
+    const holder: { api?: PulxonApi } = {};
+    act(() => {
+      holder.api = createWidget({ storage: createMemoryStorage(), styleMode: 'style-tag', onDestroy });
+    });
+    holder.api?.destroy();
+    holder.api?.destroy();
+    expect(onDestroy).toHaveBeenCalledOnce();
+  });
+
   it('normalizes invalid levels passed through the public API', () => {
     const api = start();
     expect(api.enable('highlight-links', Number.NaN)).toBe(true);

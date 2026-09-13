@@ -18,6 +18,8 @@ export interface CreateWidgetInput {
   features?: FeatureDefinition[];
   profiles?: ProfileDefinition[];
   styleMode?: StyleMode;
+  /** Called once at the end of `destroy()`. */
+  onDestroy?: () => void;
 }
 
 export function createWidget(input: CreateWidgetInput = {}): PulxonApi {
@@ -65,6 +67,7 @@ export function createWidget(input: CreateWidgetInput = {}): PulxonApi {
       controller.destroy();
       styles.clear();
       emitter.clear();
+      input.onDestroy?.();
     },
   });
 }
