@@ -75,13 +75,13 @@
   margin-bottom: 8px;
 }
 
-h2 { margin: 0; font-size: 1.25rem; }
-h3 { margin: 16px 0 8px; font-size: 1rem; }
+h2 { margin: 0; font-size: 1.25em; }
+h3 { margin: 16px 0 8px; font-size: 1em; }
 
 .icon-button {
   min-width: 44px;
   min-height: 44px;
-  font-size: 1.5rem;
+  font-size: 24px;
   line-height: 1;
   color: inherit;
   background: transparent;
@@ -118,7 +118,7 @@ h3 { margin: 16px 0 8px; font-size: 1rem; }
   border-color: #111111;
 }
 
-.tile__status { font-size: 0.875rem; }
+.tile__status { font-size: 0.875em; }
 
 .tile__dots { display: flex; gap: 4px; }
 .dot { width: 8px; height: 8px; border: 1px solid currentColor; border-radius: 50%; }

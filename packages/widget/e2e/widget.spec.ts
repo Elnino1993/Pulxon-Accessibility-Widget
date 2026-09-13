@@ -6,9 +6,11 @@ import { fileURLToPath } from 'node:url';
 const BUNDLE = readFileSync(fileURLToPath(new URL('../dist/pulxon.min.js', import.meta.url)), 'utf8');
 const ORIGIN = 'https://fixture.pulxon.test';
 
-function pageHtml(scripts: string): string {
+function pageHtml(scripts: string, head = ''): string {
   return (
-    '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Fixture</title></head><body>' +
+    '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Fixture</title>' +
+    head +
+    '</head><body>' +
     '<main><h1>Fixture page</h1><p>Read the <a href="#docs">documentation</a>.</p>' +
     '<button id="my-trigger" type="button">Accessibility options</button></main>' +
     scripts +
@@ -81,6 +83,14 @@ test('respects data attributes and a custom trigger', async ({ page }) => {
   await expect(page.getByRole('dialog', { name: 'Accesibilidad' })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(trigger).toBeFocused();
+});
+
+test('panel text size does not depend on the host root font size', async ({ page }) => {
+  await serve(page, pageHtml('<script src="/pulxon.min.js"></script>', '<style>html{font-size:62.5%}</style>'));
+  await page.goto(`${ORIGIN}/`);
+  await page.waitForFunction(() => 'Pulxon' in window);
+  await page.getByRole('button', { name: 'Open accessibility menu' }).click();
+  await expect(page.locator('#pulxon-title')).toHaveCSS('font-size', '20px');
 });
 
 test('the open panel has no WCAG A/AA axe violations', async ({ page }) => {
