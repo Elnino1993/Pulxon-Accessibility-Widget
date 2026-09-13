@@ -12,7 +12,7 @@ import { mountUI, type UiHandle } from './mount';
 
 const handles: UiHandle[] = [];
 
-function setup(opts: Partial<WidgetOptions> = {}) {
+function setup(opts: Partial<WidgetOptions> = {}, lang?: string) {
   const store = createSettingsStore(createMemoryStorage());
   const registry = createRegistry(builtinFeatures);
   const styles = createStyleEngine(document, { mode: 'style-tag' });
@@ -28,6 +28,7 @@ function setup(opts: Partial<WidgetOptions> = {}) {
       profiles: [],
       t: createTranslator('en'),
       styleMode: 'style-tag',
+      lang,
     });
   });
   const ui = holder.ui;
@@ -76,6 +77,13 @@ describe('mountUI', () => {
     expect(setup({ color: '#1f4bff' }).launcher()?.parentElement?.style.getPropertyValue('--pulxon-on-accent')).toBe(
       '#ffffff',
     );
+  });
+
+  it('marks the widget language and direction on the mount point', () => {
+    const mountPoint = setup({}, 'es').launcher()?.parentElement;
+    expect(mountPoint?.getAttribute('lang')).toBe('es');
+    expect(mountPoint?.getAttribute('dir')).toBe('ltr');
+    expect(setup().launcher()?.parentElement?.getAttribute('lang')).toBe('en');
   });
 
   it('marks the host for hiding on mobile when requested', () => {

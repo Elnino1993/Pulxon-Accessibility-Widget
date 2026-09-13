@@ -98,6 +98,14 @@ describe('createWidget', () => {
     expect(api.getSettings().features).toEqual({ 'highlight-links': 1 });
   });
 
+  it('marks the resolved widget language in the DOM', () => {
+    act(() => {
+      apis.push(createWidget({ options: { lang: 'es-MX' }, storage: createMemoryStorage(), styleMode: 'style-tag' }));
+    });
+    const mountPoint = document.getElementById('pulxon-root')?.shadowRoot?.querySelector('button.launcher')?.parentElement;
+    expect(mountPoint?.getAttribute('lang')).toBe('es');
+  });
+
   it('normalizes invalid levels passed through the public API', () => {
     const api = start();
     expect(api.enable('highlight-links', Number.NaN)).toBe(true);

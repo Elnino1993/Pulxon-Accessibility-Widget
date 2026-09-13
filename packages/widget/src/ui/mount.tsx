@@ -20,6 +20,8 @@ export interface MountUiInput {
   store: SettingsStore;
   profiles: ProfileDefinition[];
   t: Translator;
+  /** Resolved widget language, marked on the mount point (defaults to `en`). */
+  lang?: string;
   styleMode?: StyleMode;
   onOpenChange?: (open: boolean) => void;
 }
@@ -60,6 +62,8 @@ export function mountUI(input: MountUiInput): UiHandle {
   const styles = createStyleEngine(shadow, { nonce: options.nonce, mode: input.styleMode ?? 'auto' });
   styles.set('ui', css);
   const mountPoint = doc.createElement('div');
+  mountPoint.setAttribute('lang', input.lang ?? 'en');
+  mountPoint.setAttribute('dir', 'ltr');
   mountPoint.style.setProperty('--pulxon-accent', options.color);
   mountPoint.style.setProperty('--pulxon-on-accent', readableOn(options.color));
   mountPoint.style.setProperty('--pulxon-ox', `${options.offsetX}px`);

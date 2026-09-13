@@ -42,6 +42,7 @@ export function createWidget(input: CreateWidgetInput = {}): PulxonApi {
     store,
     profiles,
     t: createTranslator(lang),
+    lang,
     styleMode: input.styleMode,
     onOpenChange: (open) => emitter.emit(open ? 'open' : 'close', undefined),
   });
