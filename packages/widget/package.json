@@ -21,17 +21,23 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "size": "size-limit",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "preact": "^10.29.8"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
     "@preact/preset-vite": "^2.10.6",
+    "@size-limit/file": "^13.1.1",
     "@types/node": "^26.5.1",
     "eslint": "^10.10.0",
     "happy-dom": "^20.14.5",
+    "size-limit": "^13.1.1",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.70.0",
     "vite": "^8.3.0",

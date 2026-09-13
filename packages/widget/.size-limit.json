@@ -1,0 +1,8 @@
+[
+  {
+    "name": "IIFE bundle (gzip)",
+    "path": "dist/pulxon.min.js",
+    "limit": "25 kB",
+    "gzip": true
+  }
+]
