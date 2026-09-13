@@ -69,6 +69,15 @@ describe('mountUI', () => {
     expect(launcher()?.style.getPropertyValue('--pulxon-accent')).toBe('');
   });
 
+  it('exposes a readable foreground color for the accent', () => {
+    expect(setup({ color: '#ffd400' }).launcher()?.parentElement?.style.getPropertyValue('--pulxon-on-accent')).toBe(
+      '#111111',
+    );
+    expect(setup({ color: '#1f4bff' }).launcher()?.parentElement?.style.getPropertyValue('--pulxon-on-accent')).toBe(
+      '#ffffff',
+    );
+  });
+
   it('marks the host for hiding on mobile when requested', () => {
     const { ui } = setup({ hideOnMobile: true });
     expect(ui.host.hasAttribute('data-hide-mobile')).toBe(true);

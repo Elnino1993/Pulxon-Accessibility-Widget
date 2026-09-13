@@ -1,4 +1,5 @@
 import { render } from 'preact';
+import { readableOn } from '../config/contrast';
 import type { WidgetOptions } from '../config/options';
 import type { Controller } from '../core/controller';
 import type { ProfileDefinition, Registry } from '../core/registry';
@@ -54,6 +55,7 @@ export function mountUI(input: MountUiInput): UiHandle {
   styles.set('ui', css);
   const mountPoint = doc.createElement('div');
   mountPoint.style.setProperty('--pulxon-accent', options.color);
+  mountPoint.style.setProperty('--pulxon-on-accent', readableOn(options.color));
   mountPoint.style.setProperty('--pulxon-ox', `${options.offsetX}px`);
   mountPoint.style.setProperty('--pulxon-oy', `${options.offsetY}px`);
   mountPoint.style.setProperty('--pulxon-z', String(options.zIndex));

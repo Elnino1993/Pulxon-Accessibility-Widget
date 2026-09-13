@@ -20,7 +20,7 @@
   border: 2px solid #ffffff;
   border-radius: 50%;
   background: var(--pulxon-accent, #1f4bff);
-  color: #ffffff;
+  color: var(--pulxon-on-accent, #ffffff);
   cursor: pointer;
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
 }
@@ -113,7 +113,7 @@ h3 { margin: 16px 0 8px; font-size: 1rem; }
 }
 
 .tile[aria-pressed="true"] {
-  color: #ffffff;
+  color: var(--pulxon-on-accent, #ffffff);
   background: var(--pulxon-accent, #1f4bff);
   border-color: #111111;
 }
