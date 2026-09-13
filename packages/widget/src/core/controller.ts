@@ -25,23 +25,37 @@ function clampLevel(value: number, max: number): number {
 }
 
 export function createController({ registry, store, ctx, profiles }: ControllerInput): Controller {
+  function safely(fn: () => void, id: string): boolean {
+    try {
+      fn();
+      return true;
+    } catch (error) {
+      console.error('[pulxon] feature failed', id, error);
+      return false;
+    }
+  }
+
   function level(id: string): number {
     return store.get().features[id] ?? 0;
   }
 
   function teardownAll(): void {
-    for (const id of Object.keys(store.get().features)) registry.get(id)?.teardown(ctx);
+    for (const id of Object.keys(store.get().features)) {
+      const def = registry.get(id);
+      if (def) safely(() => def.teardown(ctx), id);
+    }
   }
 
   function enable(id: string, requested = 1): boolean {
     const def = registry.get(id);
     if (!def) return false;
     const next = clampLevel(requested, def.levels);
+    if (!safely(() => def.apply(ctx, next), id)) return false;
     const conflicts = def.conflictsWith ?? [];
     for (const other of conflicts) {
-      if (level(other) > 0) registry.get(other)?.teardown(ctx);
+      const otherDef = registry.get(other);
+      if (otherDef && level(other) > 0) safely(() => otherDef.teardown(ctx), other);
     }
-    def.apply(ctx, next);
     store.update((s) => {
       const features = { ...s.features };
       for (const other of conflicts) delete features[other];
@@ -54,7 +68,7 @@ export function createController({ registry, store, ctx, profiles }: ControllerI
   function disable(id: string): void {
     const def = registry.get(id);
     if (!def || level(id) === 0) return;
-    def.teardown(ctx);
+    safely(() => def.teardown(ctx), id);
     store.update((s) => {
       const features = { ...s.features };
       delete features[id];
@@ -88,18 +102,24 @@ export function createController({ registry, store, ctx, profiles }: ControllerI
       const def = registry.get(featureId);
       if (!def) continue;
       const next = clampLevel(requested, def.levels);
-      def.apply(ctx, next);
-      features[featureId] = next;
+      if (safely(() => def.apply(ctx, next), featureId)) features[featureId] = next;
     }
     store.update((s) => ({ ...s, features, profile: id }));
     return true;
   }
 
   function applyAll(): void {
+    const failed: string[] = [];
     for (const [id, stored] of Object.entries(store.get().features)) {
       const def = registry.get(id);
-      if (def) def.apply(ctx, clampLevel(stored, def.levels));
+      if (def && !safely(() => def.apply(ctx, clampLevel(stored, def.levels)), id)) failed.push(id);
     }
+    if (failed.length === 0) return;
+    store.update((s) => {
+      const features = { ...s.features };
+      for (const id of failed) delete features[id];
+      return { ...s, features, profile: null };
+    });
   }
 
   function destroy(): void {

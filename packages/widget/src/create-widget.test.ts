@@ -1,17 +1,19 @@
 import { act } from 'preact/test-utils';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { PulxonApi } from './api';
 import { createWidget } from './create-widget';
+import type { FeatureDefinition } from './core/registry';
 import { createMemoryStorage } from './core/storage';
 import { SETTINGS_KEY, type Settings } from './core/store';
+import { builtinFeatures } from './features';
 import { VERSION } from './version';
 
 const apis: PulxonApi[] = [];
 
-function start(storage = createMemoryStorage()): PulxonApi {
+function start(storage = createMemoryStorage(), features?: FeatureDefinition[]): PulxonApi {
   const holder: { api?: PulxonApi } = {};
   act(() => {
-    holder.api = createWidget({ storage, styleMode: 'style-tag' });
+    holder.api = createWidget({ storage, features, styleMode: 'style-tag' });
   });
   if (!holder.api) throw new Error('createWidget failed');
   apis.push(holder.api);
@@ -23,6 +25,7 @@ function hasStyle(id: string): boolean {
 }
 
 afterEach(() => {
+  vi.restoreAllMocks();
   for (const api of apis.splice(0)) api.destroy();
   document.body.innerHTML = '';
   document.head.innerHTML = '';
@@ -74,6 +77,25 @@ describe('createWidget', () => {
     expect(Object.isFrozen(api.getSettings().features)).toBe(true);
     api.enable('highlight-links');
     expect(Object.isFrozen(api.getSettings().features)).toBe(true);
+  });
+
+  it('starts even when a persisted feature throws while applying', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const throwing: FeatureDefinition = {
+      id: 'throwing',
+      group: 'text',
+      labelKey: 'feature.highlightLinks',
+      levels: 1,
+      apply: () => {
+        throw new Error('boom');
+      },
+      teardown: () => undefined,
+    };
+    const storage = createMemoryStorage();
+    storage.set(SETTINGS_KEY, JSON.stringify({ v: 1, features: { throwing: 1, 'highlight-links': 1 }, profile: null, lang: null }));
+    const api = start(storage, [throwing, ...builtinFeatures]);
+    expect(hasStyle('highlight-links')).toBe(true);
+    expect(api.getSettings().features).toEqual({ 'highlight-links': 1 });
   });
 
   it('normalizes invalid levels passed through the public API', () => {

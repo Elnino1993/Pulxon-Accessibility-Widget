@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createController } from './controller';
 import { createRegistry, type FeatureDefinition, type ProfileDefinition } from './registry';
 import { createMemoryStorage } from './storage';
@@ -39,6 +39,14 @@ describe('createRegistry', () => {
     expect(registry.get('b')?.id).toBe('b');
     expect(registry.get('c')).toBeUndefined();
   });
+});
+
+function silenceConsoleError() {
+  return vi.spyOn(console, 'error').mockImplementation(() => undefined);
+}
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 describe('createController', () => {
@@ -133,6 +141,63 @@ describe('createController', () => {
     expect(store.get().features).toEqual({ a: 1 });
     controller.enable('a', 'abc' as unknown as number);
     expect(store.get().features).toEqual({ a: 1 });
+  });
+
+  it('applyAll isolates a throwing feature and drops it from stored settings', () => {
+    const errors = silenceConsoleError();
+    const bad = fakeFeature('bad');
+    bad.apply.mockImplementation(() => {
+      throw new Error('boom');
+    });
+    const good = fakeFeature('good');
+    const seed = JSON.stringify({ v: 1, features: { bad: 1, good: 1 }, profile: 'calm', lang: null });
+    const { controller, store, ctx } = setup([bad, good], [], seed);
+    expect(() => controller.applyAll()).not.toThrow();
+    expect(good.apply).toHaveBeenCalledWith(ctx, 1);
+    expect(store.get()).toMatchObject({ features: { good: 1 }, profile: null });
+    expect(errors).toHaveBeenCalledWith('[pulxon] feature failed', 'bad', expect.any(Error));
+  });
+
+  it('enable of a throwing feature returns false and keeps the conflicting feature', () => {
+    silenceConsoleError();
+    const a = fakeFeature('a');
+    const b = fakeFeature('b', 1, ['a']);
+    b.apply.mockImplementation(() => {
+      throw new Error('boom');
+    });
+    const { controller, store } = setup([a, b]);
+    controller.enable('a');
+    expect(controller.enable('b')).toBe(false);
+    expect(a.teardown).not.toHaveBeenCalled();
+    expect(store.get().features).toEqual({ a: 1 });
+  });
+
+  it('reset continues past a throwing teardown and clears the store', () => {
+    silenceConsoleError();
+    const a = fakeFeature('a');
+    a.teardown.mockImplementation(() => {
+      throw new Error('boom');
+    });
+    const b = fakeFeature('b');
+    const { controller, store } = setup([a, b]);
+    controller.enable('a');
+    controller.enable('b');
+    expect(() => controller.reset()).not.toThrow();
+    expect(b.teardown).toHaveBeenCalledOnce();
+    expect(store.get().features).toEqual({});
+  });
+
+  it('setProfile skips features whose apply fails', () => {
+    silenceConsoleError();
+    const a = fakeFeature('a');
+    a.apply.mockImplementation(() => {
+      throw new Error('boom');
+    });
+    const b = fakeFeature('b');
+    const profile: ProfileDefinition = { id: 'p', labelKey: 'panel.profiles', features: { a: 1, b: 1 } };
+    const { controller, store } = setup([a, b], [profile]);
+    expect(controller.setProfile('p')).toBe(true);
+    expect(store.get()).toMatchObject({ features: { b: 1 }, profile: 'p' });
   });
 
   it('destroy tears down without clearing persisted settings', () => {
