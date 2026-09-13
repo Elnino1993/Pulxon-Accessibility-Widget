@@ -68,6 +68,14 @@ describe('createWidget', () => {
     expect(() => api.destroy()).not.toThrow();
   });
 
+  it('does not expose mutable internal settings', () => {
+    const api = start();
+    expect(Object.isFrozen(api.getSettings())).toBe(true);
+    expect(Object.isFrozen(api.getSettings().features)).toBe(true);
+    api.enable('highlight-links');
+    expect(Object.isFrozen(api.getSettings().features)).toBe(true);
+  });
+
   it('normalizes invalid levels passed through the public API', () => {
     const api = start();
     expect(api.enable('highlight-links', Number.NaN)).toBe(true);

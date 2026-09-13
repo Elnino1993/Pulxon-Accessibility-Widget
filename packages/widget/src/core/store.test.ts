@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createMemoryStorage } from './storage';
-import { EMPTY_SETTINGS, SETTINGS_KEY, createSettingsStore, parseSettings } from './store';
+import { EMPTY_SETTINGS, SETTINGS_KEY, createSettingsStore, parseSettings, type Settings } from './store';
 
 describe('parseSettings', () => {
   it('returns empty settings for missing, broken or unknown-version data', () => {
@@ -19,10 +19,15 @@ describe('parseSettings', () => {
     expect(parseSettings(raw)).toEqual({ v: 1, features: { a: 2 }, profile: 'adhd', lang: null });
   });
 
-  it('returns a fresh object each time', () => {
+  it('returns a distinct frozen object each time', () => {
     const first = parseSettings(null);
-    first.features.x = 1;
-    expect(parseSettings(null).features).toEqual({});
+    const second = parseSettings(null);
+    expect(first).not.toBe(second);
+    expect(Object.isFrozen(first)).toBe(true);
+    expect(Object.isFrozen(first.features)).toBe(true);
+    const parsed = parseSettings(JSON.stringify({ v: 1, features: { a: 1 }, profile: null, lang: null }));
+    expect(Object.isFrozen(parsed)).toBe(true);
+    expect(Object.isFrozen(parsed.features)).toBe(true);
   });
 });
 
@@ -31,6 +36,22 @@ describe('createSettingsStore', () => {
     const storage = createMemoryStorage();
     storage.set(SETTINGS_KEY, JSON.stringify({ v: 1, features: { y: 1 }, profile: null, lang: 'es' }));
     expect(createSettingsStore(storage).get()).toEqual({ v: 1, features: { y: 1 }, profile: null, lang: 'es' });
+  });
+
+  it('keeps state frozen after load and after updates', () => {
+    const storage = createMemoryStorage();
+    storage.set(SETTINGS_KEY, JSON.stringify({ v: 1, features: { y: 1 }, profile: null, lang: null }));
+    const store = createSettingsStore(storage);
+    expect(Object.isFrozen(store.get())).toBe(true);
+    expect(Object.isFrozen(store.get().features)).toBe(true);
+    let seen: Settings | undefined;
+    store.subscribe((s) => {
+      seen = s;
+    });
+    store.update((s) => ({ ...s, features: { ...s.features, z: 2 } }));
+    expect(Object.isFrozen(store.get())).toBe(true);
+    expect(Object.isFrozen(store.get().features)).toBe(true);
+    expect(seen).toBe(store.get());
   });
 
   it('persists updates and notifies subscribers until unsubscribed', () => {

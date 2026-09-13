@@ -20,8 +20,13 @@ export const EMPTY_SETTINGS: Settings = Object.freeze({
 
 const MAX_LEVEL = 10;
 
+function freezeSettings(settings: Settings): Settings {
+  Object.freeze(settings.features);
+  return Object.freeze(settings);
+}
+
 function emptySettings(): Settings {
-  return { v: 1, features: {}, profile: null, lang: null };
+  return freezeSettings({ v: 1, features: {}, profile: null, lang: null });
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -41,12 +46,12 @@ export function parseSettings(raw: string | null): Settings {
         }
       }
     }
-    return {
+    return freezeSettings({
       v: 1,
       features,
       profile: typeof data.profile === 'string' ? data.profile : null,
       lang: typeof data.lang === 'string' ? data.lang : null,
-    };
+    });
   } catch {
     return emptySettings();
   }
@@ -65,7 +70,7 @@ export function createSettingsStore(storage: KeyValueStorage): SettingsStore {
   return {
     get: () => state,
     update: (fn) => {
-      state = fn(state);
+      state = freezeSettings(fn(state));
       storage.set(SETTINGS_KEY, JSON.stringify(state));
       for (const listener of listeners) listener(state);
     },
