@@ -53,6 +53,10 @@ export function mountUI(input: MountUiInput): UiHandle {
   const styles = createStyleEngine(shadow, { nonce: options.nonce, mode: input.styleMode ?? 'auto' });
   styles.set('ui', css);
   const mountPoint = doc.createElement('div');
+  mountPoint.style.setProperty('--pulxon-accent', options.color);
+  mountPoint.style.setProperty('--pulxon-ox', `${options.offsetX}px`);
+  mountPoint.style.setProperty('--pulxon-oy', `${options.offsetY}px`);
+  mountPoint.style.setProperty('--pulxon-z', String(options.zIndex));
   shadow.appendChild(mountPoint);
   doc.body.appendChild(host);
 

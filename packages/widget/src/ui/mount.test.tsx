@@ -58,6 +58,17 @@ describe('mountUI', () => {
     expect(button?.classList.contains('launcher--large')).toBe(true);
   });
 
+  it('exposes accent color and z-index on the element shared by launcher and panel', () => {
+    const { ui, root, launcher } = setup({ color: '#ff0000', zIndex: 5 });
+    act(() => ui.open());
+    const panel = root.querySelector('.panel');
+    const mountPoint = launcher()?.parentElement;
+    expect(panel?.parentElement).toBe(mountPoint);
+    expect(mountPoint?.style.getPropertyValue('--pulxon-accent')).toBe('#ff0000');
+    expect(mountPoint?.style.getPropertyValue('--pulxon-z')).toBe('5');
+    expect(launcher()?.style.getPropertyValue('--pulxon-accent')).toBe('');
+  });
+
   it('marks the host for hiding on mobile when requested', () => {
     const { ui } = setup({ hideOnMobile: true });
     expect(ui.host.hasAttribute('data-hide-mobile')).toBe(true);

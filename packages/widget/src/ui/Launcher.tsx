@@ -15,12 +15,6 @@ export function Launcher({ options, label, expanded, onToggle, buttonRef }: Laun
       ref={buttonRef}
       type="button"
       class={`launcher launcher--${options.size} launcher--${options.position}`}
-      style={{
-        '--pulxon-accent': options.color,
-        '--pulxon-ox': `${options.offsetX}px`,
-        '--pulxon-oy': `${options.offsetY}px`,
-        '--pulxon-z': String(options.zIndex),
-      }}
       aria-label={label}
       aria-expanded={expanded}
       aria-controls={expanded ? 'pulxon-panel' : undefined}
