@@ -68,6 +68,12 @@ describe('createWidget', () => {
     expect(() => api.destroy()).not.toThrow();
   });
 
+  it('normalizes invalid levels passed through the public API', () => {
+    const api = start();
+    expect(api.enable('highlight-links', Number.NaN)).toBe(true);
+    expect(api.getSettings().features).toEqual({ 'highlight-links': 1 });
+  });
+
   it('emits open/close events and dispatches DOM change events', () => {
     const api = start();
     const seen: string[] = [];

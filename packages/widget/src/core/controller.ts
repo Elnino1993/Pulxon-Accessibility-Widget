@@ -20,7 +20,8 @@ export interface ControllerInput {
 }
 
 function clampLevel(value: number, max: number): number {
-  return Math.min(Math.max(Math.trunc(value), 1), max);
+  const numeric = typeof value === 'number' && Number.isFinite(value) ? Math.trunc(value) : 1;
+  return Math.min(Math.max(numeric, 1), max);
 }
 
 export function createController({ registry, store, ctx, profiles }: ControllerInput): Controller {

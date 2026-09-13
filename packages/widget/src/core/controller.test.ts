@@ -123,6 +123,18 @@ describe('createController', () => {
     expect(a.apply).toHaveBeenCalledWith(ctx, 2);
   });
 
+  it('treats non-finite or non-numeric levels as level 1', () => {
+    const a = fakeFeature('a', 3);
+    const { controller, store, ctx } = setup([a]);
+    expect(controller.enable('a', Number.NaN)).toBe(true);
+    expect(a.apply).toHaveBeenLastCalledWith(ctx, 1);
+    expect(store.get().features).toEqual({ a: 1 });
+    controller.enable('a', Number.POSITIVE_INFINITY);
+    expect(store.get().features).toEqual({ a: 1 });
+    controller.enable('a', 'abc' as unknown as number);
+    expect(store.get().features).toEqual({ a: 1 });
+  });
+
   it('destroy tears down without clearing persisted settings', () => {
     const a = fakeFeature('a');
     const { controller, storage } = setup([a]);
