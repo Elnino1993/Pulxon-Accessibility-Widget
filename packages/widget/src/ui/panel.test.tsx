@@ -1,0 +1,132 @@
+import { act } from 'preact/test-utils';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { resolveOptions } from '../config/options';
+import { createController } from '../core/controller';
+import { createRegistry, type FeatureDefinition, type ProfileDefinition } from '../core/registry';
+import { createMemoryStorage } from '../core/storage';
+import { createSettingsStore } from '../core/store';
+import { createStyleEngine } from '../core/style-engine';
+import { builtinFeatures } from '../features';
+import { createTranslator } from '../i18n';
+import { mountUI, type UiHandle } from './mount';
+
+const handles: UiHandle[] = [];
+
+function setup(features: FeatureDefinition[] = builtinFeatures, profiles: ProfileDefinition[] = []) {
+  const store = createSettingsStore(createMemoryStorage());
+  const registry = createRegistry(features);
+  const styles = createStyleEngine(document, { mode: 'style-tag' });
+  const controller = createController({ registry, store, ctx: { doc: document, styles }, profiles });
+  const holder: { ui?: UiHandle } = {};
+  act(() => {
+    holder.ui = mountUI({
+      doc: document,
+      options: resolveOptions({}),
+      controller,
+      registry,
+      store,
+      profiles,
+      t: createTranslator('en'),
+      styleMode: 'style-tag',
+    });
+  });
+  const ui = holder.ui;
+  if (!ui) throw new Error('mount failed');
+  handles.push(ui);
+  const root = ui.host.shadowRoot;
+  if (!root) throw new Error('missing shadow root');
+  act(() => ui.open());
+  return { ui, root, controller, store };
+}
+
+function buttonByText(root: ShadowRoot, text: string): HTMLButtonElement | undefined {
+  return Array.from(root.querySelectorAll('button')).find((b) => b.textContent?.trim() === text);
+}
+
+afterEach(() => {
+  for (const handle of handles.splice(0)) handle.destroy();
+  document.body.innerHTML = '';
+  document.head.innerHTML = '';
+});
+
+describe('Panel', () => {
+  it('renders an accessible dialog with grouped feature tiles', () => {
+    const { root } = setup();
+    const dialog = root.querySelector('[role="dialog"]');
+    expect(dialog?.id).toBe('pulxon-panel');
+    expect(dialog?.getAttribute('aria-modal')).toBe('true');
+    expect(dialog?.getAttribute('aria-labelledby')).toBe('pulxon-title');
+    expect(root.querySelector('#pulxon-title')?.textContent).toBe('Accessibility');
+    expect(Array.from(root.querySelectorAll('h3')).map((h) => h.textContent)).toEqual(['Navigation', 'Distractions']);
+    expect(root.querySelectorAll('[data-feature]')).toHaveLength(2);
+    expect(root.querySelector('[aria-label="Close accessibility menu"]')).not.toBeNull();
+  });
+
+  it('toggles a feature from its tile', () => {
+    const { root, controller } = setup();
+    const tile = () => root.querySelector<HTMLButtonElement>('[data-feature="highlight-links"]');
+    expect(tile()?.getAttribute('aria-pressed')).toBe('false');
+    act(() => tile()?.click());
+    expect(controller.level('highlight-links')).toBe(1);
+    expect(tile()?.getAttribute('aria-pressed')).toBe('true');
+    expect(document.head.querySelector('style[data-pulxon-style="highlight-links"]')).not.toBeNull();
+  });
+
+  it('shows level status for multi-level features', () => {
+    const multi: FeatureDefinition = {
+      id: 'multi',
+      group: 'text',
+      labelKey: 'feature.highlightLinks',
+      levels: 3,
+      apply: vi.fn(),
+      teardown: vi.fn(),
+    };
+    const { root, controller } = setup([multi]);
+    const status = () => root.querySelector('[data-feature="multi"] .tile__status')?.textContent;
+    expect(status()).toBe('Off');
+    act(() => {
+      controller.enable('multi', 2);
+    });
+    expect(status()).toBe('Level 2 of 3');
+    expect(root.querySelectorAll('[data-feature="multi"] .dot--on')).toHaveLength(2);
+  });
+
+  it('closes on Escape and via the close button', () => {
+    const { ui, root } = setup();
+    const dialog = root.querySelector('[role="dialog"]') as HTMLElement;
+    act(() => {
+      dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    });
+    expect(ui.isOpen()).toBe(false);
+    expect(root.querySelector('[role="dialog"]')).toBeNull();
+
+    act(() => ui.open());
+    act(() => root.querySelector<HTMLButtonElement>('[aria-label="Close accessibility menu"]')?.click());
+    expect(ui.isOpen()).toBe(false);
+  });
+
+  it('reset clears all features', () => {
+    const { root, store } = setup();
+    act(() => root.querySelector<HTMLButtonElement>('[data-feature="pause-animations"]')?.click());
+    expect(store.get().features).toEqual({ 'pause-animations': 1 });
+    act(() => buttonByText(root, 'Reset all settings')?.click());
+    expect(store.get().features).toEqual({});
+    expect(root.querySelector('[data-feature="pause-animations"]')?.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('renders profiles and toggles them', () => {
+    const profile: ProfileDefinition = {
+      id: 'calm',
+      labelKey: 'feature.pauseAnimations',
+      features: { 'pause-animations': 1 },
+    };
+    const { root, store } = setup(builtinFeatures, [profile]);
+    expect(root.querySelector('#pulxon-profiles')?.textContent).toBe('Profiles');
+    const profileButton = () => root.querySelector<HTMLButtonElement>('[data-profile="calm"]');
+    act(() => profileButton()?.click());
+    expect(store.get().profile).toBe('calm');
+    expect(profileButton()?.getAttribute('aria-pressed')).toBe('true');
+    act(() => profileButton()?.click());
+    expect(store.get()).toMatchObject({ profile: null, features: {} });
+  });
+});
