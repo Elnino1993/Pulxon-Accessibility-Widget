@@ -109,6 +109,41 @@ describe('mountUI', () => {
     expect(ui.isOpen()).toBe(true);
   });
 
+  it('ignores Alt+A while typing in an editable field', () => {
+    document.body.innerHTML = '<input id="field" type="text"><textarea id="area"></textarea>';
+    const { ui } = setup();
+    for (const id of ['field', 'area']) {
+      const field = document.getElementById(id) as HTMLElement;
+      field.focus();
+      const event = new KeyboardEvent('keydown', { altKey: true, code: 'KeyA', key: 'a', bubbles: true, cancelable: true });
+      act(() => {
+        field.dispatchEvent(event);
+      });
+      expect(ui.isOpen()).toBe(false);
+      expect(event.defaultPrevented).toBe(false);
+    }
+  });
+
+  it('ignores auto-repeated and already handled Alt+A events', () => {
+    const { ui } = setup();
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { altKey: true, code: 'KeyA', key: 'a', bubbles: true }));
+    });
+    expect(ui.isOpen()).toBe(true);
+    act(() => {
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', { altKey: true, code: 'KeyA', key: 'a', bubbles: true, repeat: true }),
+      );
+    });
+    expect(ui.isOpen()).toBe(true);
+    const handled = new KeyboardEvent('keydown', { altKey: true, code: 'KeyA', key: 'a', bubbles: true, cancelable: true });
+    handled.preventDefault();
+    act(() => {
+      document.dispatchEvent(handled);
+    });
+    expect(ui.isOpen()).toBe(true);
+  });
+
   it('opens from a custom trigger and ignores invalid selectors', () => {
     document.body.innerHTML = '<button id="my-trigger" type="button">A11y</button>';
     const { ui } = setup({ trigger: '#my-trigger' });

@@ -42,6 +42,12 @@ function isValidSelector(doc: Document, selector: string): boolean {
   }
 }
 
+function isEditable(target: Element | null): boolean {
+  if (!target) return false;
+  const tag = target.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (target as HTMLElement).isContentEditable === true;
+}
+
 export function mountUI(input: MountUiInput): UiHandle {
   const { doc, options } = input;
 
@@ -91,10 +97,11 @@ export function mountUI(input: MountUiInput): UiHandle {
   };
 
   function onHotkey(event: KeyboardEvent): void {
-    if (event.altKey && !event.ctrlKey && !event.metaKey && event.code === 'KeyA') {
-      event.preventDefault();
-      handle.toggle();
-    }
+    if (!event.altKey || event.ctrlKey || event.metaKey || event.code !== 'KeyA') return;
+    if (event.defaultPrevented || event.repeat || event.isComposing) return;
+    if (isEditable((event.composedPath()[0] ?? event.target) as Element | null)) return;
+    event.preventDefault();
+    handle.toggle();
   }
 
   function onTriggerClick(event: MouseEvent): void {
