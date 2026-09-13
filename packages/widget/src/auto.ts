@@ -27,7 +27,7 @@ function boot(doc: Document): void {
         options,
         document: doc,
         onDestroy: () => {
-          delete win.Pulxon;
+          if (win.Pulxon === api) delete win.Pulxon;
           doc.documentElement.removeAttribute(LOADED_ATTR);
         },
       });

@@ -2,6 +2,7 @@ import { act } from 'preact/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { PulxonApi } from './api';
 import { createWidget } from './create-widget';
+import { Emitter } from './core/emitter';
 import type { FeatureDefinition } from './core/registry';
 import { createMemoryStorage } from './core/storage';
 import { SETTINGS_KEY, type Settings } from './core/store';
@@ -138,6 +139,19 @@ describe('createWidget', () => {
     });
     holder.api?.destroy();
     holder.api?.destroy();
+    expect(onDestroy).toHaveBeenCalledOnce();
+  });
+
+  it('calls onDestroy even when teardown throws', () => {
+    const onDestroy = vi.fn();
+    const holder: { api?: PulxonApi } = {};
+    act(() => {
+      holder.api = createWidget({ storage: createMemoryStorage(), styleMode: 'style-tag', onDestroy });
+    });
+    vi.spyOn(Emitter.prototype, 'clear').mockImplementation(() => {
+      throw new Error('boom');
+    });
+    expect(() => holder.api?.destroy()).toThrow('boom');
     expect(onDestroy).toHaveBeenCalledOnce();
   });
 

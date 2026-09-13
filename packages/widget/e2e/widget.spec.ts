@@ -175,3 +175,15 @@ test('destroy releases the global so the widget can boot again', async ({ page }
   await page.waitForFunction(() => 'Pulxon' in window);
   await expect(page.locator('#pulxon-root')).toHaveCount(1);
 });
+
+test('destroying a replaced instance keeps the current global', async ({ page }) => {
+  await loadWidget(page);
+  const kept = await page.evaluate(() => {
+    const original = window.Pulxon;
+    const replacement = { marker: true } as unknown as NonNullable<typeof window.Pulxon>;
+    window.Pulxon = replacement;
+    original?.destroy();
+    return window.Pulxon === replacement;
+  });
+  expect(kept).toBe(true);
+});

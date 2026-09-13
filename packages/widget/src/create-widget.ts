@@ -62,12 +62,15 @@ export function createWidget(input: CreateWidgetInput = {}): PulxonApi {
     ui,
     emitter,
     onDestroy: () => {
-      unsubscribe();
-      ui.destroy();
-      controller.destroy();
-      styles.clear();
-      emitter.clear();
-      input.onDestroy?.();
+      try {
+        unsubscribe();
+        ui.destroy();
+        controller.destroy();
+        styles.clear();
+        emitter.clear();
+      } finally {
+        input.onDestroy?.();
+      }
     },
   });
 }
