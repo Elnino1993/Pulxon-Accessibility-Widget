@@ -1,5 +1,16 @@
 :host {
-  all: initial !important;
+  all: initial;
+}
+
+/* Host page CSS may still hide the root (display), but must not create a containing block for the fixed UI. */
+:host {
+  position: static !important;
+  transform: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  perspective: none !important;
+  contain: none !important;
+  will-change: auto !important;
 }
 
 *,
@@ -157,6 +168,11 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
 
 @media (max-width: 640px) {
   :host([data-hide-mobile]) .launcher { display: none; }
+}
+
+@media print {
+  .launcher,
+  .panel { display: none; }
 }
 
 @media (prefers-reduced-motion: no-preference) {

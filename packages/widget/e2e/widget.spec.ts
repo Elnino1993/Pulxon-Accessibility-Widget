@@ -93,6 +93,36 @@ test('panel text size does not depend on the host root font size', async ({ page
   await expect(page.locator('#pulxon-title')).toHaveCSS('font-size', '20px');
 });
 
+test('host page CSS can hide the widget root', async ({ page }) => {
+  await serve(page, pageHtml('<script src="/pulxon.min.js"></script>', '<style>#pulxon-root{display:none !important}</style>'));
+  await page.goto(`${ORIGIN}/`);
+  await page.waitForFunction(() => 'Pulxon' in window);
+  await expect(page.locator('#pulxon-root')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Open accessibility menu' })).toBeHidden();
+});
+
+test('host page transforms do not break fixed positioning of the launcher', async ({ page }) => {
+  await serve(
+    page,
+    pageHtml('<script src="/pulxon.min.js"></script>', '<style>body > div{display:block;transform:translateX(10px)}</style>'),
+  );
+  await page.goto(`${ORIGIN}/`);
+  await page.waitForFunction(() => 'Pulxon' in window);
+  const viewport = page.viewportSize();
+  const box = await page.getByRole('button', { name: 'Open accessibility menu' }).boundingBox();
+  expect(viewport).not.toBeNull();
+  expect(box?.x ?? 0).toBeGreaterThan((viewport?.width ?? 0) - 100);
+  expect(box?.y ?? 0).toBeGreaterThan((viewport?.height ?? 0) - 100);
+});
+
+test('the widget is hidden when printing', async ({ page }) => {
+  await loadWidget(page);
+  const launcher = page.getByRole('button', { name: 'Open accessibility menu' });
+  await expect(launcher).toBeVisible();
+  await page.emulateMedia({ media: 'print' });
+  await expect(launcher).toBeHidden();
+});
+
 test('the open panel has no WCAG A/AA axe violations', async ({ page }) => {
   await loadWidget(page);
   await page.getByRole('button', { name: 'Open accessibility menu' }).click();

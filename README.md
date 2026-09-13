@@ -35,6 +35,15 @@ Status: early development (v0.x). License: MIT.
 Keyboard: `Alt+A` opens or closes the menu. Add `data-pulxon-ignore` to any
 element to exclude it from page adjustments.
 
+To hide the widget with CSS (for example on specific pages), target its root
+element — this is the supported way:
+
+```css
+#pulxon-root { display: none; }
+```
+
+The widget is also hidden automatically when the page is printed.
+
 ## JavaScript API
 
 ```js
