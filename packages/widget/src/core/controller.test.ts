@@ -39,6 +39,15 @@ describe('createRegistry', () => {
     expect(registry.get('b')?.id).toBe('b');
     expect(registry.get('c')).toBeUndefined();
   });
+
+  it('makes conflicts symmetric and validates them', () => {
+    const registry = createRegistry([fakeFeature('a'), fakeFeature('b', 1, ['a'])]);
+    expect(registry.conflicts('a')).toEqual(['b']);
+    expect(registry.conflicts('b')).toEqual(['a']);
+    expect(registry.conflicts('missing')).toEqual([]);
+    expect(createRegistry([fakeFeature('a', 1, ['ghost'])]).conflicts('a')).toEqual([]);
+    expect(() => createRegistry([fakeFeature('a', 1, ['a'])])).toThrow(/itself/);
+  });
 });
 
 function silenceConsoleError() {
@@ -207,5 +216,62 @@ describe('createController', () => {
     controller.destroy();
     expect(a.teardown).toHaveBeenCalledOnce();
     expect(storage.get(SETTINGS_KEY)).toContain('"a":1');
+  });
+
+  it('enabling a feature tears down features that declare a conflict with it', () => {
+    const a = fakeFeature('a');
+    const b = fakeFeature('b', 1, ['a']);
+    const { controller, store } = setup([a, b]);
+    controller.enable('b');
+    controller.enable('a');
+    expect(b.teardown).toHaveBeenCalledOnce();
+    expect(store.get().features).toEqual({ a: 1 });
+  });
+
+  it('setProfile skips a feature that conflicts with one already applied by the profile', () => {
+    const a = fakeFeature('a');
+    const b = fakeFeature('b', 1, ['a']);
+    const profile: ProfileDefinition = { id: 'p', labelKey: 'panel.profiles', features: { a: 1, b: 1 } };
+    const { controller, store } = setup([a, b], [profile]);
+    controller.setProfile('p');
+    expect(b.apply).not.toHaveBeenCalled();
+    expect(store.get().features).toEqual({ a: 1 });
+  });
+
+  it('setProfile tears down a feature whose apply failed', () => {
+    silenceConsoleError();
+    const a = fakeFeature('a');
+    a.apply.mockImplementation(() => {
+      throw new Error('boom');
+    });
+    const profile: ProfileDefinition = { id: 'p', labelKey: 'panel.profiles', features: { a: 1 } };
+    const { controller } = setup([a], [profile]);
+    controller.setProfile('p');
+    expect(a.teardown).toHaveBeenCalledOnce();
+  });
+
+  it('applyAll drops stored conflicts, tears down failed features and normalizes levels', () => {
+    silenceConsoleError();
+    const a = fakeFeature('a', 2);
+    const b = fakeFeature('b', 1, ['a']);
+    const bad = fakeFeature('bad');
+    bad.apply.mockImplementation(() => {
+      throw new Error('boom');
+    });
+    const seed = JSON.stringify({ v: 1, features: { a: 5, b: 1, bad: 1 }, profile: 'p', lang: null });
+    const { controller, store, ctx } = setup([a, b, bad], [], seed);
+    controller.applyAll();
+    expect(a.apply).toHaveBeenCalledWith(ctx, 2);
+    expect(b.apply).not.toHaveBeenCalled();
+    expect(bad.teardown).toHaveBeenCalledOnce();
+    expect(store.get()).toMatchObject({ features: { a: 2 }, profile: null });
+  });
+
+  it('applyAll keeps the profile when it only normalizes levels', () => {
+    const a = fakeFeature('a', 2);
+    const seed = JSON.stringify({ v: 1, features: { a: 7 }, profile: 'calm', lang: null });
+    const { controller, store } = setup([a], [], seed);
+    controller.applyAll();
+    expect(store.get()).toMatchObject({ features: { a: 2 }, profile: 'calm' });
   });
 });

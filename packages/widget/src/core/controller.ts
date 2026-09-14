@@ -24,6 +24,10 @@ function clampLevel(value: number, max: number): number {
   return Math.min(Math.max(numeric, 1), max);
 }
 
+function hasOwn(record: Record<string, number>, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(record, key);
+}
+
 export function createController({ registry, store, ctx, profiles }: ControllerInput): Controller {
   function safely(fn: () => void, id: string): boolean {
     try {
@@ -51,7 +55,7 @@ export function createController({ registry, store, ctx, profiles }: ControllerI
     if (!def) return false;
     const next = clampLevel(requested, def.levels);
     if (!safely(() => def.apply(ctx, next), id)) return false;
-    const conflicts = def.conflictsWith ?? [];
+    const conflicts = registry.conflicts(id);
     for (const other of conflicts) {
       const otherDef = registry.get(other);
       if (otherDef && level(other) > 0) safely(() => otherDef.teardown(ctx), other);
@@ -101,25 +105,44 @@ export function createController({ registry, store, ctx, profiles }: ControllerI
     for (const [featureId, requested] of Object.entries(profile.features)) {
       const def = registry.get(featureId);
       if (!def) continue;
+      if (registry.conflicts(featureId).some((other) => hasOwn(features, other))) continue;
       const next = clampLevel(requested, def.levels);
       if (safely(() => def.apply(ctx, next), featureId)) features[featureId] = next;
+      else safely(() => def.teardown(ctx), featureId);
     }
     store.update((s) => ({ ...s, features, profile: id }));
     return true;
   }
 
   function applyAll(): void {
-    const failed: string[] = [];
-    for (const [id, stored] of Object.entries(store.get().features)) {
+    const stored = store.get().features;
+    const features: Record<string, number> = { ...stored };
+    const applied = new Set<string>();
+    let dropped = false;
+    let normalized = false;
+    for (const [id, storedLevel] of Object.entries(stored)) {
       const def = registry.get(id);
-      if (def && !safely(() => def.apply(ctx, clampLevel(stored, def.levels)), id)) failed.push(id);
+      if (!def) continue;
+      if (registry.conflicts(id).some((other) => applied.has(other))) {
+        delete features[id];
+        dropped = true;
+        continue;
+      }
+      const next = clampLevel(storedLevel, def.levels);
+      if (safely(() => def.apply(ctx, next), id)) {
+        applied.add(id);
+        if (next !== storedLevel) {
+          features[id] = next;
+          normalized = true;
+        }
+      } else {
+        safely(() => def.teardown(ctx), id);
+        delete features[id];
+        dropped = true;
+      }
     }
-    if (failed.length === 0) return;
-    store.update((s) => {
-      const features = { ...s.features };
-      for (const id of failed) delete features[id];
-      return { ...s, features, profile: null };
-    });
+    if (!dropped && !normalized) return;
+    store.update((s) => ({ ...s, features, profile: dropped ? null : s.profile }));
   }
 
   function destroy(): void {
