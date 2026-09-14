@@ -1,11 +1,24 @@
 import type { FeatureDefinition } from '../core/registry';
 import { biggerText } from './bigger-text';
+import { contrast, hideImages, saturation } from './color-features';
 import { dyslexiaFont } from './dyslexia-font';
 import { highlightLinks } from './highlight-links';
 import { pauseAnimations } from './pause-animations';
 import { boldText, lineHeight, textAlign, textSpacing } from './text-features';
 
-export { biggerText, boldText, dyslexiaFont, highlightLinks, lineHeight, pauseAnimations, textAlign, textSpacing };
+export {
+  biggerText,
+  boldText,
+  contrast,
+  dyslexiaFont,
+  hideImages,
+  highlightLinks,
+  lineHeight,
+  pauseAnimations,
+  saturation,
+  textAlign,
+  textSpacing,
+};
 
 export const builtinFeatures: FeatureDefinition[] = [
   biggerText,
@@ -14,6 +27,9 @@ export const builtinFeatures: FeatureDefinition[] = [
   textAlign,
   dyslexiaFont,
   boldText,
+  contrast,
+  saturation,
   highlightLinks,
   pauseAnimations,
+  hideImages,
 ];

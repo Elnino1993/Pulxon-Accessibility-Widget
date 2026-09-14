@@ -70,8 +70,11 @@ describe('builtinFeatures', () => {
       'text-align',
       'dyslexia-font',
       'bold-text',
+      'contrast',
+      'saturation',
       'highlight-links',
       'pause-animations',
+      'hide-images',
     ]);
   });
 });
