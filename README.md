@@ -51,6 +51,10 @@ script (`dist/fonts/`). When you self-host the script, publish that folder too.
 | Distractions | `pause-animations` | 1 |
 | Distractions | `hide-images` | 1 |
 
+Read aloud uses the voices of the visitor's browser or operating system and
+prefers an on-device voice for the page language when one is available. Some
+voices are provided by online services of the browser vendor.
+
 The panel also has a **Page structure** tool that lists headings, landmarks
 and links and moves focus to the one you choose.
 
@@ -124,6 +128,10 @@ is not required in modern browsers. In browsers without constructable
 stylesheets, pass `data-nonce` and allow that nonce in `style-src`.
 The big cursor uses `data:` SVG images; if your `img-src` blocks `data:`, the
 normal cursor is shown instead.
+The dyslexia-friendly font is fetched from the script's origin (or from
+`fontBaseUrl`), so `font-src` must allow that origin (for example
+`https://cdn.jsdelivr.net`). Subresource Integrity covers
+only the script, not the font files.
 
 ## Development
 

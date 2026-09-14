@@ -37,6 +37,19 @@ export function spokenText(el: Element): string {
   return (el.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, MAX_SPOKEN_CHARS);
 }
 
+function primaryLanguage(tag: string): string {
+  return tag.toLowerCase().replace(/_/g, '-').split('-')[0] ?? '';
+}
+
+/** Picks an on-device voice for `lang` (exact tag first, then same base language); null keeps the default voice. */
+function localVoice(synth: SpeechSynthesis, lang: string): SpeechSynthesisVoice | null {
+  if (typeof synth.getVoices !== 'function') return null;
+  const wanted = lang.toLowerCase().replace(/_/g, '-');
+  const local = synth.getVoices().filter((voice) => voice.localService === true);
+  const exact = local.find((voice) => voice.lang.toLowerCase().replace(/_/g, '-') === wanted);
+  return exact ?? local.find((voice) => primaryLanguage(voice.lang) === primaryLanguage(wanted)) ?? null;
+}
+
 export const readAloud: FeatureDefinition = {
   id: ID,
   group: 'reading',
@@ -73,6 +86,8 @@ export const readAloud: FeatureDefinition = {
       const utterance = new api.Utterance(text);
       utterance.rate = state.rate;
       utterance.lang = el.closest('[lang]')?.getAttribute('lang') || doc.documentElement.lang || 'en';
+      const voice = localVoice(api.synth, utterance.lang);
+      if (voice) utterance.voice = voice;
       utterance.onend = () => {
         if (current === el) clearMark();
       };

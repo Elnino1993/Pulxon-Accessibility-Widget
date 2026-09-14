@@ -8,7 +8,7 @@ export const GROUP_ORDER: readonly FeatureGroup[] = ['text', 'color', 'navigatio
 export interface FeatureContext {
   doc: Document;
   styles: StyleEngine;
-  /** Base URL of the widget's font files (ends with `/`), or null when fonts are not hosted. */
+  /** Base URL of the widget's font files (a trailing `/` is added if missing), or null when fonts are not hosted. */
   fontBaseUrl?: string | null;
   /** z-index of the widget UI; page overlays must stay below it. */
   zIndex?: number;

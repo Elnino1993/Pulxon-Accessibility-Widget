@@ -122,6 +122,21 @@ describe('readAloud', () => {
     expect(cancel).toHaveBeenCalledOnce();
   });
 
+  it('prefers an on-device voice for the utterance language and otherwise uses the default voice', () => {
+    const online = { lang: 'es-ES', localService: false, name: 'Online' };
+    const localEs = { lang: 'es-MX', localService: true, name: 'Local ES' };
+    const localEn = { lang: 'en-US', localService: true, name: 'Local EN' };
+    const getVoices = vi.fn(() => [online, localEn, localEs]);
+    vi.stubGlobal('speechSynthesis', { speak, cancel, getVoices });
+    document.body.innerHTML = '<p id="es" lang="es-ES">Hola</p><p id="fr" lang="fr">Bonjour</p>';
+    readAloud.apply(makeCtx(), 1);
+
+    click('es');
+    expect((utterance(0) as FakeUtterance & { voice?: unknown }).voice).toBe(localEs);
+    click('fr');
+    expect((utterance(1) as FakeUtterance & { voice?: unknown }).voice).toBeUndefined();
+  });
+
   it('does not cancel speech it did not start', () => {
     document.body.innerHTML = '<p id="p">Hi</p>';
     const ctx = makeCtx();
