@@ -52,6 +52,7 @@ function isEditable(target: Element | null): boolean {
 
 export function mountUI(input: MountUiInput): UiHandle {
   const { doc, options } = input;
+  const features = input.registry.list().filter((feature) => !feature.isSupported || feature.isSupported(doc));
 
   const host = doc.createElement('div');
   host.id = HOST_ID;
@@ -124,7 +125,7 @@ export function mountUI(input: MountUiInput): UiHandle {
     <App
       options={options}
       controller={input.controller}
-      registry={input.registry}
+      features={features}
       store={input.store}
       profiles={input.profiles}
       t={input.t}

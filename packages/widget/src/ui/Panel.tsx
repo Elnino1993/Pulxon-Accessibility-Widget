@@ -1,7 +1,7 @@
 import type { JSX } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
 import type { Controller } from '../core/controller';
-import { GROUP_ORDER, type ProfileDefinition, type Registry } from '../core/registry';
+import { GROUP_ORDER, type FeatureDefinition, type ProfileDefinition } from '../core/registry';
 import type { Settings } from '../core/store';
 import type { MessageKey, Translator } from '../i18n';
 import { FeatureButton } from './FeatureButton';
@@ -9,7 +9,7 @@ import { handleTrapKeydown } from './focus-trap';
 
 export interface PanelProps {
   t: Translator;
-  registry: Registry;
+  features: FeatureDefinition[];
   controller: Controller;
   settings: Settings;
   profiles: ProfileDefinition[];
@@ -17,7 +17,7 @@ export interface PanelProps {
   onClose: () => void;
 }
 
-export function Panel({ t, registry, controller, settings, profiles, side, onClose }: PanelProps) {
+export function Panel({ t, features, controller, settings, profiles, side, onClose }: PanelProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
 
@@ -40,7 +40,7 @@ export function Panel({ t, registry, controller, settings, profiles, side, onClo
 
   const groups = GROUP_ORDER.map((group) => ({
     group,
-    items: registry.list().filter((feature) => feature.group === group),
+    items: features.filter((feature) => feature.group === group),
   })).filter((entry) => entry.items.length > 0);
 
   return (

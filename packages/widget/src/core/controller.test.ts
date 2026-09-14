@@ -279,4 +279,17 @@ describe('createController', () => {
     controller.applyAll();
     expect(store.get()).toMatchObject({ features: { a: 2 }, profile: 'calm' });
   });
+
+  it('refuses unsupported features and keeps their stored level', () => {
+    const a = { ...fakeFeature('a'), isSupported: () => false };
+    const seed = JSON.stringify({ v: 1, features: { a: 1 }, profile: null, lang: null });
+    const profile: ProfileDefinition = { id: 'p', labelKey: 'panel.profiles', features: { a: 1 } };
+    const { controller, store } = setup([a], [profile], seed);
+    controller.applyAll();
+    expect(a.apply).not.toHaveBeenCalled();
+    expect(store.get().features).toEqual({ a: 1 });
+    expect(controller.enable('a')).toBe(false);
+    controller.setProfile('p');
+    expect(a.apply).not.toHaveBeenCalled();
+  });
 });

@@ -29,6 +29,7 @@ export const es: Messages = {
   'feature.bigCursor': 'Cursor grande',
   'feature.readingMask': 'Máscara de lectura',
   'feature.readingGuide': 'Guía de lectura',
+  'feature.readAloud': 'Leer en voz alta',
   'level.off': 'Desactivado',
   'level.of': 'Nivel {current} de {total}',
   'level.left': 'Izquierda',
@@ -41,4 +42,7 @@ export const es: Messages = {
   'level.low': 'Baja',
   'level.high': 'Alta',
   'level.grayscale': 'Escala de grises',
+  'level.normal': 'Normal',
+  'level.fast': 'Rápida',
+  'level.slow': 'Lenta',
 };

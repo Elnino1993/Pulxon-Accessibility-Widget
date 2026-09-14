@@ -5,6 +5,7 @@ import { dyslexiaFont } from './dyslexia-font';
 import { highlightLinks } from './highlight-links';
 import { bigCursor, focusHighlight, highlightHeadings } from './navigation-features';
 import { pauseAnimations } from './pause-animations';
+import { readAloud } from './read-aloud';
 import { readingGuide, readingMask } from './reading-overlays';
 import { boldText, lineHeight, textAlign, textSpacing } from './text-features';
 
@@ -20,6 +21,7 @@ export {
   highlightLinks,
   lineHeight,
   pauseAnimations,
+  readAloud,
   readingGuide,
   readingMask,
   saturation,
@@ -39,6 +41,7 @@ export const builtinFeatures: FeatureDefinition[] = [
   highlightLinks,
   highlightHeadings,
   focusHighlight,
+  readAloud,
   readingMask,
   readingGuide,
   bigCursor,

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'preact/hooks';
 import type { WidgetOptions } from '../config/options';
 import type { Controller } from '../core/controller';
-import type { ProfileDefinition, Registry } from '../core/registry';
+import type { FeatureDefinition, ProfileDefinition } from '../core/registry';
 import type { SettingsStore } from '../core/store';
 import type { Translator } from '../i18n';
 import { Launcher } from './Launcher';
@@ -12,14 +12,14 @@ import { useExternal } from './use-external';
 export interface AppProps {
   options: WidgetOptions;
   controller: Controller;
-  registry: Registry;
+  features: FeatureDefinition[];
   store: SettingsStore;
   profiles: ProfileDefinition[];
   t: Translator;
   state: UiState;
 }
 
-export function App({ options, controller, registry, store, profiles, t, state }: AppProps) {
+export function App({ options, controller, features, store, profiles, t, state }: AppProps) {
   const open = useExternal(state.subscribe, state.isOpen);
   const settings = useExternal(store.subscribe, store.get);
   const launcherRef = useRef<HTMLButtonElement>(null);
@@ -53,7 +53,7 @@ export function App({ options, controller, registry, store, profiles, t, state }
       {open && (
         <Panel
           t={t}
-          registry={registry}
+          features={features}
           controller={controller}
           settings={settings}
           profiles={profiles}

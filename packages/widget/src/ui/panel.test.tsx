@@ -146,4 +146,19 @@ describe('Panel', () => {
     });
     expect(root.querySelector('[data-feature="aligned"] .tile__status')?.textContent).toBe('Right');
   });
+
+  it('hides features that are not supported in this environment', () => {
+    const unsupported: FeatureDefinition = {
+      id: 'nope',
+      group: 'reading',
+      labelKey: 'feature.readAloud',
+      levels: 1,
+      isSupported: () => false,
+      apply: vi.fn(),
+      teardown: vi.fn(),
+    };
+    const { root } = setup([highlightLinks, unsupported]);
+    expect(root.querySelector('[data-feature="nope"]')).toBeNull();
+    expect(root.querySelector('[data-feature="highlight-links"]')).not.toBeNull();
+  });
 });

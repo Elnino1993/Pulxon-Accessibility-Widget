@@ -1,4 +1,4 @@
-import type { FeatureContext, ProfileDefinition, Registry } from './registry';
+import type { FeatureContext, FeatureDefinition, ProfileDefinition, Registry } from './registry';
 import type { SettingsStore } from './store';
 
 export interface Controller {
@@ -39,6 +39,10 @@ export function createController({ registry, store, ctx, profiles }: ControllerI
     }
   }
 
+  function supported(def: FeatureDefinition): boolean {
+    return !def.isSupported || def.isSupported(ctx.doc);
+  }
+
   function level(id: string): number {
     return store.get().features[id] ?? 0;
   }
@@ -52,7 +56,7 @@ export function createController({ registry, store, ctx, profiles }: ControllerI
 
   function enable(id: string, requested = 1): boolean {
     const def = registry.get(id);
-    if (!def) return false;
+    if (!def || !supported(def)) return false;
     const next = clampLevel(requested, def.levels);
     if (!safely(() => def.apply(ctx, next), id)) return false;
     const conflicts = registry.conflicts(id);
@@ -104,7 +108,7 @@ export function createController({ registry, store, ctx, profiles }: ControllerI
     const features: Record<string, number> = {};
     for (const [featureId, requested] of Object.entries(profile.features)) {
       const def = registry.get(featureId);
-      if (!def) continue;
+      if (!def || !supported(def)) continue;
       if (registry.conflicts(featureId).some((other) => hasOwn(features, other))) continue;
       const next = clampLevel(requested, def.levels);
       if (safely(() => def.apply(ctx, next), featureId)) features[featureId] = next;
@@ -122,7 +126,7 @@ export function createController({ registry, store, ctx, profiles }: ControllerI
     let normalized = false;
     for (const [id, storedLevel] of Object.entries(stored)) {
       const def = registry.get(id);
-      if (!def) continue;
+      if (!def || !supported(def)) continue;
       if (registry.conflicts(id).some((other) => applied.has(other))) {
         delete features[id];
         dropped = true;

@@ -1,0 +1,103 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createStyleEngine } from '../core/style-engine';
+import { SPEECH_RATES, readAloud, spokenText } from './read-aloud';
+
+class FakeUtterance {
+  text: string;
+  rate = 1;
+  lang = '';
+  onend: (() => void) | null = null;
+  constructor(text: string) {
+    this.text = text;
+  }
+}
+
+let speak = vi.fn();
+let cancel = vi.fn();
+
+function makeCtx() {
+  return { doc: document, styles: createStyleEngine(document, { mode: 'style-tag' }) };
+}
+
+function click(id: string): void {
+  (document.getElementById(id) as HTMLElement).click();
+}
+
+function utterance(call: number): FakeUtterance {
+  return speak.mock.calls[call]?.[0] as FakeUtterance;
+}
+
+beforeEach(() => {
+  speak = vi.fn();
+  cancel = vi.fn();
+  vi.stubGlobal('speechSynthesis', { speak, cancel });
+  vi.stubGlobal('SpeechSynthesisUtterance', FakeUtterance);
+});
+
+afterEach(() => {
+  readAloud.teardown(makeCtx());
+  vi.unstubAllGlobals();
+  document.body.innerHTML = '';
+  document.head.innerHTML = '';
+  document.documentElement.removeAttribute('lang');
+});
+
+describe('readAloud', () => {
+  it('is only supported with the Web Speech API', () => {
+    expect(readAloud.isSupported?.(document)).toBe(true);
+    vi.stubGlobal('speechSynthesis', undefined);
+    expect(readAloud.isSupported?.(document)).toBe(false);
+  });
+
+  it('exposes three named speeds', () => {
+    expect(SPEECH_RATES).toEqual([1, 1.5, 0.75]);
+    expect(readAloud.levelLabelKeys).toEqual(['level.normal', 'level.fast', 'level.slow']);
+  });
+
+  it('normalizes and caps spoken text', () => {
+    const el = document.createElement('p');
+    el.textContent = `  Hello \n  world ${'x'.repeat(2000)}`;
+    expect(spokenText(el).startsWith('Hello world x')).toBe(true);
+    expect(spokenText(el)).toHaveLength(1000);
+  });
+
+  it('reads the clicked text block at the selected rate and marks it while speaking', () => {
+    document.documentElement.setAttribute('lang', 'en');
+    document.body.innerHTML =
+      '<p id="p">Hello <b id="b">big</b>\n world</p><p id="es" lang="es">Hola</p>' +
+      '<div data-pulxon-ignore><p id="ignored">Widget</p></div>';
+    const ctx = makeCtx();
+    readAloud.apply(ctx, 1);
+
+    click('b');
+    expect(speak).toHaveBeenCalledOnce();
+    expect(utterance(0)).toMatchObject({ text: 'Hello big world', rate: 1, lang: 'en' });
+    const p = document.getElementById('p');
+    expect(p?.hasAttribute('data-pulxon-reading')).toBe(true);
+    utterance(0).onend?.();
+    expect(p?.hasAttribute('data-pulxon-reading')).toBe(false);
+
+    readAloud.apply(ctx, 2);
+    click('es');
+    expect(utterance(1)).toMatchObject({ text: 'Hola', rate: 1.5, lang: 'es' });
+
+    click('ignored');
+    expect(speak).toHaveBeenCalledTimes(2);
+  });
+
+  it('stops on Escape and cleans up on teardown', () => {
+    document.body.innerHTML = '<p id="p">Hi</p>';
+    const ctx = makeCtx();
+    readAloud.apply(ctx, 1);
+    click('p');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(cancel).toHaveBeenCalled();
+    expect(document.getElementById('p')?.hasAttribute('data-pulxon-reading')).toBe(false);
+
+    readAloud.teardown(ctx);
+    speak.mockClear();
+    click('p');
+    expect(speak).not.toHaveBeenCalled();
+    expect(document.head.querySelector('style[data-pulxon-style="read-aloud"]')).toBeNull();
+  });
+});

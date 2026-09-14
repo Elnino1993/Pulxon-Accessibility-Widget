@@ -27,6 +27,7 @@ export const en = {
   'feature.bigCursor': 'Big cursor',
   'feature.readingMask': 'Reading mask',
   'feature.readingGuide': 'Reading guide',
+  'feature.readAloud': 'Read aloud',
   'level.off': 'Off',
   'level.of': 'Level {current} of {total}',
   'level.left': 'Left',
@@ -39,4 +40,7 @@ export const en = {
   'level.low': 'Low',
   'level.high': 'High',
   'level.grayscale': 'Grayscale',
+  'level.normal': 'Normal',
+  'level.fast': 'Fast',
+  'level.slow': 'Slow',
 } as const;

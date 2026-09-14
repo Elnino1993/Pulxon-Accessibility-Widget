@@ -30,6 +30,8 @@ export interface FeatureDefinition {
   levelLabelKeys?: readonly MessageKey[];
   /** Declared in one direction; the registry makes conflicts symmetric. */
   conflictsWith?: string[];
+  /** Return false when the environment cannot support the feature; it is then hidden and never applied. */
+  isSupported?(doc: Document): boolean;
   apply(ctx: FeatureContext, level: number): void;
   teardown(ctx: FeatureContext): void;
 }
