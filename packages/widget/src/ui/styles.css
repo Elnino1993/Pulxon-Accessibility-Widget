@@ -36,6 +36,12 @@
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
 }
 
+/* Inverted page contrast sets --pulxon-f-undo on <html>; re-invert the UI so it keeps its real colors. */
+.launcher,
+.panel {
+  filter: var(--pulxon-f-undo, none);
+}
+
 .launcher svg {
   width: 60%;
   height: 60%;

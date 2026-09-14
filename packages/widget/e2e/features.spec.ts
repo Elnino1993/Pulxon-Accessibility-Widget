@@ -84,6 +84,35 @@ test('contrast and saturation combine and each can be removed independently', as
   await expect(page.locator('#img')).toHaveCSS('visibility', 'hidden');
 });
 
+test('inverted contrast keeps the widget and the reading mask in their real colors', async ({ page }) => {
+  await load(page);
+  const launcher = page.getByRole('button', { name: 'Open accessibility menu' });
+  const filterOf = (selector: string) => page.locator(selector).first().evaluate((el) => getComputedStyle(el).filter);
+
+  await enable(page, 'contrast', 1);
+  expect(await launcher.evaluate((el) => getComputedStyle(el).filter)).toContain('invert(1)');
+  await expect(launcher).toHaveCSS('position', 'fixed');
+  const viewport = page.viewportSize();
+  const box = await launcher.boundingBox();
+  expect(box?.x ?? 0).toBeGreaterThan((viewport?.width ?? 0) - 100);
+  expect(box?.y ?? 0).toBeGreaterThan((viewport?.height ?? 0) - 100);
+
+  await enable(page, 'reading-mask');
+  expect(await filterOf('.pulxon-reading-mask--top')).toContain('invert(1)');
+
+  await launcher.click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  expect(await page.locator('.panel').evaluate((el) => getComputedStyle(el).filter)).toContain('invert(1)');
+  const panelBox = await page.locator('.panel').boundingBox();
+  expect(panelBox?.y).toBe(0);
+  expect(panelBox?.height).toBe(viewport?.height);
+  await page.keyboard.press('Escape');
+
+  await page.evaluate(() => window.Pulxon?.disable('contrast'));
+  expect(await launcher.evaluate((el) => getComputedStyle(el).filter)).toBe('none');
+});
+
 test('navigation helpers and the big cursor style the page', async ({ page }) => {
   await load(page);
   await enable(page, 'highlight-headings');

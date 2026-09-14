@@ -30,6 +30,16 @@ describe('contrast', () => {
     expect(css).toContain(`img${NOT_IGNORED}`);
   });
 
+  it('re-inverts the widget overlays and exposes an undo filter for the widget UI', () => {
+    const ctx = makeCtx();
+    contrast.apply(ctx, 1);
+    const css = styleText('contrast') ?? '';
+    expect(css).toContain('.pulxon-reading-mask,.pulxon-reading-guide{filter:invert(1) hue-rotate(180deg)!important}');
+    expect(css).toContain('--pulxon-f-undo:invert(1) hue-rotate(180deg)');
+    contrast.apply(ctx, 2);
+    expect(styleText('contrast')).not.toContain('--pulxon-f-undo');
+  });
+
   it('uses a black or white palette with readable link colors', () => {
     const ctx = makeCtx();
     contrast.apply(ctx, 2);

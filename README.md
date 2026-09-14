@@ -51,10 +51,6 @@ script (`dist/fonts/`). When you self-host the script, publish that folder too.
 | Distractions | `pause-animations` | 1 |
 | Distractions | `hide-images` | 1 |
 
-In Chromium-based browsers, inverted contrast mode does not visually invert
-host-page elements with `position: fixed`, because the `html` filter does not
-apply to their painted layer.
-
 The panel also has a **Page structure** tool that lists headings, landmarks
 and links and moves focus to the one you choose.
 

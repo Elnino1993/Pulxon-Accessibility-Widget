@@ -11,10 +11,17 @@ const MEDIA = ['img', 'picture', 'video', 'canvas', 'iframe', 'svg', 'object', '
 export const CONTRAST_MODES = ['invert', 'dark', 'light'] as const;
 export const SATURATION_FILTERS = ['saturate(0.5)', 'saturate(2)', 'grayscale(1)'] as const;
 
+const UNDO_INVERT = 'invert(1) hue-rotate(180deg)';
+
+/**
+ * Inverts the page and re-inverts media and the widget's own overlays. `--pulxon-f-undo` inherits into the
+ * widget's shadow tree, where the launcher and panel use it to keep their real colors.
+ */
 function invertCss(): string {
   return (
-    `html{--pulxon-f-contrast:invert(1) hue-rotate(180deg)}${FILTER_RULE}` +
-    `${scoped(INVERT_BACK)}{filter:invert(1) hue-rotate(180deg)!important}`
+    `html{--pulxon-f-contrast:${UNDO_INVERT};--pulxon-f-undo:${UNDO_INVERT}}${FILTER_RULE}` +
+    `${scoped(INVERT_BACK)}{filter:${UNDO_INVERT}!important}` +
+    `.pulxon-reading-mask,.pulxon-reading-guide{filter:${UNDO_INVERT}!important}`
   );
 }
 

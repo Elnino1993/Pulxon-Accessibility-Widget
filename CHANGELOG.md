@@ -18,10 +18,6 @@
 - Feature conflicts are symmetric; stored settings are normalized on load.
 - Settings written by a newer widget version are never overwritten.
 
-### Known limitations
-- In Chromium, inverted contrast mode does not visually invert host-page elements with `position: fixed`,
-  because the `html` filter does not apply to their painted layer.
-
 ## 0.1.0
 
 - Accessible panel, public API, highlight links and pause animations.
