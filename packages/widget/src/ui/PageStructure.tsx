@@ -86,7 +86,7 @@ export function PageStructure({ t, doc, onBack, onNavigate }: PageStructureProps
         ) : (
           <ul class="structure__list">
             {items.map((item) => {
-              const isLink = item.level === undefined && !item.detailKey;
+              const isLink = item.kind === 'link';
               const detail = <span class="structure__detail">{item.detailKey ? t(item.detailKey) : item.detail}</span>;
               const label = item.label && <span class="structure__label">{item.label}</span>;
               return (

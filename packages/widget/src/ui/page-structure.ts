@@ -1,7 +1,10 @@
 import type { MessageKey } from '../i18n';
 
+export type StructureKind = 'heading' | 'landmark' | 'link';
+
 export interface StructureItem {
   id: number;
+  kind: StructureKind;
   label: string;
   detail: string;
   detailKey?: MessageKey;
@@ -67,7 +70,7 @@ export function collectHeadings(doc: Document): StructureItem[] {
     const tagLevel = Number.parseInt(/^H([1-6])$/.exec(el.tagName)?.[1] ?? '', 10);
     const raw = el.getAttribute('role') === 'heading' || !Number.isFinite(tagLevel) ? ariaLevel : tagLevel;
     const level = Number.isFinite(raw) ? Math.min(Math.max(raw, 1), 6) : 2;
-    items.push({ id: items.length, label, detail: `H${level}`, level, element: el });
+    items.push({ id: items.length, kind: 'heading', label, detail: `H${level}`, level, element: el });
   });
   return items;
 }
@@ -110,7 +113,7 @@ export function collectLandmarks(doc: Document): StructureItem[] {
     const detailKey = role ? ROLE_KEYS[role] : undefined;
     if (!role || !detailKey) return;
     const label = clean(el.getAttribute('aria-label')) || labelledByText(el);
-    items.push({ id: items.length, label, detail: role, detailKey, element: el });
+    items.push({ id: items.length, kind: 'landmark', label, detail: role, detailKey, element: el });
   });
   return items;
 }
@@ -129,7 +132,7 @@ export function collectLinks(doc: Document): StructureItem[] {
   doc.querySelectorAll<HTMLAnchorElement>('a[href]').forEach((el) => {
     if (isExcluded(el)) return;
     const label = accessibleName(el) || clean(el.getAttribute('href'));
-    items.push({ id: items.length, label, detail: linkDetail(el), element: el });
+    items.push({ id: items.length, kind: 'link', label, detail: linkDetail(el), element: el });
   });
   return items;
 }
@@ -143,5 +146,8 @@ export function focusElement(el: HTMLElement): boolean {
   }
   el.scrollIntoView?.({ block: 'center' });
   el.focus({ preventScroll: true });
-  return el.ownerDocument.activeElement === el;
+  const focused = el.ownerDocument.activeElement === el;
+  // Focus did not land, so no blur will follow: drop the tabindex we added right away.
+  if (!focused && addedTabIndex) el.removeAttribute('tabindex');
+  return focused;
 }

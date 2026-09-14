@@ -218,6 +218,22 @@ describe('Page structure view', () => {
     expect(root.activeElement).toBe(root.querySelector('.launcher'));
   });
 
+  it('closes and returns focus to the launcher when a connected target cannot take focus', () => {
+    document.body.insertAdjacentHTML('afterbegin', '<main><h1 id="top">Fixture title</h1></main>');
+    const { ui, root } = setup();
+    act(() => root.querySelector<HTMLButtonElement>('[data-tool="page-structure"]')?.click());
+    const item = Array.from(root.querySelectorAll<HTMLButtonElement>('.structure__item')).find((button) =>
+      button.textContent?.includes('Fixture title'),
+    );
+    const heading = document.getElementById('top') as HTMLElement;
+    vi.spyOn(heading, 'focus').mockImplementation(() => undefined);
+
+    act(() => item?.click());
+    expect(ui.isOpen()).toBe(false);
+    expect(root.activeElement).toBe(root.querySelector('.launcher'));
+    expect(heading.hasAttribute('tabindex')).toBe(false);
+  });
+
   it('makes an empty tabpanel focusable when there is nothing to list', () => {
     const { root } = setup();
     act(() => root.querySelector<HTMLButtonElement>('[data-tool="page-structure"]')?.click());

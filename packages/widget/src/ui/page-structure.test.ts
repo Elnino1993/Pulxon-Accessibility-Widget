@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { collectHeadings, collectLandmarks, collectLinks, focusElement } from './page-structure';
 
 afterEach(() => {
@@ -68,6 +68,15 @@ describe('collectLandmarks', () => {
   });
 });
 
+describe('item kinds', () => {
+  it('marks each collected item with its kind', () => {
+    document.body.innerHTML = '<main><h1>Title</h1><a href="/a">Home</a></main>';
+    expect(collectHeadings(document).map((item) => item.kind)).toEqual(['heading']);
+    expect(collectLandmarks(document).map((item) => item.kind)).toEqual(['landmark']);
+    expect(collectLinks(document).map((item) => item.kind)).toEqual(['link']);
+  });
+});
+
 describe('collectLinks', () => {
   it('uses the accessible name and falls back to the href', () => {
     document.body.innerHTML =
@@ -101,6 +110,14 @@ describe('focusElement', () => {
 
     const detached = document.createElement('div');
     expect(focusElement(detached)).toBe(false);
+  });
+
+  it('removes the tabindex it added when focus does not land', () => {
+    document.body.innerHTML = '<h2 id="h">Section</h2>';
+    const heading = document.getElementById('h') as HTMLElement;
+    vi.spyOn(heading, 'focus').mockImplementation(() => undefined);
+    expect(focusElement(heading)).toBe(false);
+    expect(heading.hasAttribute('tabindex')).toBe(false);
   });
 
   it('removes the tabindex it added once the element loses focus', () => {
