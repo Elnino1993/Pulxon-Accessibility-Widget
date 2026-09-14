@@ -162,3 +162,45 @@ describe('Panel', () => {
     expect(root.querySelector('[data-feature="highlight-links"]')).not.toBeNull();
   });
 });
+
+describe('Page structure view', () => {
+  it('lists headings, moves focus to the chosen heading and closes the panel', () => {
+    document.body.insertAdjacentHTML('afterbegin', '<main><h1 id="top">Fixture title</h1><h2>Section</h2></main>');
+    const { ui, root } = setup();
+    act(() => root.querySelector<HTMLButtonElement>('[data-tool="page-structure"]')?.click());
+
+    expect(root.querySelector('#pulxon-tab-headings')?.getAttribute('aria-selected')).toBe('true');
+    expect(root.querySelector('[role="tabpanel"]')?.getAttribute('aria-labelledby')).toBe('pulxon-tab-headings');
+    const item = Array.from(root.querySelectorAll<HTMLButtonElement>('.structure__item')).find((button) =>
+      button.textContent?.includes('Fixture title'),
+    );
+    expect(item).toBeDefined();
+
+    act(() => item?.click());
+    const heading = document.getElementById('top');
+    expect(ui.isOpen()).toBe(false);
+    expect(document.activeElement).toBe(heading);
+    expect(heading?.getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('switches tabs with arrow keys and returns to the settings view', () => {
+    document.body.insertAdjacentHTML('afterbegin', '<nav aria-label="Primary"><a href="#a">Home link</a></nav>');
+    const { root } = setup();
+    act(() => root.querySelector<HTMLButtonElement>('[data-tool="page-structure"]')?.click());
+
+    act(() => {
+      root
+        .querySelector('#pulxon-tab-headings')
+        ?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+    });
+    expect(root.querySelector('#pulxon-tab-landmarks')?.getAttribute('aria-selected')).toBe('true');
+    expect(root.querySelector('#pulxon-tab-headings')?.getAttribute('tabindex')).toBe('-1');
+    expect(root.querySelector('.structure__list')?.textContent).toContain('Navigation');
+    expect(root.querySelector('.structure__list')?.textContent).toContain('Primary');
+
+    act(() => root.querySelector<HTMLButtonElement>('.back')?.click());
+    const tool = root.querySelector('[data-tool="page-structure"]');
+    expect(tool).not.toBeNull();
+    expect(root.activeElement).toBe(tool);
+  });
+});

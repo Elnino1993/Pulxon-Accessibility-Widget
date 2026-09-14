@@ -123,6 +123,7 @@ export function mountUI(input: MountUiInput): UiHandle {
 
   render(
     <App
+      doc={doc}
       options={options}
       controller={input.controller}
       features={features}

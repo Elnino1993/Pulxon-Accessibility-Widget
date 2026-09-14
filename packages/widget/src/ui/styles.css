@@ -166,6 +166,72 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
   white-space: nowrap;
 }
 
+.tools { margin-top: 16px; }
+
+.tile--wide { width: 100%; }
+
+.back {
+  min-height: 44px;
+  padding: 8px 12px;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid #767676;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.tab {
+  flex: 1;
+  min-height: 44px;
+  padding: 8px;
+  font: inherit;
+  color: #111111;
+  background: #f3f4f6;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.tab[aria-selected="true"] {
+  color: var(--pulxon-on-accent, #ffffff);
+  background: var(--pulxon-accent, #1f4bff);
+  border-color: #111111;
+}
+
+.structure__list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.structure__item {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  padding-inline-start: calc(12px + var(--pulxon-indent, 0px));
+  font: inherit;
+  text-align: start;
+  color: #111111;
+  background: #f3f4f6;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.structure__detail { font-weight: 700; }
+
 @media (max-width: 640px) {
   :host([data-hide-mobile]) .launcher { display: none; }
 }

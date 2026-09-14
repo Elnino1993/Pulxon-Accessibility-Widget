@@ -6,10 +6,12 @@ import type { SettingsStore } from '../core/store';
 import type { Translator } from '../i18n';
 import { Launcher } from './Launcher';
 import { Panel } from './Panel';
+import { focusElement } from './page-structure';
 import type { UiState } from './ui-state';
 import { useExternal } from './use-external';
 
 export interface AppProps {
+  doc: Document;
   options: WidgetOptions;
   controller: Controller;
   features: FeatureDefinition[];
@@ -19,14 +21,14 @@ export interface AppProps {
   state: UiState;
 }
 
-export function App({ options, controller, features, store, profiles, t, state }: AppProps) {
+export function App({ doc, options, controller, features, store, profiles, t, state }: AppProps) {
   const open = useExternal(state.subscribe, state.isOpen);
   const settings = useExternal(store.subscribe, store.get);
   const launcherRef = useRef<HTMLButtonElement>(null);
   const wasOpen = useRef(false);
 
   useEffect(() => {
-    if (wasOpen.current && !open) {
+    if (wasOpen.current && !open && state.shouldReturnFocus()) {
       const opener = state.opener();
       const target = opener && opener.isConnected ? opener : launcherRef.current;
       target?.focus();
@@ -37,6 +39,11 @@ export function App({ options, controller, features, store, profiles, t, state }
   const onToggle = (): void => {
     if (state.isOpen()) state.setOpen(false);
     else state.setOpen(true, launcherRef.current);
+  };
+
+  const onNavigate = (element: HTMLElement): void => {
+    state.setOpen(false, null, false);
+    focusElement(element);
   };
 
   const side = options.position.endsWith('left') ? 'left' : 'right';
@@ -53,12 +60,14 @@ export function App({ options, controller, features, store, profiles, t, state }
       {open && (
         <Panel
           t={t}
+          doc={doc}
           features={features}
           controller={controller}
           settings={settings}
           profiles={profiles}
           side={side}
           onClose={() => state.setOpen(false)}
+          onNavigate={onNavigate}
         />
       )}
     </>
