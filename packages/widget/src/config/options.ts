@@ -31,6 +31,7 @@ export interface WidgetOptions {
   nonce: string | null;
   siteKey: string | null;
   zIndex: number;
+  fontBaseUrl: string | null;
 }
 
 export const DEFAULT_OPTIONS: WidgetOptions = {
@@ -45,6 +46,7 @@ export const DEFAULT_OPTIONS: WidgetOptions = {
   nonce: null,
   siteKey: null,
   zIndex: 2147483000,
+  fontBaseUrl: null,
 };
 
 const HEX_COLOR = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
@@ -83,6 +85,7 @@ function isValidOption(key: string, value: unknown): boolean {
   if (key === 'color') return typeof value === 'string' && HEX_COLOR.test(value);
   if (key === 'position') return typeof value === 'string' && isPosition(value);
   if (key === 'size') return value === 'small' || value === 'medium' || value === 'large';
+  if (key === 'fontBaseUrl') return value === null || typeof value === 'string';
   return true;
 }
 

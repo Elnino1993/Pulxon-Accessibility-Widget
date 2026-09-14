@@ -76,4 +76,10 @@ describe('resolveOptions', () => {
   it('lets later parts override earlier ones', () => {
     expect(resolveOptions({ size: 'small' }, { size: 'large' }).size).toBe('large');
   });
+
+  it('accepts a string fontBaseUrl and ignores other types', () => {
+    expect(resolveOptions({}).fontBaseUrl).toBeNull();
+    expect(resolveOptions({ fontBaseUrl: 'https://cdn.test/fonts/' }).fontBaseUrl).toBe('https://cdn.test/fonts/');
+    expect(resolveOptions({ fontBaseUrl: 5 as unknown as string }).fontBaseUrl).toBeNull();
+  });
 });

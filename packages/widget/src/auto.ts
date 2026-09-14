@@ -19,6 +19,13 @@ function boot(doc: Document): void {
   const script = doc.currentScript as HTMLScriptElement | null;
   const options = parseDataAttributes(script);
   if (!options.nonce && script?.nonce) options.nonce = script.nonce;
+  if (!options.fontBaseUrl && script?.src) {
+    try {
+      options.fontBaseUrl = new URL('fonts/', script.src).href;
+    } catch {
+      // Invalid script URL: the dyslexia font falls back to locally installed fonts.
+    }
+  }
   doc.documentElement.setAttribute(LOADED_ATTR, '');
 
   const start = (): void => {

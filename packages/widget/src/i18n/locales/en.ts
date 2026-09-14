@@ -18,6 +18,7 @@ export const en = {
   'feature.lineHeight': 'Line height',
   'feature.textSpacing': 'Text spacing',
   'feature.textAlign': 'Text alignment',
+  'feature.dyslexiaFont': 'Dyslexia-friendly font',
   'level.off': 'Off',
   'level.of': 'Level {current} of {total}',
   'level.left': 'Left',

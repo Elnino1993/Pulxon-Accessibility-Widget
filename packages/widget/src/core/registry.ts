@@ -8,6 +8,8 @@ export const GROUP_ORDER: readonly FeatureGroup[] = ['text', 'color', 'navigatio
 export interface FeatureContext {
   doc: Document;
   styles: StyleEngine;
+  /** Base URL of the widget's font files (ends with `/`), or null when fonts are not hosted. */
+  fontBaseUrl?: string | null;
 }
 
 /**

@@ -20,6 +20,7 @@ export const es: Messages = {
   'feature.lineHeight': 'Altura de línea',
   'feature.textSpacing': 'Espaciado del texto',
   'feature.textAlign': 'Alineación del texto',
+  'feature.dyslexiaFont': 'Fuente para dislexia',
   'level.off': 'Desactivado',
   'level.of': 'Nivel {current} de {total}',
   'level.left': 'Izquierda',

@@ -68,6 +68,7 @@ describe('builtinFeatures', () => {
       'text-spacing',
       'line-height',
       'text-align',
+      'dyslexia-font',
       'bold-text',
       'highlight-links',
       'pause-animations',
