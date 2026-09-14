@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createMemoryStorage } from './storage';
-import { EMPTY_SETTINGS, SETTINGS_KEY, createSettingsStore, parseSettings, type Settings } from './store';
+import { EMPTY_SETTINGS, SETTINGS_KEY, createSettingsStore, parseSettings, readStoredVersion, type Settings } from './store';
 
 describe('parseSettings', () => {
   it('returns empty settings for missing, broken or unknown-version data', () => {
@@ -68,3 +68,41 @@ describe('createSettingsStore', () => {
     expect(parseSettings(storage.get(SETTINGS_KEY))).toEqual(EMPTY_SETTINGS);
   });
 });
+
+describe('readStoredVersion', () => {
+  it('returns the integer schema version or null', () => {
+    expect(readStoredVersion(null)).toBeNull();
+    expect(readStoredVersion('{bad')).toBeNull();
+    expect(readStoredVersion('[]')).toBeNull();
+    expect(readStoredVersion('{"v":"2"}')).toBeNull();
+    expect(readStoredVersion('{"v":1.5}')).toBeNull();
+    expect(readStoredVersion('{"v":2}')).toBe(2);
+  });
+});
+
+describe('createSettingsStore with newer data', () => {
+  it('never overwrites settings written by a newer widget version', () => {
+    const storage = createMemoryStorage();
+    const newer = JSON.stringify({ v: 2, features: { 'x-new': 1 }, theme: 'dark' });
+    storage.set(SETTINGS_KEY, newer);
+    const store = createSettingsStore(storage);
+    const seen: Settings[] = [];
+    store.subscribe((s) => seen.push(s));
+
+    expect(store.get()).toEqual(EMPTY_SETTINGS);
+    store.update((s) => ({ ...s, features: { a: 1 } }));
+
+    expect(store.get().features).toEqual({ a: 1 });
+    expect(seen).toHaveLength(1);
+    expect(storage.get(SETTINGS_KEY)).toBe(newer);
+  });
+
+  it('still persists over unreadable data', () => {
+    const storage = createMemoryStorage();
+    storage.set(SETTINGS_KEY, '{bad');
+    const store = createSettingsStore(storage);
+    store.update((s) => ({ ...s, features: { a: 1 } }));
+    expect(parseSettings(storage.get(SETTINGS_KEY)).features).toEqual({ a: 1 });
+  });
+});
+

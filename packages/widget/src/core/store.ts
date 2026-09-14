@@ -33,6 +33,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+export function readStoredVersion(raw: string | null): number | null {
+  if (!raw) return null;
+  try {
+    const data: unknown = JSON.parse(raw);
+    return isRecord(data) && typeof data.v === 'number' && Number.isInteger(data.v) ? data.v : null;
+  } catch {
+    return null;
+  }
+}
+
 export function parseSettings(raw: string | null): Settings {
   if (!raw) return emptySettings();
   try {
@@ -64,14 +74,18 @@ export interface SettingsStore {
 }
 
 export function createSettingsStore(storage: KeyValueStorage): SettingsStore {
-  let state = parseSettings(storage.get(SETTINGS_KEY));
+  const raw = storage.get(SETTINGS_KEY);
+  const storedVersion = readStoredVersion(raw);
+  // Data from a newer widget version must survive an older cached script: keep changes in memory only.
+  const readOnly = storedVersion !== null && storedVersion > 1;
+  let state = parseSettings(raw);
   const listeners = new Set<(s: Settings) => void>();
 
   return {
     get: () => state,
     update: (fn) => {
       state = freezeSettings(fn(state));
-      storage.set(SETTINGS_KEY, JSON.stringify(state));
+      if (!readOnly) storage.set(SETTINGS_KEY, JSON.stringify(state));
       for (const listener of listeners) listener(state);
     },
     subscribe: (listener) => {
