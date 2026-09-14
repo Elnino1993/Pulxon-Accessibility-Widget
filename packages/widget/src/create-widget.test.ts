@@ -1,6 +1,7 @@
 import { act } from 'preact/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { PulxonApi } from './api';
+import type { WidgetOptions } from './config/options';
 import { createWidget } from './create-widget';
 import { Emitter } from './core/emitter';
 import type { FeatureDefinition } from './core/registry';
@@ -11,10 +12,14 @@ import { VERSION } from './version';
 
 const apis: PulxonApi[] = [];
 
-function start(storage = createMemoryStorage(), features?: FeatureDefinition[]): PulxonApi {
+function start(
+  storage = createMemoryStorage(),
+  features?: FeatureDefinition[],
+  options?: Partial<WidgetOptions>,
+): PulxonApi {
   const holder: { api?: PulxonApi } = {};
   act(() => {
-    holder.api = createWidget({ storage, features, styleMode: 'style-tag' });
+    holder.api = createWidget({ storage, features, styleMode: 'style-tag', options });
   });
   if (!holder.api) throw new Error('createWidget failed');
   apis.push(holder.api);
@@ -178,5 +183,12 @@ describe('createWidget', () => {
     expect(seen).toEqual(['open', 'close']);
     expect(domEvents).toHaveLength(1);
     expect((domEvents[0] as CustomEvent<Settings>).detail.features).toEqual({ 'highlight-links': 1 });
+  });
+
+  it('keeps reading overlays below a custom widget z-index', () => {
+    const api = start(createMemoryStorage(), undefined, { zIndex: 500 });
+    api.enable('reading-guide');
+    const style = document.head.querySelector('style[data-pulxon-style="reading-guide"]');
+    expect(style?.textContent).toContain('z-index:499!important');
   });
 });

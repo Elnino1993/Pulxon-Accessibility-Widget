@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { createRegistry } from '../core/registry';
 import { createStyleEngine } from '../core/style-engine';
-import { MASK_BAND_PX, readingGuide, readingMask } from './reading-overlays';
+import { MASK_BAND_PX, overlayZIndex, readingGuide, readingMask } from './reading-overlays';
 
 function makeCtx() {
   return { doc: document, styles: createStyleEngine(document, { mode: 'style-tag' }) };
@@ -85,5 +85,21 @@ describe('readingGuide', () => {
     const registry = createRegistry([readingMask, readingGuide]);
     expect(registry.conflicts('reading-mask')).toEqual(['reading-guide']);
     expect(registry.conflicts('reading-guide')).toEqual(['reading-mask']);
+  });
+});
+
+describe('overlay z-index', () => {
+  it('stays just below the widget z-index', () => {
+    expect(overlayZIndex(undefined)).toBe(2147482999);
+    expect(overlayZIndex(999)).toBe(998);
+    expect(overlayZIndex(0)).toBe(0);
+    expect(overlayZIndex(Number.NaN)).toBe(2147482999);
+  });
+
+  it('uses the context z-index in the injected CSS', () => {
+    const ctx = { ...makeCtx(), zIndex: 999 };
+    readingMask.apply(ctx, 1);
+    expect(styleText('reading-mask')).toContain('z-index:998!important');
+    readingMask.teardown(ctx);
   });
 });

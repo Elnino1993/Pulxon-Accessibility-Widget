@@ -30,7 +30,12 @@ export function createWidget(input: CreateWidgetInput = {}): PulxonApi {
   const styles = createStyleEngine(doc, { nonce: options.nonce, mode: input.styleMode ?? 'auto' });
   const registry = createRegistry(input.features ?? builtinFeatures);
   const profiles = input.profiles ?? [];
-  const controller = createController({ registry, store, ctx: { doc, styles, fontBaseUrl: options.fontBaseUrl }, profiles });
+  const controller = createController({
+    registry,
+    store,
+    ctx: { doc, styles, fontBaseUrl: options.fontBaseUrl, zIndex: options.zIndex },
+    profiles,
+  });
   const emitter = new Emitter<PulxonEvents>();
 
   controller.applyAll();

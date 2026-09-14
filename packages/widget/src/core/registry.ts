@@ -10,6 +10,8 @@ export interface FeatureContext {
   styles: StyleEngine;
   /** Base URL of the widget's font files (ends with `/`), or null when fonts are not hosted. */
   fontBaseUrl?: string | null;
+  /** z-index of the widget UI; page overlays must stay below it. */
+  zIndex?: number;
 }
 
 /**
