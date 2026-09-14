@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
-import { ORIGIN, loadWidget, pageHtml, serve } from './fixture';
+import { ORIGIN, collectConsoleErrors, loadWidget, pageHtml, serve } from './fixture';
 
 test('opens from the keyboard, traps focus, closes with Escape and restores focus', async ({ page }) => {
   await loadWidget(page);
@@ -101,10 +101,7 @@ test('the open panel has no WCAG A/AA axe violations', async ({ page }) => {
 });
 
 test('works under a strict Content-Security-Policy', async ({ page }) => {
-  const errors: string[] = [];
-  page.on('console', (message) => {
-    if (message.type() === 'error') errors.push(message.text());
-  });
+  const errors = collectConsoleErrors(page);
   await serve(page, pageHtml('<script src="/pulxon.min.js"></script>'), {
     'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self'",
   });
@@ -120,10 +117,7 @@ test('works under a strict Content-Security-Policy', async ({ page }) => {
 });
 
 test('falls back to nonce style tags when constructable stylesheets are unavailable', async ({ page }) => {
-  const errors: string[] = [];
-  page.on('console', (message) => {
-    if (message.type() === 'error') errors.push(message.text());
-  });
+  const errors = collectConsoleErrors(page);
   const nonce = 'e2eNonce123';
   const scripts =
     `<script nonce="${nonce}">delete Document.prototype.adoptedStyleSheets;delete ShadowRoot.prototype.adoptedStyleSheets;</script>` +

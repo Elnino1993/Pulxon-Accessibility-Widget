@@ -1,6 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { ORIGIN, pageHtml, serve } from './fixture';
+import { ORIGIN, collectConsoleErrors, pageHtml, serve } from './fixture';
 
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
@@ -225,10 +225,7 @@ test('page structure is accessible and moves focus to the chosen heading', async
 });
 
 test('profiles apply their feature sets and the panel stays axe-clean with every feature on', async ({ page }) => {
-  const errors: string[] = [];
-  page.on('console', (message) => {
-    if (message.type() === 'error') errors.push(message.text());
-  });
+  const errors = collectConsoleErrors(page);
   await load(page);
   await page.getByRole('button', { name: 'Open accessibility menu' }).click();
   const adhd = page.getByRole('button', { name: 'ADHD friendly' });

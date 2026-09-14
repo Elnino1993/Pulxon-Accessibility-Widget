@@ -2,6 +2,15 @@ import type { Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
+/** Collects the text of every console error the page logs from now on. */
+export function collectConsoleErrors(page: Page): string[] {
+  const errors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(message.text());
+  });
+  return errors;
+}
+
 export const ORIGIN = 'https://fixture.pulxon.test';
 
 const DIST = new URL('../dist/', import.meta.url);
