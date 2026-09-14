@@ -56,12 +56,14 @@ function releaseRemoved(state: State, root: Element): void {
  * Known limitation: an element added later inside an already scaled `em`-sized parent is measured
  * after the parent grew, so it scales from the grown size.
  */
-function scaleTree(doc: Document, state: State, root: Element): void {
+function scaleTree(doc: Document, state: State, roots: readonly Element[]): void {
   const win = doc.defaultView;
   if (!win) return;
-  const candidates: HTMLElement[] = [];
-  if (root.matches(SCALABLE_SELECTOR)) candidates.push(root as HTMLElement);
-  root.querySelectorAll<HTMLElement>(SCALABLE_SELECTOR).forEach((el) => candidates.push(el));
+  const candidates = new Set<HTMLElement>();
+  for (const root of roots) {
+    if (root.matches(SCALABLE_SELECTOR)) candidates.add(root as HTMLElement);
+    root.querySelectorAll<HTMLElement>(SCALABLE_SELECTOR).forEach((el) => candidates.add(el));
+  }
 
   const measured: Array<[HTMLElement, number]> = [];
   for (const el of candidates) {
@@ -99,7 +101,7 @@ export const biggerText: FeatureDefinition = {
     if (!body) return;
     const state: State = { scale, touched: new Map(), observer: null };
     STATES.set(doc, state);
-    scaleTree(doc, state, body);
+    scaleTree(doc, state, [body]);
 
     const Observer = doc.defaultView?.MutationObserver;
     if (!Observer) return;
@@ -108,10 +110,14 @@ export const biggerText: FeatureDefinition = {
         record.removedNodes.forEach((node) => {
           if (node.nodeType === 1) releaseRemoved(state, node as Element);
         });
+      }
+      const added: Element[] = [];
+      for (const record of records) {
         record.addedNodes.forEach((node) => {
-          if (node.nodeType === 1) scaleTree(doc, state, node as Element);
+          if (node.nodeType === 1 && node.isConnected) added.push(node as Element);
         });
       }
+      if (added.length > 0) scaleTree(doc, state, added);
     });
     state.observer.observe(body, { childList: true, subtree: true });
   },

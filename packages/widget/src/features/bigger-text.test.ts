@@ -76,6 +76,33 @@ describe('biggerText', () => {
     expect(added.style.getPropertyValue('font-size')).toBe('14px');
   });
 
+  it('scales several elements added in the same tick with one read pass before writing', async () => {
+    const calls: string[] = [];
+    vi.spyOn(window, 'getComputedStyle').mockImplementation((node: Element) => {
+      calls.push('read');
+      return { fontSize: `${(node as HTMLElement).dataset.px ?? '16'}px` } as CSSStyleDeclaration;
+    });
+    document.body.innerHTML = '<main id="m"></main>';
+    const ctx = makeCtx();
+    biggerText.apply(ctx, 1);
+    const first = document.createElement('p');
+    first.dataset.px = '10';
+    const second = document.createElement('p');
+    second.dataset.px = '20';
+    const setProperty = CSSStyleDeclaration.prototype.setProperty;
+    vi.spyOn(CSSStyleDeclaration.prototype, 'setProperty').mockImplementation(function (this: CSSStyleDeclaration, ...args) {
+      calls.push('write');
+      setProperty.apply(this, args);
+    });
+    calls.length = 0;
+    el('m').appendChild(first);
+    el('m').appendChild(second);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(first.style.getPropertyValue('font-size')).toBe('12px');
+    expect(second.style.getPropertyValue('font-size')).toBe('24px');
+    expect(calls).toEqual(['read', 'read', 'write', 'write']);
+  });
+
   it('stops observing after teardown', async () => {
     mockFontSizes();
     document.body.innerHTML = '<main id="m"></main>';
