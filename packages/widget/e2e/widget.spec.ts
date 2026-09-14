@@ -1,40 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-
-const BUNDLE = readFileSync(fileURLToPath(new URL('../dist/pulxon.min.js', import.meta.url)), 'utf8');
-const ORIGIN = 'https://fixture.pulxon.test';
-
-function pageHtml(scripts: string, head = ''): string {
-  return (
-    '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Fixture</title>' +
-    head +
-    '</head><body>' +
-    '<main><h1>Fixture page</h1><p>Read the <a href="#docs">documentation</a>.</p>' +
-    '<button id="my-trigger" type="button">Accessibility options</button></main>' +
-    scripts +
-    '</body></html>'
-  );
-}
-
-async function serve(page: Page, html: string, headers: Record<string, string> = {}): Promise<void> {
-  await page.route(`${ORIGIN}/`, (route) =>
-    route.fulfill({ status: 200, contentType: 'text/html', headers, body: html }),
-  );
-  await page.route(`${ORIGIN}/pulxon.min.js`, (route) =>
-    route.fulfill({ status: 200, contentType: 'application/javascript', body: BUNDLE }),
-  );
-}
-
-async function loadWidget(page: Page, attributes: Record<string, string> = {}): Promise<void> {
-  const attrs = Object.entries(attributes)
-    .map(([name, value]) => ` ${name}="${value}"`)
-    .join('');
-  await serve(page, pageHtml(`<script src="/pulxon.min.js"${attrs}></script>`));
-  await page.goto(`${ORIGIN}/`);
-  await page.waitForFunction(() => 'Pulxon' in window);
-}
+import { expect, test } from '@playwright/test';
+import { ORIGIN, loadWidget, pageHtml, serve } from './fixture';
 
 test('opens from the keyboard, traps focus, closes with Escape and restores focus', async ({ page }) => {
   await loadWidget(page);
