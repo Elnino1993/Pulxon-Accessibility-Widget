@@ -68,6 +68,40 @@ test('bigger text scales content added after it was enabled', async ({ page }) =
   await expect(page.locator('#late')).toHaveCSS('font-size', '14px');
 });
 
+test('bigger text measures late content that inherits its size from the original size', async ({ page }) => {
+  await load(page);
+  await enable(page, 'bigger-text', 1);
+  await page.evaluate(() => {
+    const main = document.querySelector('main');
+    const p = document.createElement('p');
+    p.id = 'late-inherit';
+    p.textContent = 'Late inheriting paragraph';
+    main?.appendChild(p);
+    const article = document.createElement('article');
+    const inner = document.createElement('p');
+    inner.id = 'late-article';
+    inner.textContent = 'Paragraph in a late article';
+    article.appendChild(inner);
+    main?.appendChild(article);
+  });
+  await expect(page.locator('#text')).toHaveCSS('font-size', '19.2px');
+  await expect(page.locator('#late-inherit')).toHaveCSS('font-size', '19.2px');
+  await expect(page.locator('#late-article')).toHaveCSS('font-size', '19.2px');
+
+  await page.evaluate(async () => {
+    const p = document.getElementById('late-inherit');
+    p?.remove();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    if (p) document.querySelector('main')?.appendChild(p);
+  });
+  await expect(page.locator('#late-inherit')).toHaveCSS('font-size', '19.2px');
+
+  await enable(page, 'bigger-text', 4);
+  for (const selector of ['#text', '#late-inherit', '#late-article']) {
+    await expect(page.locator(selector)).toHaveCSS('font-size', '28.8px');
+  }
+});
+
 test('contrast and saturation combine and each can be removed independently', async ({ page }) => {
   await load(page);
   await enable(page, 'contrast', 1);

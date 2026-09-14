@@ -52,24 +52,39 @@ function releaseRemoved(state: State, root: Element): void {
 }
 
 /**
- * Reads every candidate's computed size first, then writes, to avoid layout thrashing.
- * Known limitation: an element added later inside an already scaled `em`-sized parent is measured
- * after the parent grew, so it scales from the grown size.
+ * Reads every candidate's computed size in one pass, then writes, to avoid layout thrashing.
+ * Already scaled ancestors of the roots get their original inline size back during the read pass, so
+ * content that inherits its size (or uses `em`/`%`) is measured from the page's original size and is
+ * not scaled twice; the ancestors are scaled again right after.
+ * Known limitation: size changes made later by the page itself (class or style changes on an element
+ * that is already tracked) are not re-measured.
  */
 function scaleTree(doc: Document, state: State, roots: readonly Element[]): void {
   const win = doc.defaultView;
   if (!win) return;
   const candidates = new Set<HTMLElement>();
+  const ancestors = new Set<HTMLElement>();
   for (const root of roots) {
     if (root.matches(SCALABLE_SELECTOR)) candidates.add(root as HTMLElement);
     root.querySelectorAll<HTMLElement>(SCALABLE_SELECTOR).forEach((el) => candidates.add(el));
+    for (let parent = root.parentElement; parent && parent !== doc.body; parent = parent.parentElement) {
+      if (state.touched.has(parent)) ancestors.add(parent);
+    }
   }
 
+  for (const ancestor of ancestors) {
+    const original = state.touched.get(ancestor);
+    if (original) restore(ancestor, original);
+  }
   const measured: Array<[HTMLElement, number]> = [];
   for (const el of candidates) {
     if (state.touched.has(el) || el.closest('[data-pulxon-ignore]')) continue;
     const px = Number.parseFloat(win.getComputedStyle(el).fontSize);
     if (Number.isFinite(px) && px > 0) measured.push([el, px]);
+  }
+  for (const ancestor of ancestors) {
+    const original = state.touched.get(ancestor);
+    if (original) setSize(ancestor, original.px, state.scale);
   }
   for (const [el, px] of measured) {
     state.touched.set(el, {

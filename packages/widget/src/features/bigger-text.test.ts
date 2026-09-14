@@ -100,7 +100,34 @@ describe('biggerText', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(first.style.getPropertyValue('font-size')).toBe('12px');
     expect(second.style.getPropertyValue('font-size')).toBe('24px');
-    expect(calls).toEqual(['read', 'read', 'write', 'write']);
+    // Two reads, then only writes (scaled ancestors are re-applied after the read pass).
+    expect(calls.slice(0, 2)).toEqual(['read', 'read']);
+    expect(calls.slice(2).length).toBeGreaterThanOrEqual(2);
+    expect(calls.slice(2).every((call) => call === 'write')).toBe(true);
+  });
+
+  it('measures late inheriting content against the original size of scaled ancestors', async () => {
+    // Minimal inheritance model: an element without data-px inherits its parent's inline px size, else its data-px.
+    const sizeOf = (node: Element | null): string => {
+      if (!node || node === document.documentElement) return '16px';
+      const own = (node as HTMLElement).dataset.px;
+      if (own) return `${own}px`;
+      const parent = node.parentElement as HTMLElement | null;
+      return parent?.style.getPropertyValue('font-size') || sizeOf(parent);
+    };
+    vi.spyOn(window, 'getComputedStyle').mockImplementation((node: Element) => ({ fontSize: sizeOf(node) }) as CSSStyleDeclaration);
+    document.body.innerHTML = '<main id="m" data-px="10"><p id="p">Existing</p></main>';
+    const ctx = makeCtx();
+    biggerText.apply(ctx, 1);
+    expect(el('m').style.getPropertyValue('font-size')).toBe('12px');
+    expect(el('p').style.getPropertyValue('font-size')).toBe('12px');
+
+    const late = document.createElement('p');
+    el('m').appendChild(late);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(late.style.getPropertyValue('font-size')).toBe('12px');
+    expect(el('m').style.getPropertyValue('font-size')).toBe('12px');
+    expect(el('m').style.getPropertyPriority('font-size')).toBe('important');
   });
 
   it('stops observing after teardown', async () => {
