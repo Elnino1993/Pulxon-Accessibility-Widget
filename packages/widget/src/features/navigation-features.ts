@@ -7,7 +7,8 @@ export const highlightHeadings = cssFeature({
   levels: 1,
   css: () =>
     `${scoped(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', '[role="heading"]'])}` +
-    '{outline:3px dashed #b00020!important;outline-offset:3px!important}',
+    // The white ring behind the outline keeps it at least 3:1 against dark page backgrounds.
+    '{outline:3px dashed #b00020!important;outline-offset:3px!important;box-shadow:0 0 0 6px #ffffff!important}',
 });
 
 export const focusHighlight = cssFeature({

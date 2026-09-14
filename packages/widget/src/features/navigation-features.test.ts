@@ -21,7 +21,8 @@ describe('navigation features', () => {
     highlightHeadings.apply(ctx, 1);
     expect(styleText('highlight-headings')).toContain(`h1${NOT_IGNORED}`);
     expect(styleText('highlight-headings')).toContain(`[role="heading"]${NOT_IGNORED}`);
-    expect(styleText('highlight-headings')).toContain('outline:3px dashed #b00020!important');
+    expect(styleText('highlight-headings')).toContain('outline:3px dashed #b00020!important;outline-offset:3px!important');
+    expect(styleText('highlight-headings')).toContain('box-shadow:0 0 0 6px #ffffff!important');
     highlightHeadings.teardown(ctx);
     expect(styleText('highlight-headings')).toBeNull();
   });
