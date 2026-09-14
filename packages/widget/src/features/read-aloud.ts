@@ -88,9 +88,11 @@ export const readAloud: FeatureDefinition = {
       utterance.lang = el.closest('[lang]')?.getAttribute('lang') || doc.documentElement.lang || 'en';
       const voice = localVoice(api.synth, utterance.lang);
       if (voice) utterance.voice = voice;
-      utterance.onend = () => {
+      const finish = (): void => {
         if (current === el) clearMark();
       };
+      utterance.onend = finish;
+      utterance.onerror = finish;
       current = el;
       el.setAttribute(READING_ATTR, '');
       api.synth.speak(utterance);

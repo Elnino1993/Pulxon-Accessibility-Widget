@@ -7,6 +7,7 @@ class FakeUtterance {
   rate = 1;
   lang = '';
   onend: (() => void) | null = null;
+  onerror: (() => void) | null = null;
   constructor(text: string) {
     this.text = text;
   }
@@ -135,6 +136,16 @@ describe('readAloud', () => {
     expect((utterance(0) as FakeUtterance & { voice?: unknown }).voice).toBe(localEs);
     click('fr');
     expect((utterance(1) as FakeUtterance & { voice?: unknown }).voice).toBeUndefined();
+  });
+
+  it('clears the reading marker when speech fails', () => {
+    document.body.innerHTML = '<p id="p">Hi</p>';
+    readAloud.apply(makeCtx(), 1);
+    click('p');
+    const p = document.getElementById('p');
+    expect(p?.hasAttribute('data-pulxon-reading')).toBe(true);
+    utterance(0).onerror?.();
+    expect(p?.hasAttribute('data-pulxon-reading')).toBe(false);
   });
 
   it('does not cancel speech it did not start', () => {
