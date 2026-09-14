@@ -153,6 +153,31 @@ test('works under a strict Content-Security-Policy', async ({ page }) => {
   expect(errors.filter((text) => text.includes('Content Security Policy'))).toEqual([]);
 });
 
+test('falls back to nonce style tags when constructable stylesheets are unavailable', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(message.text());
+  });
+  const nonce = 'e2eNonce123';
+  const scripts =
+    `<script nonce="${nonce}">delete Document.prototype.adoptedStyleSheets;delete ShadowRoot.prototype.adoptedStyleSheets;</script>` +
+    `<script src="/pulxon.min.js" data-nonce="${nonce}"></script>`;
+  await serve(page, pageHtml(scripts), {
+    'Content-Security-Policy': `default-src 'self'; script-src 'self' 'nonce-${nonce}'; style-src 'self' 'nonce-${nonce}'`,
+  });
+  await page.goto(`${ORIGIN}/`);
+  await page.waitForFunction(() => 'Pulxon' in window);
+  expect(await page.evaluate(() => 'adoptedStyleSheets' in document)).toBe(false);
+
+  const launcher = page.getByRole('button', { name: 'Open accessibility menu' });
+  await expect(launcher).toHaveCSS('position', 'fixed');
+  await launcher.click();
+  await page.getByRole('button', { name: 'Highlight links' }).click();
+  await expect(page.getByRole('link', { name: 'documentation' })).toHaveCSS('outline-style', 'solid');
+  await expect(page.locator('style[data-pulxon-style="highlight-links"]')).toHaveCount(1);
+  expect(errors.filter((text) => text.includes('Content Security Policy'))).toEqual([]);
+});
+
 test('ignores a second copy of the script', async ({ page }) => {
   await serve(page, pageHtml('<script src="/pulxon.min.js"></script><script src="/pulxon.min.js"></script>'));
   await page.goto(`${ORIGIN}/`);
