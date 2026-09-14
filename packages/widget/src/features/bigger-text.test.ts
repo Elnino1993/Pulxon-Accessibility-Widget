@@ -76,4 +76,22 @@ describe('biggerText', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(added.style.getPropertyValue('font-size')).toBe('');
   });
+
+  it('restores and forgets elements removed from the page, and rescales them once if re-added', async () => {
+    mockFontSizes();
+    document.body.innerHTML = '<main id="m"><section id="s"><p id="child" data-px="10">Child</p></section></main>';
+    const ctx = makeCtx();
+    biggerText.apply(ctx, 2);
+    const section = el('s');
+    const child = el('child');
+    expect(child.style.getPropertyValue('font-size')).toBe('14px');
+
+    section.remove();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(child.style.getPropertyValue('font-size')).toBe('');
+
+    el('m').appendChild(section);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(child.style.getPropertyValue('font-size')).toBe('14px');
+  });
 });

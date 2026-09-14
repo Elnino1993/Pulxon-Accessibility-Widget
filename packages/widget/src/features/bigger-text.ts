@@ -27,6 +27,29 @@ function setSize(el: HTMLElement, px: number, scale: number): void {
   el.style.setProperty('font-size', `${Math.round(px * scale * 100) / 100}px`, 'important');
 }
 
+function restore(el: HTMLElement, original: Original): void {
+  if (original.value) el.style.setProperty('font-size', original.value, original.priority);
+  else el.style.removeProperty('font-size');
+}
+
+/**
+ * Restores and forgets elements that left the document, so a re-inserted element is measured fresh
+ * from its original size instead of being scaled again from an already-scaled value. An element only
+ * moved within the document (still connected when the callback runs) stays tracked untouched.
+ */
+function releaseRemoved(state: State, root: Element): void {
+  const candidates: Element[] = [];
+  if (root.matches(SCALABLE_SELECTOR)) candidates.push(root);
+  root.querySelectorAll<HTMLElement>(SCALABLE_SELECTOR).forEach((el) => candidates.push(el));
+
+  for (const el of candidates) {
+    const original = state.touched.get(el as HTMLElement);
+    if (!original || el.isConnected) continue;
+    restore(el as HTMLElement, original);
+    state.touched.delete(el as HTMLElement);
+  }
+}
+
 /**
  * Reads every candidate's computed size first, then writes, to avoid layout thrashing.
  * Known limitation: an element added later inside an already scaled `em`-sized parent is measured
@@ -81,6 +104,9 @@ export const biggerText: FeatureDefinition = {
     if (!Observer) return;
     state.observer = new Observer((records) => {
       for (const record of records) {
+        record.removedNodes.forEach((node) => {
+          if (node.nodeType === 1) releaseRemoved(state, node as Element);
+        });
         record.addedNodes.forEach((node) => {
           if (node.nodeType === 1) scaleTree(doc, state, node as Element);
         });
@@ -92,10 +118,7 @@ export const biggerText: FeatureDefinition = {
     const state = STATES.get(doc);
     if (!state) return;
     state.observer?.disconnect();
-    state.touched.forEach((original, el) => {
-      if (original.value) el.style.setProperty('font-size', original.value, original.priority);
-      else el.style.removeProperty('font-size');
-    });
+    state.touched.forEach((original, el) => restore(el, original));
     STATES.delete(doc);
   },
 };
