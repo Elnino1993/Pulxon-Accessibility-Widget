@@ -203,4 +203,82 @@ describe('Page structure view', () => {
     expect(tool).not.toBeNull();
     expect(root.activeElement).toBe(tool);
   });
+
+  it('closes and returns focus to the launcher when the target was removed from the DOM', () => {
+    document.body.insertAdjacentHTML('afterbegin', '<main><h1 id="top">Fixture title</h1></main>');
+    const { ui, root } = setup();
+    act(() => root.querySelector<HTMLButtonElement>('[data-tool="page-structure"]')?.click());
+    const item = Array.from(root.querySelectorAll<HTMLButtonElement>('.structure__item')).find((button) =>
+      button.textContent?.includes('Fixture title'),
+    );
+    document.getElementById('top')?.remove();
+
+    act(() => item?.click());
+    expect(ui.isOpen()).toBe(false);
+    expect(root.activeElement).toBe(root.querySelector('.launcher'));
+  });
+
+  it('makes an empty tabpanel focusable when there is nothing to list', () => {
+    const { root } = setup();
+    act(() => root.querySelector<HTMLButtonElement>('[data-tool="page-structure"]')?.click());
+    act(() => {
+      root
+        .querySelector('#pulxon-tab-headings')
+        ?.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true }));
+    });
+    expect(root.querySelector('#pulxon-tab-links')?.getAttribute('aria-selected')).toBe('true');
+    expect(root.querySelector('[role="tabpanel"]')?.getAttribute('tabindex')).toBe('0');
+  });
+
+  it('shows the link label before its href detail', () => {
+    document.body.insertAdjacentHTML('afterbegin', '<a href="/about">About us</a>');
+    const { root } = setup();
+    act(() => root.querySelector<HTMLButtonElement>('[data-tool="page-structure"]')?.click());
+    act(() => {
+      root
+        .querySelector('#pulxon-tab-headings')
+        ?.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true }));
+    });
+    const item = root.querySelector<HTMLButtonElement>('.structure__item');
+    expect(item?.firstElementChild?.className).toBe('structure__label');
+    expect(item?.firstElementChild?.textContent).toBe('About us');
+  });
+
+  it('Home and End move to the first and last tab and focus it', () => {
+    const { root } = setup();
+    act(() => root.querySelector<HTMLButtonElement>('[data-tool="page-structure"]')?.click());
+    act(() => {
+      root
+        .querySelector('#pulxon-tab-headings')
+        ?.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true }));
+    });
+    expect(root.querySelector('#pulxon-tab-links')?.getAttribute('aria-selected')).toBe('true');
+    expect(root.activeElement).toBe(root.querySelector('#pulxon-tab-links'));
+
+    act(() => {
+      root
+        .querySelector('#pulxon-tab-links')
+        ?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true, cancelable: true }));
+    });
+    expect(root.querySelector('#pulxon-tab-headings')?.getAttribute('aria-selected')).toBe('true');
+    expect(root.activeElement).toBe(root.querySelector('#pulxon-tab-headings'));
+  });
+
+  it('focuses the Back button when the structure view opens', () => {
+    const { root } = setup();
+    act(() => root.querySelector<HTMLButtonElement>('[data-tool="page-structure"]')?.click());
+    expect(root.activeElement).toBe(root.querySelector('.back'));
+  });
+
+  it('Escape from the structure view closes the panel and returns focus to the launcher', () => {
+    const { ui, root } = setup();
+    act(() => root.querySelector<HTMLButtonElement>('[data-tool="page-structure"]')?.click());
+    const dialog = root.querySelector('[role="dialog"]') as HTMLElement;
+    act(() => {
+      dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    });
+    expect(ui.isOpen()).toBe(false);
+    expect(root.querySelector('[role="dialog"]')).toBeNull();
+    expect(root.activeElement).toBe(root.querySelector('.launcher'));
+  });
 });

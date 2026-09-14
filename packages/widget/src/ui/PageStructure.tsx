@@ -74,24 +74,44 @@ export function PageStructure({ t, doc, onBack, onNavigate }: PageStructureProps
           </button>
         ))}
       </div>
-      <div id="pulxon-structure-panel" role="tabpanel" aria-labelledby={`pulxon-tab-${tab}`} class="structure__panel">
+      <div
+        id="pulxon-structure-panel"
+        role="tabpanel"
+        aria-labelledby={`pulxon-tab-${tab}`}
+        class="structure__panel"
+        tabIndex={items.length === 0 ? 0 : undefined}
+      >
         {items.length === 0 ? (
           <p>{t('structure.empty')}</p>
         ) : (
           <ul class="structure__list">
-            {items.map((item) => (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  class="structure__item"
-                  style={{ '--pulxon-indent': `${((item.level ?? 1) - 1) * 12}px` }}
-                  onClick={() => onNavigate(item.element)}
-                >
-                  <span class="structure__detail">{item.detailKey ? t(item.detailKey) : item.detail}</span>
-                  {item.label && <span class="structure__label">{item.label}</span>}
-                </button>
-              </li>
-            ))}
+            {items.map((item) => {
+              const isLink = item.level === undefined && !item.detailKey;
+              const detail = <span class="structure__detail">{item.detailKey ? t(item.detailKey) : item.detail}</span>;
+              const label = item.label && <span class="structure__label">{item.label}</span>;
+              return (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    class="structure__item"
+                    style={{ '--pulxon-indent': `${((item.level ?? 1) - 1) * 12}px` }}
+                    onClick={() => onNavigate(item.element)}
+                  >
+                    {isLink ? (
+                      <>
+                        {label}
+                        {detail}
+                      </>
+                    ) : (
+                      <>
+                        {detail}
+                        {label}
+                      </>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

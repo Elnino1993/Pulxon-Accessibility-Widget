@@ -19,6 +19,15 @@ describe('collectHeadings', () => {
       ['Custom heading', 'H3', 3],
     ]);
   });
+
+  it('skips inert subtrees and headings whose role is presentation or none', () => {
+    document.body.innerHTML =
+      '<div inert><h2>Inert</h2></div>' +
+      '<h2 role="presentation">Presentational</h2>' +
+      '<h2 role="none">NoneRole</h2>' +
+      '<h2>Kept</h2>';
+    expect(collectHeadings(document).map((item) => item.label)).toEqual(['Kept']);
+  });
 });
 
 describe('collectLandmarks', () => {
@@ -43,6 +52,18 @@ describe('collectLandmarks', () => {
       ['landmark.form', 'Signup'],
       ['landmark.search', ''],
       ['landmark.contentinfo', ''],
+    ]);
+  });
+
+  it('only counts explicit region and form roles when they have an accessible name', () => {
+    document.body.innerHTML =
+      '<div role="region">Unnamed region</div>' +
+      '<div role="region" aria-label="Named region">Named</div>' +
+      '<div role="form">Unnamed form</div>' +
+      '<div role="form" aria-label="Named form">Named</div>';
+    expect(collectLandmarks(document).map((item) => [item.detailKey, item.label])).toEqual([
+      ['landmark.region', 'Named region'],
+      ['landmark.form', 'Named form'],
     ]);
   });
 });
@@ -71,5 +92,24 @@ describe('focusElement', () => {
     const div = document.getElementById('d') as HTMLElement;
     focusElement(div);
     expect(div.getAttribute('tabindex')).toBe('0');
+  });
+
+  it('returns whether focus actually landed on the element', () => {
+    document.body.innerHTML = '<h2 id="h">Section</h2>';
+    const heading = document.getElementById('h') as HTMLElement;
+    expect(focusElement(heading)).toBe(true);
+
+    const detached = document.createElement('div');
+    expect(focusElement(detached)).toBe(false);
+  });
+
+  it('removes the tabindex it added once the element loses focus', () => {
+    document.body.innerHTML = '<h2 id="h">Section</h2><button id="b" type="button">Go</button>';
+    const heading = document.getElementById('h') as HTMLElement;
+    const button = document.getElementById('b') as HTMLElement;
+    focusElement(heading);
+    expect(heading.getAttribute('tabindex')).toBe('-1');
+    button.focus();
+    expect(heading.hasAttribute('tabindex')).toBe(false);
   });
 });

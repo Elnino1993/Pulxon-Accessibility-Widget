@@ -10,7 +10,7 @@ export interface StructureItem {
 }
 
 const MAX_LABEL = 120;
-const EXCLUDED = '[data-pulxon-ignore],[hidden],[aria-hidden="true"]';
+const EXCLUDED = '[data-pulxon-ignore],[hidden],[aria-hidden="true"],[inert]';
 const SECTIONING = 'article,aside,main,nav,section';
 const LANDMARK_SELECTOR =
   'header,nav,main,aside,footer,form,section,search,[role="banner"],[role="navigation"],[role="main"],' +
@@ -49,13 +49,18 @@ export function accessibleName(el: Element): string {
 }
 
 function isExcluded(el: Element): boolean {
-  return el.closest(EXCLUDED) !== null;
+  if (el.closest(EXCLUDED) !== null) return true;
+  const target = el as HTMLElement;
+  if (typeof target.checkVisibility === 'function' && !target.checkVisibility()) return true;
+  return false;
 }
 
 export function collectHeadings(doc: Document): StructureItem[] {
   const items: StructureItem[] = [];
   doc.querySelectorAll<HTMLElement>('h1,h2,h3,h4,h5,h6,[role="heading"]').forEach((el) => {
     if (isExcluded(el)) return;
+    const overrideRole = el.getAttribute('role');
+    if (overrideRole === 'presentation' || overrideRole === 'none') return;
     const label = accessibleName(el);
     if (!label) return;
     const ariaLevel = Number.parseInt(el.getAttribute('aria-level') ?? '', 10);
@@ -69,8 +74,12 @@ export function collectHeadings(doc: Document): StructureItem[] {
 
 function landmarkRole(el: Element): string | null {
   const explicit = el.getAttribute('role');
-  if (explicit) return Object.prototype.hasOwnProperty.call(ROLE_KEYS, explicit) ? explicit : null;
   const named = el.hasAttribute('aria-label') || el.hasAttribute('aria-labelledby');
+  if (explicit) {
+    if (!Object.prototype.hasOwnProperty.call(ROLE_KEYS, explicit)) return null;
+    if ((explicit === 'region' || explicit === 'form') && !named) return null;
+    return explicit;
+  }
   switch (el.tagName) {
     case 'NAV':
       return 'navigation';
@@ -125,8 +134,14 @@ export function collectLinks(doc: Document): StructureItem[] {
   return items;
 }
 
-export function focusElement(el: HTMLElement): void {
-  if (!el.matches(FOCUSABLE)) el.setAttribute('tabindex', '-1');
+export function focusElement(el: HTMLElement): boolean {
+  if (!el.isConnected) return false;
+  const addedTabIndex = !el.matches(FOCUSABLE);
+  if (addedTabIndex) {
+    el.setAttribute('tabindex', '-1');
+    el.addEventListener('blur', () => el.removeAttribute('tabindex'), { once: true });
+  }
   el.scrollIntoView?.({ block: 'center' });
   el.focus({ preventScroll: true });
+  return el.ownerDocument.activeElement === el;
 }

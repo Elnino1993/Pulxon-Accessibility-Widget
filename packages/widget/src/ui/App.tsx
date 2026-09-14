@@ -27,11 +27,15 @@ export function App({ doc, options, controller, features, store, profiles, t, st
   const launcherRef = useRef<HTMLButtonElement>(null);
   const wasOpen = useRef(false);
 
+  const focusOpenerOrLauncher = (): void => {
+    const opener = state.opener();
+    const target = opener && opener.isConnected ? opener : launcherRef.current;
+    target?.focus();
+  };
+
   useEffect(() => {
     if (wasOpen.current && !open && state.shouldReturnFocus()) {
-      const opener = state.opener();
-      const target = opener && opener.isConnected ? opener : launcherRef.current;
-      target?.focus();
+      focusOpenerOrLauncher();
     }
     wasOpen.current = open;
   }, [open, state]);
@@ -42,8 +46,12 @@ export function App({ doc, options, controller, features, store, profiles, t, st
   };
 
   const onNavigate = (element: HTMLElement): void => {
+    if (!element.isConnected) {
+      state.setOpen(false);
+      return;
+    }
     state.setOpen(false, null, false);
-    focusElement(element);
+    if (!focusElement(element)) focusOpenerOrLauncher();
   };
 
   const side = options.position.endsWith('left') ? 'left' : 'right';
