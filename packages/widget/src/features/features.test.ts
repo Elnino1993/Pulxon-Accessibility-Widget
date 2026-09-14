@@ -75,6 +75,8 @@ describe('builtinFeatures', () => {
       'highlight-links',
       'highlight-headings',
       'focus-highlight',
+      'reading-mask',
+      'reading-guide',
       'big-cursor',
       'pause-animations',
       'hide-images',

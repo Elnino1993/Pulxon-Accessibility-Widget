@@ -25,6 +25,8 @@ export const en = {
   'feature.highlightHeadings': 'Highlight headings',
   'feature.focusHighlight': 'Focus highlight',
   'feature.bigCursor': 'Big cursor',
+  'feature.readingMask': 'Reading mask',
+  'feature.readingGuide': 'Reading guide',
   'level.off': 'Off',
   'level.of': 'Level {current} of {total}',
   'level.left': 'Left',

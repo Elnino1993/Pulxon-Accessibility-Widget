@@ -27,6 +27,8 @@ export const es: Messages = {
   'feature.highlightHeadings': 'Resaltar encabezados',
   'feature.focusHighlight': 'Resaltar el foco',
   'feature.bigCursor': 'Cursor grande',
+  'feature.readingMask': 'Máscara de lectura',
+  'feature.readingGuide': 'Guía de lectura',
   'level.off': 'Desactivado',
   'level.of': 'Nivel {current} de {total}',
   'level.left': 'Izquierda',
