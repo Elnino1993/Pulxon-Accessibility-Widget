@@ -64,6 +64,7 @@ describe('pauseAnimations', () => {
 describe('builtinFeatures', () => {
   it('exposes the reference features with stable ids', () => {
     expect(builtinFeatures.map((f) => f.id)).toEqual([
+      'bigger-text',
       'text-spacing',
       'line-height',
       'text-align',

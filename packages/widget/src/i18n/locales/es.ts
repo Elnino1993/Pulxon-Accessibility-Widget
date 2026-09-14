@@ -13,6 +13,7 @@ export const es: Messages = {
   'group.navigation': 'Navegación',
   'group.reading': 'Lectura',
   'group.distraction': 'Distracciones',
+  'feature.biggerText': 'Texto más grande',
   'feature.highlightLinks': 'Resaltar enlaces',
   'feature.pauseAnimations': 'Pausar animaciones',
   'feature.boldText': 'Texto en negrita',

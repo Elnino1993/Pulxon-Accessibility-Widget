@@ -11,6 +11,7 @@ export const en = {
   'group.navigation': 'Navigation',
   'group.reading': 'Reading',
   'group.distraction': 'Distractions',
+  'feature.biggerText': 'Bigger text',
   'feature.highlightLinks': 'Highlight links',
   'feature.pauseAnimations': 'Pause animations',
   'feature.boldText': 'Bold text',
