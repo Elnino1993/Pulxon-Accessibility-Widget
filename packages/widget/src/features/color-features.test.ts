@@ -43,7 +43,9 @@ describe('contrast', () => {
   it('uses a black or white palette with readable link colors', () => {
     const ctx = makeCtx();
     contrast.apply(ctx, 2);
-    expect(styleText('contrast')).toContain('background-color:#000000!important;color:#ffffff!important');
+    expect(styleText('contrast')).toContain(
+      `html${NOT_IGNORED},body${NOT_IGNORED},body *${NOT_IGNORED}{background-color:#000000!important;color:#ffffff!important`,
+    );
     expect(styleText('contrast')).toContain('color:#ffeb3b!important');
     contrast.apply(ctx, 3);
     expect(styleText('contrast')).toContain('background-color:#ffffff!important;color:#000000!important');

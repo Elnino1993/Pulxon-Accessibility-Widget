@@ -27,7 +27,7 @@ function invertCss(): string {
 
 function paletteCss(background: string, text: string, link: string): string {
   return (
-    `${scoped(ALL)}{background-color:${background}!important;color:${text}!important;border-color:${text}!important}` +
+    `${scoped(['html', ...ALL])}{background-color:${background}!important;color:${text}!important;border-color:${text}!important}` +
     `${scoped(['a', 'a *'])}{color:${link}!important}` +
     `${scoped(MEDIA)}{background-color:transparent!important}`
   );
