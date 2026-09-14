@@ -186,6 +186,27 @@ describe('createController', () => {
     expect(store.get().features).toEqual({ a: 1 });
   });
 
+  it('enable tears down a newly enabled feature whose apply fails, but not an active one changing level', () => {
+    silenceConsoleError();
+    const a = fakeFeature('a', 2);
+    const { controller, store } = setup([a]);
+    a.apply.mockImplementationOnce(() => {
+      throw new Error('boom');
+    });
+    expect(controller.enable('a')).toBe(false);
+    expect(a.teardown).toHaveBeenCalledOnce();
+    expect(store.get().features).toEqual({});
+
+    a.teardown.mockClear();
+    controller.enable('a', 1);
+    a.apply.mockImplementationOnce(() => {
+      throw new Error('boom');
+    });
+    expect(controller.enable('a', 2)).toBe(false);
+    expect(a.teardown).not.toHaveBeenCalled();
+    expect(store.get().features).toEqual({ a: 1 });
+  });
+
   it('reset continues past a throwing teardown and clears the store', () => {
     silenceConsoleError();
     const a = fakeFeature('a');

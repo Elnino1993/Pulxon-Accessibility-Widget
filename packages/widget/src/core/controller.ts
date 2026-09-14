@@ -58,7 +58,11 @@ export function createController({ registry, store, ctx, profiles }: ControllerI
     const def = registry.get(id);
     if (!def || !supported(def)) return false;
     const next = clampLevel(requested, def.levels);
-    if (!safely(() => def.apply(ctx, next), id)) return false;
+    if (!safely(() => def.apply(ctx, next), id)) {
+      // A feature that was off must not keep half-applied resources; an active one keeps its previous level.
+      if (level(id) === 0) safely(() => def.teardown(ctx), id);
+      return false;
+    }
     const conflicts = registry.conflicts(id);
     for (const other of conflicts) {
       const otherDef = registry.get(other);

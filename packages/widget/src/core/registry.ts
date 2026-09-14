@@ -20,6 +20,8 @@ export interface FeatureContext {
  * Resource contract: `apply` and `teardown` may only touch resources the feature owns — its own
  * style-engine id (equal to `id`), `data-pulxon-*` attributes and `pulxon-*` elements it created.
  * `apply` may be called again with another level while active; `teardown` must restore the page.
+ * `enable` applies the new feature first and only then tears down conflicting features, so two
+ * features must never share resources (a conflict's teardown would remove what the new one just applied).
  */
 export interface FeatureDefinition {
   id: string;
