@@ -48,6 +48,11 @@ describe('createRegistry', () => {
     expect(createRegistry([fakeFeature('a', 1, ['ghost'])]).conflicts('a')).toEqual([]);
     expect(() => createRegistry([fakeFeature('a', 1, ['a'])])).toThrow(/itself/);
   });
+
+  it('requires one level label per level when labels are given', () => {
+    expect(() => createRegistry([{ ...fakeFeature('a', 2), levelLabelKeys: ['level.left'] }])).toThrow(/levelLabelKeys/);
+    expect(() => createRegistry([{ ...fakeFeature('a', 2), levelLabelKeys: ['level.left', 'level.right'] }])).not.toThrow();
+  });
 });
 
 function silenceConsoleError() {

@@ -8,14 +8,17 @@ export interface FeatureButtonProps {
   onActivate: (id: string) => void;
 }
 
+function statusText(feature: FeatureDefinition, level: number, t: Translator): string | null {
+  if (feature.levels <= 1) return null;
+  if (level <= 0) return t('level.off');
+  const named = feature.levelLabelKeys?.[level - 1];
+  return named ? t(named) : t('level.of', { current: level, total: feature.levels });
+}
+
 export function FeatureButton({ feature, level, t, onActivate }: FeatureButtonProps) {
   const active = level > 0;
   const multiLevel = feature.levels > 1;
-  const status = multiLevel
-    ? active
-      ? t('level.of', { current: level, total: feature.levels })
-      : t('level.off')
-    : null;
+  const status = statusText(feature, level, t);
 
   return (
     <button

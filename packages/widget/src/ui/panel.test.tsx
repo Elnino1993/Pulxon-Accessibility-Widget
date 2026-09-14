@@ -6,13 +6,13 @@ import { createRegistry, type FeatureDefinition, type ProfileDefinition } from '
 import { createMemoryStorage } from '../core/storage';
 import { createSettingsStore } from '../core/store';
 import { createStyleEngine } from '../core/style-engine';
-import { builtinFeatures } from '../features';
+import { highlightLinks, pauseAnimations } from '../features';
 import { createTranslator } from '../i18n';
 import { mountUI, type UiHandle } from './mount';
 
 const handles: UiHandle[] = [];
 
-function setup(features: FeatureDefinition[] = builtinFeatures, profiles: ProfileDefinition[] = []) {
+function setup(features: FeatureDefinition[] = [highlightLinks, pauseAnimations], profiles: ProfileDefinition[] = []) {
   const store = createSettingsStore(createMemoryStorage());
   const registry = createRegistry(features);
   const styles = createStyleEngine(document, { mode: 'style-tag' });
@@ -120,7 +120,7 @@ describe('Panel', () => {
       labelKey: 'feature.pauseAnimations',
       features: { 'pause-animations': 1 },
     };
-    const { root, store } = setup(builtinFeatures, [profile]);
+    const { root, store } = setup([highlightLinks, pauseAnimations], [profile]);
     expect(root.querySelector('#pulxon-profiles')?.textContent).toBe('Profiles');
     const profileButton = () => root.querySelector<HTMLButtonElement>('[data-profile="calm"]');
     act(() => profileButton()?.click());
@@ -128,5 +128,22 @@ describe('Panel', () => {
     expect(profileButton()?.getAttribute('aria-pressed')).toBe('true');
     act(() => profileButton()?.click());
     expect(store.get()).toMatchObject({ profile: null, features: {} });
+  });
+
+  it('shows named level labels when a feature provides them', () => {
+    const aligned: FeatureDefinition = {
+      id: 'aligned',
+      group: 'text',
+      labelKey: 'feature.textAlign',
+      levels: 2,
+      levelLabelKeys: ['level.left', 'level.right'],
+      apply: vi.fn(),
+      teardown: vi.fn(),
+    };
+    const { root, controller } = setup([aligned]);
+    act(() => {
+      controller.enable('aligned', 2);
+    });
+    expect(root.querySelector('[data-feature="aligned"] .tile__status')?.textContent).toBe('Right');
   });
 });

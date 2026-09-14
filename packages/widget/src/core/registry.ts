@@ -22,6 +22,8 @@ export interface FeatureDefinition {
   group: FeatureGroup;
   labelKey: MessageKey;
   levels: number;
+  /** Optional status text per level; length must equal `levels`. */
+  levelLabelKeys?: readonly MessageKey[];
   /** Declared in one direction; the registry makes conflicts symmetric. */
   conflictsWith?: string[];
   apply(ctx: FeatureContext, level: number): void;
@@ -46,6 +48,9 @@ export function createRegistry(definitions: FeatureDefinition[]): Registry {
     if (map.has(def.id)) throw new Error(`[pulxon] duplicate feature id: ${def.id}`);
     if (!Number.isInteger(def.levels) || def.levels < 1) {
       throw new Error(`[pulxon] invalid levels for feature: ${def.id}`);
+    }
+    if (def.levelLabelKeys && def.levelLabelKeys.length !== def.levels) {
+      throw new Error(`[pulxon] levelLabelKeys must match levels for feature: ${def.id}`);
     }
     map.set(def.id, def);
   }

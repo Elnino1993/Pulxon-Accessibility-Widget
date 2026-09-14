@@ -63,6 +63,13 @@ describe('pauseAnimations', () => {
 
 describe('builtinFeatures', () => {
   it('exposes the reference features with stable ids', () => {
-    expect(builtinFeatures.map((f) => f.id)).toEqual(['highlight-links', 'pause-animations']);
+    expect(builtinFeatures.map((f) => f.id)).toEqual([
+      'text-spacing',
+      'line-height',
+      'text-align',
+      'bold-text',
+      'highlight-links',
+      'pause-animations',
+    ]);
   });
 });
