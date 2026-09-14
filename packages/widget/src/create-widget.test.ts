@@ -191,4 +191,14 @@ describe('createWidget', () => {
     const style = document.head.querySelector('style[data-pulxon-style="reading-guide"]');
     expect(style?.textContent).toContain('z-index:499!important');
   });
+
+  it('ships the built-in profiles by default', () => {
+    const api = start();
+    expect(api.setProfile('seizure-safe')).toBe(true);
+    expect(api.getSettings()).toMatchObject({
+      profile: 'seizure-safe',
+      features: { 'pause-animations': 1, saturation: 1 },
+    });
+    expect(hasStyle('saturation')).toBe(true);
+  });
 });

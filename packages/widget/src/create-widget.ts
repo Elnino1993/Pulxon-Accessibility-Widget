@@ -8,6 +8,7 @@ import { createSettingsStore } from './core/store';
 import { createStyleEngine, type StyleMode } from './core/style-engine';
 import { builtinFeatures } from './features';
 import { createTranslator, resolveLanguage } from './i18n';
+import { builtinProfiles } from './profiles';
 import { mountUI } from './ui/mount';
 import { VERSION } from './version';
 
@@ -29,7 +30,7 @@ export function createWidget(input: CreateWidgetInput = {}): PulxonApi {
   const store = createSettingsStore(input.storage ?? createSafeStorage(win));
   const styles = createStyleEngine(doc, { nonce: options.nonce, mode: input.styleMode ?? 'auto' });
   const registry = createRegistry(input.features ?? builtinFeatures);
-  const profiles = input.profiles ?? [];
+  const profiles = input.profiles ?? builtinProfiles;
   const controller = createController({
     registry,
     store,

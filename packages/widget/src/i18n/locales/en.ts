@@ -57,4 +57,9 @@ export const en = {
   'landmark.search': 'Search',
   'landmark.region': 'Region',
   'landmark.form': 'Form',
+  'profile.lowVision': 'Low vision',
+  'profile.dyslexia': 'Dyslexia',
+  'profile.adhd': 'ADHD friendly',
+  'profile.seizureSafe': 'Seizure safe',
+  'profile.keyboard': 'Keyboard navigation',
 } as const;

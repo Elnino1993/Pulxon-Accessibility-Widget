@@ -59,4 +59,9 @@ export const es: Messages = {
   'landmark.search': 'Búsqueda',
   'landmark.region': 'Región',
   'landmark.form': 'Formulario',
+  'profile.lowVision': 'Baja visión',
+  'profile.dyslexia': 'Dislexia',
+  'profile.adhd': 'Apto para TDAH',
+  'profile.seizureSafe': 'Seguro para epilepsia',
+  'profile.keyboard': 'Navegación por teclado',
 };

@@ -10,4 +10,24 @@ export {
 } from './config/options';
 export type { FeatureContext, FeatureDefinition, FeatureGroup, ProfileDefinition } from './core/registry';
 export type { Settings } from './core/store';
-export { builtinFeatures, highlightLinks, pauseAnimations } from './features';
+export {
+  bigCursor,
+  biggerText,
+  boldText,
+  builtinFeatures,
+  contrast,
+  dyslexiaFont,
+  focusHighlight,
+  hideImages,
+  highlightHeadings,
+  highlightLinks,
+  lineHeight,
+  pauseAnimations,
+  readAloud,
+  readingGuide,
+  readingMask,
+  saturation,
+  textAlign,
+  textSpacing,
+} from './features';
+export { builtinProfiles } from './profiles';
