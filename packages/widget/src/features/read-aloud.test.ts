@@ -100,4 +100,34 @@ describe('readAloud', () => {
     expect(speak).not.toHaveBeenCalled();
     expect(document.head.querySelector('style[data-pulxon-style="read-aloud"]')).toBeNull();
   });
+
+  it('does not restart speech when a focused element is then clicked', () => {
+    let speaking = false;
+    speak.mockImplementation(() => {
+      speaking = true;
+    });
+    vi.stubGlobal('speechSynthesis', {
+      speak,
+      cancel,
+      get speaking() {
+        return speaking;
+      },
+    });
+    document.body.innerHTML = '<button id="btn" type="button">Save</button>';
+    readAloud.apply(makeCtx(), 1);
+    const button = document.getElementById('btn') as HTMLButtonElement;
+    button.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    button.click();
+    expect(speak).toHaveBeenCalledOnce();
+    expect(cancel).toHaveBeenCalledOnce();
+  });
+
+  it('does not cancel speech it did not start', () => {
+    document.body.innerHTML = '<p id="p">Hi</p>';
+    const ctx = makeCtx();
+    readAloud.apply(ctx, 1);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    readAloud.teardown(ctx);
+    expect(cancel).not.toHaveBeenCalled();
+  });
 });

@@ -66,6 +66,8 @@ export const readAloud: FeatureDefinition = {
     const speak = (el: Element): void => {
       const text = spokenText(el);
       if (!text) return;
+      // Focusing and then clicking the same element fires both events; keep the utterance already playing.
+      if (el === current && (api.synth.speaking || api.synth.pending)) return;
       api.synth.cancel();
       clearMark();
       const utterance = new api.Utterance(text);
@@ -91,7 +93,7 @@ export const readAloud: FeatureDefinition = {
     };
 
     const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key !== 'Escape') return;
+      if (event.key !== 'Escape' || current === null) return;
       api.synth.cancel();
       clearMark();
     };
@@ -103,7 +105,7 @@ export const readAloud: FeatureDefinition = {
       doc.removeEventListener('click', onActivate, true);
       doc.removeEventListener('focusin', onActivate);
       doc.removeEventListener('keydown', onKeyDown);
-      api.synth.cancel();
+      if (current !== null) api.synth.cancel();
       clearMark();
     };
     STATES.set(doc, state);
