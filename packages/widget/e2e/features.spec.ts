@@ -11,6 +11,7 @@ const BODY =
   '<p id="rem-text" style="font-size:1rem">Rem paragraph.</p>' +
   '<a id="link" href="#docs">documentation</a>' +
   '<img id="img" alt="Example" width="10" height="10" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=">' +
+  '<div id="div-text" style="font-size:16px">Div text</div>' +
   '</main><footer>Footer</footer>';
 
 async function load(page: Page): Promise<void> {
@@ -44,10 +45,12 @@ test('text features change computed styles and reset restores the page', async (
   await enable(page, 'bigger-text', 1);
   await expect(text).toHaveCSS('font-size', '19.2px');
   await expect(page.locator('#rem-text')).toHaveCSS('font-size', '19.2px');
+  await expect(page.locator('#div-text')).toHaveCSS('font-size', '19.2px');
 
   await page.evaluate(() => window.Pulxon?.reset());
   await expect(text).toHaveCSS('font-weight', '400');
   await expect(text).toHaveCSS('font-size', '16px');
+  await expect(page.locator('#div-text')).toHaveCSS('font-size', '16px');
   expect(await text.evaluate((el) => (el as HTMLElement).style.getPropertyValue('font-size'))).toBe('16px');
   expect(await page.locator('#rem-text').evaluate((el) => (el as HTMLElement).style.getPropertyValue('font-size'))).toBe('1rem');
 });

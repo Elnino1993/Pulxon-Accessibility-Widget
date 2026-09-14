@@ -52,6 +52,18 @@ describe('biggerText', () => {
     expect(el('h').style.getPropertyPriority('font-size')).toBe('');
   });
 
+  it('scales text placed directly inside containers and restores it', () => {
+    mockFontSizes();
+    document.body.innerHTML = '<div id="d" data-px="10">Text</div><section id="s" data-px="11">Section text</section>';
+    const ctx = makeCtx();
+    biggerText.apply(ctx, 1);
+    expect(el('d').style.getPropertyValue('font-size')).toBe('12px');
+    expect(el('s').style.getPropertyValue('font-size')).toBe('13.2px');
+    biggerText.teardown(ctx);
+    expect(el('d').style.getPropertyValue('font-size')).toBe('');
+    expect(el('s').style.getPropertyValue('font-size')).toBe('');
+  });
+
   it('scales elements added while active', async () => {
     mockFontSizes();
     document.body.innerHTML = '<main id="m"></main>';

@@ -7,7 +7,8 @@ export const TEXT_SCALES = [1.2, 1.4, 1.6, 1.8] as const;
 
 export const SCALABLE_SELECTOR =
   'p,li,dt,dd,td,th,caption,figcaption,blockquote,label,legend,h1,h2,h3,h4,h5,h6,a,button,input,select,' +
-  'textarea,span,small,strong,em,b,i,u,summary,pre,code,q,cite,abbr,time,mark';
+  'textarea,span,small,strong,em,b,i,u,summary,pre,code,q,cite,abbr,time,mark,' +
+  'div,section,article,header,footer,nav,main,aside,address,figure,details,dl,ul,ol,table,fieldset,form';
 
 interface Original {
   value: string;
