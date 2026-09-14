@@ -120,6 +120,16 @@ describe('focusElement', () => {
     expect(heading.hasAttribute('tabindex')).toBe(false);
   });
 
+  it('never removes a tabindex the page sets after a failed focus', () => {
+    document.body.innerHTML = '<h2 id="h">Section</h2>';
+    const heading = document.getElementById('h') as HTMLElement;
+    vi.spyOn(heading, 'focus').mockImplementation(() => undefined);
+    expect(focusElement(heading)).toBe(false);
+    heading.setAttribute('tabindex', '0');
+    heading.dispatchEvent(new FocusEvent('blur'));
+    expect(heading.getAttribute('tabindex')).toBe('0');
+  });
+
   it('removes the tabindex it added once the element loses focus', () => {
     document.body.innerHTML = '<h2 id="h">Section</h2><button id="b" type="button">Go</button>';
     const heading = document.getElementById('h') as HTMLElement;

@@ -140,14 +140,19 @@ export function collectLinks(doc: Document): StructureItem[] {
 export function focusElement(el: HTMLElement): boolean {
   if (!el.isConnected) return false;
   const addedTabIndex = !el.matches(FOCUSABLE);
+  const onBlur = (): void => el.removeAttribute('tabindex');
   if (addedTabIndex) {
     el.setAttribute('tabindex', '-1');
-    el.addEventListener('blur', () => el.removeAttribute('tabindex'), { once: true });
+    el.addEventListener('blur', onBlur, { once: true });
   }
   el.scrollIntoView?.({ block: 'center' });
   el.focus({ preventScroll: true });
   const focused = el.ownerDocument.activeElement === el;
-  // Focus did not land, so no blur will follow: drop the tabindex we added right away.
-  if (!focused && addedTabIndex) el.removeAttribute('tabindex');
+  // Focus did not land, so no blur will follow: drop our tabindex and listener right away, so a
+  // tabindex the page sets later is never removed by the widget.
+  if (!focused && addedTabIndex) {
+    el.removeEventListener('blur', onBlur);
+    el.removeAttribute('tabindex');
+  }
   return focused;
 }
