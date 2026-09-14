@@ -3,15 +3,19 @@ import { biggerText } from './bigger-text';
 import { contrast, hideImages, saturation } from './color-features';
 import { dyslexiaFont } from './dyslexia-font';
 import { highlightLinks } from './highlight-links';
+import { bigCursor, focusHighlight, highlightHeadings } from './navigation-features';
 import { pauseAnimations } from './pause-animations';
 import { boldText, lineHeight, textAlign, textSpacing } from './text-features';
 
 export {
+  bigCursor,
   biggerText,
   boldText,
   contrast,
   dyslexiaFont,
+  focusHighlight,
   hideImages,
+  highlightHeadings,
   highlightLinks,
   lineHeight,
   pauseAnimations,
@@ -30,6 +34,9 @@ export const builtinFeatures: FeatureDefinition[] = [
   contrast,
   saturation,
   highlightLinks,
+  highlightHeadings,
+  focusHighlight,
+  bigCursor,
   pauseAnimations,
   hideImages,
 ];

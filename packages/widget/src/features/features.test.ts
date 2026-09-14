@@ -73,6 +73,9 @@ describe('builtinFeatures', () => {
       'contrast',
       'saturation',
       'highlight-links',
+      'highlight-headings',
+      'focus-highlight',
+      'big-cursor',
       'pause-animations',
       'hide-images',
     ]);
