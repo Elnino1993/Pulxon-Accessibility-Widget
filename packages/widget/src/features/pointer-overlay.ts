@@ -34,7 +34,10 @@ export function createPointerOverlay(
   const onFocusIn = (event: FocusEvent): void => {
     const target = event.target as Element | null;
     if (!target || typeof target.getBoundingClientRect !== 'function') return;
+    // Focus inside the widget surfaces on its zero-height host at the end of <body>; never follow it.
+    if (typeof target.closest === 'function' && target.closest('[data-pulxon-ignore]')) return;
     const rect = target.getBoundingClientRect();
+    if (rect.bottom < 0 || rect.top > (win?.innerHeight ?? 0)) return;
     schedule(rect.top + rect.height / 2);
   };
 

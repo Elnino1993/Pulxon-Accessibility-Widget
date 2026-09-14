@@ -129,6 +129,21 @@ test('the reading mask follows the pointer and is replaced by the reading guide'
   expect(await page.evaluate(() => window.Pulxon?.getSettings().features)).toEqual({ 'reading-guide': 1 });
 });
 
+test('the reading mask does not jump when focus moves into the widget', async ({ page }) => {
+  await load(page);
+  await enable(page, 'reading-mask');
+  await page.mouse.move(200, 300);
+  const topHeight = () => page.locator('.pulxon-reading-mask--top').evaluate((el) => el.getBoundingClientRect().height);
+  await expect.poll(topHeight).toBe(240);
+
+  await page.keyboard.press('Alt+A');
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect.poll(topHeight).toBe(240);
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toBeHidden();
+  await expect.poll(topHeight).toBe(240);
+});
+
 test('read aloud speaks the clicked paragraph through the Web Speech API', async ({ page }) => {
   await page.addInitScript(() => {
     const spoken: string[] = [];

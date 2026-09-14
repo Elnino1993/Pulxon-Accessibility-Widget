@@ -56,6 +56,33 @@ describe('readingMask', () => {
     expect(styleText('reading-mask')).toBeNull();
   });
 
+  it('ignores focus that moves into the widget', async () => {
+    document.body.innerHTML = '<div data-pulxon-ignore><button id="inside" type="button">Widget</button></div>';
+    const ctx = makeCtx();
+    readingMask.apply(ctx, 1);
+    const top = document.querySelector<HTMLElement>('.pulxon-reading-mask--top');
+    movePointer(300);
+    await nextFrame();
+    expect(top?.style.getPropertyValue('height')).toBe('240px');
+    document.getElementById('inside')?.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    await nextFrame();
+    expect(top?.style.getPropertyValue('height')).toBe('240px');
+  });
+
+  it('ignores focus on targets outside the viewport', async () => {
+    document.body.innerHTML = '<button id="far" type="button">Far</button>';
+    const far = document.getElementById('far') as HTMLButtonElement;
+    far.getBoundingClientRect = () => ({ top: 5000, bottom: 5020, height: 20, left: 0, right: 10, width: 10, x: 0, y: 5000, toJSON: () => ({}) });
+    const ctx = makeCtx();
+    readingMask.apply(ctx, 1);
+    const top = document.querySelector<HTMLElement>('.pulxon-reading-mask--top');
+    movePointer(300);
+    await nextFrame();
+    far.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    await nextFrame();
+    expect(top?.style.getPropertyValue('height')).toBe('240px');
+  });
+
   it('stops following the pointer after teardown', async () => {
     const ctx = makeCtx();
     readingMask.apply(ctx, 1);
