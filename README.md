@@ -54,7 +54,8 @@ script (`dist/fonts/`). When you self-host the script, publish that folder too.
 The panel also has a **Page structure** tool that lists headings, landmarks
 and links and moves focus to the one you choose.
 
-Profiles: `low-vision`, `dyslexia`, `adhd`, `seizure-safe`, `keyboard`.
+Profiles: `low-vision`, `dyslexia`, `adhd`, `seizure-safe` (reduce motion and
+color), `keyboard`.
 
 ## Data attributes
 

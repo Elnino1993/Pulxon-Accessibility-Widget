@@ -51,4 +51,12 @@ describe('locales', () => {
   it('Spanish has exactly the English keys', () => {
     expect(Object.keys(es).sort()).toEqual(Object.keys(en).sort());
   });
+
+  it('describes the seizure-safe profile without a safety claim', () => {
+    expect(en['profile.seizureSafe']).toBe('Reduce motion and color');
+    expect(es['profile.seizureSafe']).toBe('Menos movimiento y color');
+    for (const locale of [en, es]) {
+      for (const label of Object.values(locale)) expect(label).not.toMatch(/safe|segur|seizure|epilep/i);
+    }
+  });
 });

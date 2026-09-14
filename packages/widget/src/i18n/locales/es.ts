@@ -62,6 +62,6 @@ export const es: Messages = {
   'profile.lowVision': 'Baja visión',
   'profile.dyslexia': 'Dislexia',
   'profile.adhd': 'Apto para TDAH',
-  'profile.seizureSafe': 'Seguro para epilepsia',
+  'profile.seizureSafe': 'Menos movimiento y color',
   'profile.keyboard': 'Navegación por teclado',
 };

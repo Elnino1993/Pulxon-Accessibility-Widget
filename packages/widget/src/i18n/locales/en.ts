@@ -60,6 +60,6 @@ export const en = {
   'profile.lowVision': 'Low vision',
   'profile.dyslexia': 'Dyslexia',
   'profile.adhd': 'ADHD friendly',
-  'profile.seizureSafe': 'Seizure safe',
+  'profile.seizureSafe': 'Reduce motion and color',
   'profile.keyboard': 'Keyboard navigation',
 } as const;

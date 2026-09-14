@@ -11,7 +11,7 @@
   big cursor.
 - Distractions: hide images.
 - Page structure tool listing headings, landmarks and links.
-- Profiles: low vision, dyslexia, ADHD friendly, seizure safe, keyboard navigation.
+- Profiles: low vision, dyslexia, ADHD friendly, reduce motion and color, keyboard navigation.
 - TypeScript declarations; Preact is now a peer-style runtime dependency of the ESM build.
 
 ### Changed
