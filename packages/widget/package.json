@@ -6,9 +6,14 @@
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
+  "types": "./dist/types/index.d.ts",
   "exports": {
-    ".": "./dist/index.js",
-    "./auto": "./dist/pulxon.min.js"
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./auto": "./dist/pulxon.min.js",
+    "./package.json": "./package.json"
   },
   "files": [
     "dist"
@@ -17,13 +22,14 @@
     "./dist/pulxon.min.js"
   ],
   "scripts": {
-    "build": "vite build && vite build --config vite.iife.config.ts",
+    "build": "vite build && vite build --config vite.iife.config.ts && tsc -p tsconfig.build.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "size": "size-limit",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "publint": "publint"
   },
   "dependencies": {
     "preact": "^10.29.8"
@@ -37,6 +43,7 @@
     "@types/node": "^26.5.1",
     "eslint": "^10.10.0",
     "happy-dom": "^20.14.5",
+    "publint": "^0.3.24",
     "size-limit": "^13.1.1",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.70.0",

@@ -9,6 +9,8 @@ export default defineConfig({
     sourcemap: true,
     emptyOutDir: true,
     lib: { entry: 'src/index.ts', formats: ['es'], fileName: () => 'index.js' },
+    // npm consumers install preact themselves; the IIFE build (vite.iife.config.ts) still bundles it.
+    rolldownOptions: { external: [/^preact(\/.*)?$/] },
   },
   test: {
     environment: 'happy-dom',
