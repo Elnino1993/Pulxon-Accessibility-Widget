@@ -54,6 +54,27 @@ test('data attributes override the dashboard config', async ({ page }) => {
   await expect(launcher(page)).toHaveCSS('background-color', 'rgb(124, 45, 18)');
 });
 
+test('branding follows the dashboard when a site key is set', async ({ page }) => {
+  await routeConfig(page, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'access-control-allow-origin': ORIGIN },
+      body: JSON.stringify({ version: 1, widget: { branding: true } }),
+    }),
+  );
+  await bootConnected(page, ' data-branding="false"');
+  await launcher(page).click();
+  await expect(page.getByRole('link', { name: /Pulxon/ })).toBeVisible();
+});
+
+test('data-branding still works without a site key', async ({ page }) => {
+  await serve(page, pageHtml('<script src="/pulxon.min.js" data-branding="false"></script>'));
+  await page.goto(`${ORIGIN}/`);
+  await launcher(page).click();
+  await expect(page.getByRole('link', { name: /Pulxon/ })).toHaveCount(0);
+});
+
 test('starts with local options when the config request fails', async ({ page }) => {
   await routeConfig(page, (route) => route.fulfill({ status: 500, body: 'boom' }));
   await bootConnected(page);

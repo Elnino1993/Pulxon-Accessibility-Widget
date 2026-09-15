@@ -79,7 +79,7 @@ color), `keyboard`.
 | `data-icon` | `person`, `eye`, `contrast` | `person` |
 | `data-mobile-position` | same values as `data-position` | same as `data-position` |
 | `data-disabled-features` | comma-separated feature ids to remove from the panel | — |
-| `data-branding` | `false` hides the "Powered by Pulxon" link | `true` |
+| `data-branding` | `false` hides the "Powered by Pulxon" link; ignored when `data-site-key` is present | `true` |
 
 Keyboard: `Alt+A` opens or closes the menu. Add `data-pulxon-ignore` to any
 element to exclude it from page adjustments.
@@ -109,7 +109,9 @@ request carries no cookies and no personal data, just the site key in the
 path. If the API does not answer within 3 seconds, or answers with an error
 or a config it cannot understand, the widget falls back to its local options
 (defaults plus any data attributes) so the page is never blocked. Any data
-attribute you set explicitly always overrides the matching dashboard setting.
+attribute you set explicitly always overrides the matching dashboard setting,
+except `data-branding`: with a valid `data-site-key`, the dashboard always
+decides branding, so `data-branding` is ignored.
 
 ## JavaScript API
 

@@ -31,9 +31,12 @@ function boot(doc: Document): void {
 
   const start = (remote: Partial<WidgetOptions>): void => {
     try {
+      // With a site key, the dashboard config decides branding, so it must not be overridden locally.
+      const localOptions: Partial<WidgetOptions> = { ...options };
+      if (localOptions.siteKey) delete localOptions.branding;
       const api = createWidget({
-        // Explicit data attributes win over the dashboard config.
-        options: { ...remote, ...options },
+        // Explicit data attributes win over the dashboard config, except branding above.
+        options: { ...remote, ...localOptions },
         document: doc,
         onDestroy: () => {
           if (win.Pulxon === api) delete win.Pulxon;
