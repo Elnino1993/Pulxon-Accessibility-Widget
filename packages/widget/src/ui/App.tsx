@@ -74,6 +74,7 @@ export function App({ doc, options, controller, features, store, profiles, t, st
           settings={settings}
           profiles={profiles}
           side={side}
+          branding={options.branding}
           onClose={() => state.setOpen(false)}
           onNavigate={onNavigate}
         />

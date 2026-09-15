@@ -23,14 +23,31 @@ export interface CreateWidgetInput {
   onDestroy?: () => void;
 }
 
+export function filterFeatures(features: FeatureDefinition[], disabled: readonly string[]): FeatureDefinition[] {
+  if (disabled.length === 0) return features;
+  const off = new Set(disabled);
+  return features.filter((feature) => !off.has(feature.id));
+}
+
+export function filterProfiles(profiles: ProfileDefinition[], disabled: readonly string[]): ProfileDefinition[] {
+  if (disabled.length === 0) return profiles;
+  const off = new Set(disabled);
+  return profiles
+    .map((profile) => ({
+      ...profile,
+      features: Object.fromEntries(Object.entries(profile.features).filter(([id]) => !off.has(id))),
+    }))
+    .filter((profile) => Object.keys(profile.features).length > 0);
+}
+
 export function createWidget(input: CreateWidgetInput = {}): PulxonApi {
   const doc = input.document ?? document;
   const win = doc.defaultView ?? undefined;
   const options = resolveOptions(input.options ?? {});
   const store = createSettingsStore(input.storage ?? createSafeStorage(win));
   const styles = createStyleEngine(doc, { nonce: options.nonce, mode: input.styleMode ?? 'auto' });
-  const registry = createRegistry(input.features ?? builtinFeatures);
-  const profiles = input.profiles ?? builtinProfiles;
+  const registry = createRegistry(filterFeatures(input.features ?? builtinFeatures, options.disabledFeatures));
+  const profiles = filterProfiles(input.profiles ?? builtinProfiles, options.disabledFeatures);
   const controller = createController({
     registry,
     store,

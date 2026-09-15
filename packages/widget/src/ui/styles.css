@@ -240,6 +240,16 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
 
 @media (max-width: 640px) {
   :host([data-hide-mobile]) .launcher { display: none; }
+
+  .launcher[class*='launcher--m-'] { top: auto; right: auto; bottom: auto; left: auto; transform: none; }
+  .launcher--m-top-left { top: var(--pulxon-oy); left: var(--pulxon-ox); }
+  .launcher--m-top-center { top: var(--pulxon-oy); left: 50%; transform: translateX(-50%); }
+  .launcher--m-top-right { top: var(--pulxon-oy); right: var(--pulxon-ox); }
+  .launcher--m-center-left { top: 50%; left: var(--pulxon-ox); transform: translateY(-50%); }
+  .launcher--m-center-right { top: 50%; right: var(--pulxon-ox); transform: translateY(-50%); }
+  .launcher--m-bottom-left { bottom: var(--pulxon-oy); left: var(--pulxon-ox); }
+  .launcher--m-bottom-center { bottom: var(--pulxon-oy); left: 50%; transform: translateX(-50%); }
+  .launcher--m-bottom-right { bottom: var(--pulxon-oy); right: var(--pulxon-ox); }
 }
 
 @media print {

@@ -2,12 +2,13 @@ import { act } from 'preact/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { PulxonApi } from './api';
 import type { WidgetOptions } from './config/options';
-import { createWidget } from './create-widget';
+import { createWidget, filterFeatures, filterProfiles } from './create-widget';
 import { Emitter } from './core/emitter';
 import type { FeatureDefinition } from './core/registry';
 import { createMemoryStorage } from './core/storage';
 import { SETTINGS_KEY, type Settings } from './core/store';
 import { builtinFeatures } from './features';
+import { builtinProfiles } from './profiles';
 import { VERSION } from './version';
 
 const apis: PulxonApi[] = [];
@@ -200,5 +201,49 @@ describe('createWidget', () => {
       features: { 'pause-animations': 1, saturation: 1 },
     });
     expect(hasStyle('saturation')).toBe(true);
+  });
+});
+
+describe('connected-mode rendering', () => {
+  it('removes disabled features from the registry and the panel', () => {
+    const api = start(createMemoryStorage(), undefined, { disabledFeatures: ['highlight-links', 'read-aloud'] });
+    expect(api.enable('highlight-links')).toBe(false);
+    expect(api.enable('bold-text')).toBe(true);
+    act(() => api.open());
+    const shadow = document.getElementById('pulxon-root')?.shadowRoot;
+    expect(shadow?.querySelector('[data-feature="highlight-links"]')).toBeNull();
+    expect(shadow?.querySelector('[data-feature="bold-text"]')).not.toBeNull();
+  });
+
+  it('does not re-apply a stored setting for a disabled feature', () => {
+    const storage = createMemoryStorage();
+    storage.set(SETTINGS_KEY, JSON.stringify({ v: 1, features: { 'bold-text': 1 }, profile: null, lang: null }));
+    start(storage, undefined, { disabledFeatures: ['bold-text'] });
+    expect(hasStyle('bold-text')).toBe(false);
+  });
+
+  it('keeps profiles consistent with disabled features', () => {
+    const profiles = filterProfiles(builtinProfiles, ['pause-animations', 'saturation']);
+    expect(profiles.find((p) => p.id === 'seizure-safe')).toBeUndefined();
+    expect(profiles.find((p) => p.id === 'adhd')?.features).toEqual({ 'reading-mask': 1 });
+    expect(filterFeatures(builtinFeatures, ['bold-text']).some((f) => f.id === 'bold-text')).toBe(false);
+    expect(filterProfiles(builtinProfiles, [])).toEqual(builtinProfiles);
+  });
+
+  it('hides the branding link when branding is off', () => {
+    const api = start(createMemoryStorage(), undefined, { branding: false });
+    act(() => api.open());
+    const shadow = document.getElementById('pulxon-root')?.shadowRoot;
+    expect(shadow?.textContent).not.toContain('Powered by Pulxon');
+    expect(shadow?.querySelector('.reset')).not.toBeNull();
+  });
+
+  it('renders the chosen icon and mobile position', () => {
+    start(createMemoryStorage(), undefined, { icon: 'eye', mobilePosition: 'bottom-center', position: 'top-right' });
+    const launcher = document.getElementById('pulxon-root')?.shadowRoot?.querySelector('.launcher');
+    expect(launcher?.className).toContain('launcher--top-right');
+    expect(launcher?.className).toContain('launcher--m-bottom-center');
+    expect(launcher?.querySelector('svg')?.getAttribute('data-icon')).toBe('eye');
+    expect(launcher?.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
   });
 });

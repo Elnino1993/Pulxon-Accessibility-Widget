@@ -16,11 +16,12 @@ export interface PanelProps {
   settings: Settings;
   profiles: ProfileDefinition[];
   side: 'left' | 'right';
+  branding: boolean;
   onClose: () => void;
   onNavigate: (element: HTMLElement) => void;
 }
 
-export function Panel({ t, doc, features, controller, settings, profiles, side, onClose, onNavigate }: PanelProps) {
+export function Panel({ t, doc, features, controller, settings, profiles, side, branding, onClose, onNavigate }: PanelProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const toolRef = useRef<HTMLButtonElement>(null);
@@ -143,10 +144,12 @@ export function Panel({ t, doc, features, controller, settings, profiles, side, 
         <button type="button" class="reset" onClick={() => controller.reset()}>
           {t('panel.reset')}
         </button>
-        <a href="https://pulxon.com/?utm_source=widget" target="_blank" rel="noopener noreferrer">
-          {t('panel.poweredBy')}
-          <span class="sr-only"> {t('link.newTab')}</span>
-        </a>
+        {branding && (
+          <a href="https://pulxon.com/?utm_source=widget" target="_blank" rel="noopener noreferrer">
+            {t('panel.poweredBy')}
+            <span class="sr-only"> {t('link.newTab')}</span>
+          </a>
+        )}
       </div>
     </div>
   );
