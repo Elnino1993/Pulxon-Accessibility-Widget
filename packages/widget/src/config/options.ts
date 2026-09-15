@@ -117,6 +117,22 @@ export function isLang(value: unknown): value is string {
   return typeof value === 'string' && LANG.test(value);
 }
 
+/**
+ * Normalizes common but non-canonical `data-lang` spellings (`ES`, `es_MX`, `pt_br`) into the
+ * BCP 47-like shape `isLang` expects, before validating. Remote config values stay strict.
+ */
+function normalizeLangTag(value: string): string {
+  return value
+    .trim()
+    .replace(/_/g, '-')
+    .split('-')
+    .map((part, index) => {
+      if (index === 0) return part.toLowerCase();
+      return /^[A-Za-z]{2}$/.test(part) ? part.toUpperCase() : part;
+    })
+    .join('-');
+}
+
 export function parseDataAttributes(el: HTMLElement | null): Partial<WidgetOptions> {
   if (!el) return {};
   const data = el.dataset;
@@ -130,7 +146,10 @@ export function parseDataAttributes(el: HTMLElement | null): Partial<WidgetOptio
   }
   if (data.color && HEX_COLOR.test(data.color)) out.color = data.color;
   if (data.size === 'small' || data.size === 'medium' || data.size === 'large') out.size = data.size;
-  if (data.lang && isLang(data.lang)) out.lang = data.lang;
+  if (data.lang) {
+    const normalizedLang = normalizeLangTag(data.lang);
+    if (isLang(normalizedLang)) out.lang = normalizedLang;
+  }
   if (data.hideOnMobile !== undefined) out.hideOnMobile = data.hideOnMobile === 'true';
   if (data.trigger) out.trigger = data.trigger;
   if (data.nonce) out.nonce = data.nonce;

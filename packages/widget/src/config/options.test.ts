@@ -176,3 +176,16 @@ describe('connected-mode options', () => {
     expect(isSiteKey(123)).toBe(false);
   });
 });
+
+describe('data-lang normalization', () => {
+  it('normalizes common spellings before validating', () => {
+    expect(parseDataAttributes(script({ 'data-lang': 'ES' }))).toEqual({ lang: 'es' });
+    expect(parseDataAttributes(script({ 'data-lang': 'es_MX' }))).toEqual({ lang: 'es-MX' });
+    expect(parseDataAttributes(script({ 'data-lang': 'pt_br' }))).toEqual({ lang: 'pt-BR' });
+  });
+
+  it('still rejects invalid tags', () => {
+    expect(parseDataAttributes(script({ 'data-lang': '<script>' }))).toEqual({});
+    expect(parseDataAttributes(script({ 'data-lang': 'e' }))).toEqual({});
+  });
+});
