@@ -241,7 +241,7 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
 @media (max-width: 640px) {
   :host([data-hide-mobile]) .launcher { display: none; }
 
-  .launcher[class*='launcher--m-'] { top: auto; right: auto; bottom: auto; left: auto; transform: none; }
+  [class*='launcher--m-'] { top: auto; right: auto; bottom: auto; left: auto; transform: none; }
   .launcher--m-top-left { top: var(--pulxon-oy); left: var(--pulxon-ox); }
   .launcher--m-top-center { top: var(--pulxon-oy); left: 50%; transform: translateX(-50%); }
   .launcher--m-top-right { top: var(--pulxon-oy); right: var(--pulxon-ox); }

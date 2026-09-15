@@ -51,6 +51,41 @@ test('respects data attributes and a custom trigger', async ({ page }) => {
   await expect(trigger).toBeFocused();
 });
 
+test('a configured mobile position wins over the reset at small viewports', async ({ page }) => {
+  const OFFSET = 20; // DEFAULT_OPTIONS.offsetX / offsetY
+  await loadWidget(page, { 'data-position': 'top-right', 'data-mobile-position': 'bottom-center' });
+  const launcher = page.getByRole('button', { name: 'Open accessibility menu' });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobileBox = await launcher.boundingBox();
+  expect(mobileBox).not.toBeNull();
+  const centerX = mobileBox!.x + mobileBox!.width / 2;
+  expect(centerX).toBeGreaterThanOrEqual(390 / 2 - 2);
+  expect(centerX).toBeLessThanOrEqual(390 / 2 + 2);
+  const bottomGap = 844 - (mobileBox!.y + mobileBox!.height);
+  expect(bottomGap).toBeGreaterThanOrEqual(0);
+  expect(bottomGap).toBeLessThanOrEqual(OFFSET + 2);
+
+  await page.setViewportSize({ width: 1280, height: 800 });
+  const desktopBox = await launcher.boundingBox();
+  expect(desktopBox).not.toBeNull();
+  expect(desktopBox!.y).toBeLessThanOrEqual(OFFSET + 2);
+  const rightGap = 1280 - (desktopBox!.x + desktopBox!.width);
+  expect(rightGap).toBeLessThanOrEqual(OFFSET + 2);
+});
+
+test('a configured mobile top-left position also wins over the reset', async ({ page }) => {
+  const OFFSET = 20;
+  await loadWidget(page, { 'data-position': 'top-right', 'data-mobile-position': 'top-left' });
+  const launcher = page.getByRole('button', { name: 'Open accessibility menu' });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const box = await launcher.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box!.x).toBeLessThanOrEqual(OFFSET + 2);
+  expect(box!.y).toBeLessThanOrEqual(OFFSET + 2);
+});
+
 test('panel text size does not depend on the host root font size', async ({ page }) => {
   await serve(page, pageHtml('<script src="/pulxon.min.js"></script>', '<style>html{font-size:62.5%}</style>'));
   await page.goto(`${ORIGIN}/`);
