@@ -15,7 +15,7 @@ Status: early development (v0.x). License: MIT.
 Pin an exact version and add Subresource Integrity:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@pulxon/widget@0.2.0/dist/pulxon.min.js"
+<script src="https://cdn.jsdelivr.net/npm/@pulxon/widget@0.3.0/dist/pulxon.min.js"
         integrity="sha384-REPLACE_WITH_HASH" crossorigin="anonymous"
         data-position="bottom-right" data-color="#1f4bff" defer></script>
 ```
@@ -23,7 +23,7 @@ Pin an exact version and add Subresource Integrity:
 Generate the hash for the exact file you ship:
 
 ```bash
-curl -sL https://cdn.jsdelivr.net/npm/@pulxon/widget@0.2.0/dist/pulxon.min.js | openssl dgst -sha384 -binary | openssl base64 -A
+curl -sL https://cdn.jsdelivr.net/npm/@pulxon/widget@0.3.0/dist/pulxon.min.js | openssl dgst -sha384 -binary | openssl base64 -A
 ```
 
 The dyslexia-friendly font is loaded from the `fonts/` folder next to the
@@ -74,6 +74,12 @@ color), `keyboard`.
 | `data-trigger` | CSS selector of your own button | — |
 | `data-nonce` | CSP nonce for the `<style>` fallback | — |
 | `data-z-index` | integer | `2147483000` |
+| `data-site-key` | your Pulxon site key (`pk_live_...` / `pk_test_...`) | — |
+| `data-api` | base URL of the Pulxon API (connected mode) | `https://api.pulxon.com` |
+| `data-icon` | `person`, `eye`, `contrast` | `person` |
+| `data-mobile-position` | same values as `data-position` | same as `data-position` |
+| `data-disabled-features` | comma-separated feature ids to remove from the panel | — |
+| `data-branding` | `false` hides the "Powered by Pulxon" link | `true` |
 
 Keyboard: `Alt+A` opens or closes the menu. Add `data-pulxon-ignore` to any
 element to exclude it from page adjustments.
@@ -86,6 +92,24 @@ element — this is the supported way:
 ```
 
 The widget is also hidden automatically when the page is printed.
+
+## Connected mode
+
+Add `data-site-key` to load your settings from the Pulxon dashboard instead of
+hard-coding them as data attributes:
+
+```html
+<script src="https://cdn.pulxon.com/w.js" data-site-key="pk_live_xxxxxxxx" defer></script>
+```
+
+On boot, the widget sends `GET {data-api}/v1/sites/{siteKey}/config` (default
+API `https://api.pulxon.com`) to fetch the settings saved in your dashboard —
+position, color, size, icon, language, disabled features and more. The
+request carries no cookies and no personal data, just the site key in the
+path. If the API does not answer within 3 seconds, or answers with an error
+or a config it cannot understand, the widget falls back to its local options
+(defaults plus any data attributes) so the page is never blocked. Any data
+attribute you set explicitly always overrides the matching dashboard setting.
 
 ## JavaScript API
 
@@ -132,6 +156,9 @@ The dyslexia-friendly font is fetched from the script's origin (or from
 `fontBaseUrl`), so `font-src` must allow that origin (for example
 `https://cdn.jsdelivr.net`). Subresource Integrity covers
 only the script, not the font files.
+Connected mode (`data-site-key`) fetches settings over `fetch()`, so its
+`connect-src` must allow the API origin, for example
+`connect-src https://api.pulxon.com`.
 
 ## Development
 

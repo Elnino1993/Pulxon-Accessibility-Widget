@@ -1,5 +1,6 @@
 import type { PulxonApi } from './api';
-import { parseDataAttributes } from './config/options';
+import { DEFAULT_API_BASE, parseDataAttributes, type WidgetOptions } from './config/options';
+import { fetchRemoteConfig } from './config/remote-config';
 import { createWidget } from './create-widget';
 
 declare global {
@@ -28,10 +29,11 @@ function boot(doc: Document): void {
   }
   doc.documentElement.setAttribute(LOADED_ATTR, '');
 
-  const start = (): void => {
+  const start = (remote: Partial<WidgetOptions>): void => {
     try {
       const api = createWidget({
-        options,
+        // Explicit data attributes win over the dashboard config.
+        options: { ...remote, ...options },
         document: doc,
         onDestroy: () => {
           if (win.Pulxon === api) delete win.Pulxon;
@@ -46,8 +48,15 @@ function boot(doc: Document): void {
     }
   };
 
-  if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', start, { once: true });
-  else start();
+  // Start the config request right away; create the widget once the DOM is ready and the request settled.
+  const remote = options.siteKey
+    ? fetchRemoteConfig({ siteKey: options.siteKey, apiBase: options.apiBase ?? DEFAULT_API_BASE })
+    : Promise.resolve(null);
+  const ready = new Promise<void>((resolve) => {
+    if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', () => resolve(), { once: true });
+    else resolve();
+  });
+  void Promise.all([remote, ready]).then(([config]) => start(config ?? {}));
 }
 
 boot(document);

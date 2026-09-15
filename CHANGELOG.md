@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.0
+
+### Added
+- Connected mode: with `data-site-key`, the widget loads its settings from the Pulxon dashboard
+  (`GET {data-api}/v1/sites/{siteKey}/config`, default API `https://api.pulxon.com`). The request sends no cookies,
+  gives up after 3 seconds and falls back to local options. Explicit data attributes override dashboard settings.
+- `data-icon` (`person`, `eye`, `contrast`), `data-mobile-position`, `data-disabled-features` (comma-separated
+  feature ids) and `data-branding="false"`.
+
+### Changed
+- Offsets must be integers from 0 to 200 and `data-lang` must look like a language tag; invalid values are ignored.
+  This stricter validation applies to options passed to `createWidget` as well, not only to data attributes.
+
 ## 0.2.0
 
 ### Added
