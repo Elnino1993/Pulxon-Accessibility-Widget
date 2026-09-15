@@ -14,6 +14,8 @@
 ### Changed
 - Offsets must be integers from 0 to 200 and `data-lang` must look like a language tag; invalid values are ignored.
   This stricter validation applies to options passed to `createWidget` as well, not only to data attributes.
+- `WidgetOptions` has five new required fields: `mobilePosition`, `icon`, `disabledFeatures`, `branding` and
+  `apiBase`. Code that builds a full `WidgetOptions` object must add them or spread `DEFAULT_OPTIONS`.
 
 ## 0.2.0
 

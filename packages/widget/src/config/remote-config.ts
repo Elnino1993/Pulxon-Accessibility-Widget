@@ -1,19 +1,18 @@
 import {
   LAUNCHER_ICONS,
   isFeatureIdList,
+  isHexColor,
   isHttpUrl,
   isLang,
   isOffset,
   isPosition,
+  isSiteKey,
   type Position,
   type WidgetOptions,
 } from './options';
 
 export const REMOTE_CONFIG_VERSION = 1;
 export const REMOTE_CONFIG_TIMEOUT_MS = 3000;
-
-const HEX_COLOR = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
-const SITE_KEY = /^pk_(?:live|test)_[A-Za-z0-9]{8,64}$/;
 
 export type RemoteWidgetOptions = Partial<
   Pick<
@@ -35,7 +34,7 @@ export function parseRemoteConfig(value: unknown): RemoteWidgetOptions | null {
   if (widget.mobilePosition === null || isPosition(widget.mobilePosition)) out.mobilePosition = widget.mobilePosition as Position | null;
   if (isOffset(widget.offsetX)) out.offsetX = widget.offsetX;
   if (isOffset(widget.offsetY)) out.offsetY = widget.offsetY;
-  if (typeof widget.color === 'string' && HEX_COLOR.test(widget.color)) out.color = widget.color;
+  if (isHexColor(widget.color)) out.color = widget.color;
   if (widget.size === 'small' || widget.size === 'medium' || widget.size === 'large') out.size = widget.size;
   if (typeof widget.icon === 'string' && (LAUNCHER_ICONS as readonly string[]).includes(widget.icon)) {
     out.icon = widget.icon as RemoteWidgetOptions['icon'];
@@ -48,7 +47,7 @@ export function parseRemoteConfig(value: unknown): RemoteWidgetOptions | null {
 }
 
 export function remoteConfigUrl(siteKey: string, apiBase: string): string | null {
-  if (!SITE_KEY.test(siteKey) || !isHttpUrl(apiBase)) return null;
+  if (!isSiteKey(siteKey) || !isHttpUrl(apiBase)) return null;
   const base = apiBase.endsWith('/') ? apiBase : `${apiBase}/`;
   return new URL(`v1/sites/${siteKey}/config`, base).href;
 }

@@ -2,12 +2,22 @@ export { VERSION } from './version';
 export { createWidget, type CreateWidgetInput } from './create-widget';
 export type { PulxonApi, PulxonEvents } from './api';
 export {
+  DEFAULT_API_BASE,
   DEFAULT_OPTIONS,
+  LAUNCHER_ICONS,
   parseDataAttributes,
   resolveOptions,
+  type LauncherIcon,
   type Position,
   type WidgetOptions,
 } from './config/options';
+export {
+  REMOTE_CONFIG_VERSION,
+  fetchRemoteConfig,
+  parseRemoteConfig,
+  remoteConfigUrl,
+  type RemoteWidgetOptions,
+} from './config/remote-config';
 export type { FeatureContext, FeatureDefinition, FeatureGroup, ProfileDefinition } from './core/registry';
 export type { Settings } from './core/store';
 export {

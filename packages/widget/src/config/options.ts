@@ -74,6 +74,16 @@ export function isPosition(value: unknown): value is Position {
   return typeof value === 'string' && (POSITIONS as readonly string[]).includes(value);
 }
 
+/** Shared with `remote-config.ts` so the dashboard config and data attributes accept the same colors. */
+export function isHexColor(value: unknown): value is string {
+  return typeof value === 'string' && HEX_COLOR.test(value);
+}
+
+/** Shared with `remote-config.ts` so the dashboard config and data attributes accept the same site keys. */
+export function isSiteKey(value: unknown): value is string {
+  return typeof value === 'string' && SITE_KEY.test(value);
+}
+
 function isIcon(value: unknown): value is LauncherIcon {
   return typeof value === 'string' && (LAUNCHER_ICONS as readonly string[]).includes(value);
 }

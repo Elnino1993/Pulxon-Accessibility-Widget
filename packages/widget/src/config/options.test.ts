@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_OPTIONS, isHttpUrl, parseDataAttributes, parseFeatureList, resolveOptions, type WidgetOptions } from './options';
+import { DEFAULT_OPTIONS, isHexColor, isHttpUrl, isSiteKey, parseDataAttributes, parseFeatureList, resolveOptions, type WidgetOptions } from './options';
 
 function script(attrs: Record<string, string>): HTMLScriptElement {
   const el = document.createElement('script');
@@ -163,5 +163,16 @@ describe('connected-mode options', () => {
     expect(isHttpUrl('http://localhost:3000/base')).toBe(true);
     expect(isHttpUrl('javascript:alert(1)')).toBe(false);
     expect(isHttpUrl('//api.pulxon.com')).toBe(false);
+  });
+
+  it('validates hex colors and site keys (the shared validators remote-config reuses)', () => {
+    expect(isHexColor('#0f766e')).toBe(true);
+    expect(isHexColor('#fff')).toBe(true);
+    expect(isHexColor('red')).toBe(false);
+    expect(isHexColor(123)).toBe(false);
+    expect(isSiteKey('pk_live_abcdefgh1234')).toBe(true);
+    expect(isSiteKey('pk_test_abcdefgh1234')).toBe(true);
+    expect(isSiteKey('../../admin')).toBe(false);
+    expect(isSiteKey(123)).toBe(false);
   });
 });
