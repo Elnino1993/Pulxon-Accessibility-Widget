@@ -1,9 +1,14 @@
 # Pulxon Widget
 
 Open-source, lightweight accessibility preferences widget for websites.
-Visitors can adjust how a page looks and behaves for them. Settings stay in the
-visitor's browser (`localStorage`); the widget collects no personal data and
-makes no third-party requests.
+Visitors can adjust how a page looks and behaves for them. Settings stay in
+the visitor's browser (`localStorage`). Without `data-site-key`, the widget
+makes no requests other than loading its own files (the script and,
+optionally, its font). In connected mode (`data-site-key` set) it makes one
+request per page view to the Pulxon API to fetch your dashboard settings;
+that request carries the site key in the URL, no cookies and not the page
+URL — though, as with any request, the browser sends the visitor's IP address
+and the page's origin.
 
 > A widget is not a substitute for accessible code. Use it together with
 > automated scanning and manual accessibility testing.
@@ -74,7 +79,7 @@ color), `keyboard`.
 | `data-trigger` | CSS selector of your own button | — |
 | `data-nonce` | CSP nonce for the `<style>` fallback | — |
 | `data-z-index` | integer | `2147483000` |
-| `data-site-key` | your Pulxon site key (`pk_live_...` / `pk_test_...`) | — |
+| `data-site-key` | your Pulxon site key (`pk_live_...`) | — |
 | `data-api` | base URL of the Pulxon API (connected mode) | `https://api.pulxon.com` |
 | `data-icon` | `person`, `eye`, `contrast` | `person` |
 | `data-mobile-position` | same values as `data-position` | same as `data-position` |
@@ -96,10 +101,11 @@ The widget is also hidden automatically when the page is printed.
 ## Connected mode
 
 Add `data-site-key` to load your settings from the Pulxon dashboard instead of
-hard-coding them as data attributes:
+hard-coding them as data attributes. Paste the embed code from your Pulxon
+dashboard; it has this shape:
 
 ```html
-<script src="https://cdn.pulxon.com/w.js" data-site-key="pk_live_xxxxxxxx" defer></script>
+<script src="https://…/pulxon.min.js" data-site-key="pk_live_xxxxxxxx" defer></script>
 ```
 
 On boot, the widget sends `GET {data-api}/v1/sites/{siteKey}/config` (default
@@ -146,6 +152,16 @@ const pulxon = createWidget({
 Copy `node_modules/@pulxon/widget/dist/fonts/` to the URL you pass as
 `fontBaseUrl`. Without it, the dyslexia-friendly option uses locally installed
 fonts only.
+
+Connected mode is automatic only for the script-tag embed above. From npm,
+fetch the dashboard config yourself and pass the result in as options:
+
+```js
+import { createWidget, fetchRemoteConfig } from '@pulxon/widget';
+
+const remote = (await fetchRemoteConfig({ siteKey: 'pk_live_xxxxxxxx', apiBase: 'https://api.pulxon.com' })) ?? {};
+const pulxon = createWidget({ options: { ...remote, position: 'bottom-left' } });
+```
 
 ## Content Security Policy
 
