@@ -22,6 +22,7 @@ const launcher = (page: Page, name = 'Open accessibility menu') => page.getByRol
 test('loads settings from the dashboard config', async ({ page }) => {
   const errors = collectConsoleErrors(page);
   let requestHeaders: Record<string, string> = {};
+  await page.context().addCookies([{ name: 'pulxon_test', value: '1', url: API }]);
   await routeConfig(page, async (route) => {
     requestHeaders = route.request().headers();
     await route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': ORIGIN }, body: CONTRACT });
