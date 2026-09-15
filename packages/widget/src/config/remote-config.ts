@@ -77,7 +77,7 @@ export async function fetchRemoteConfig(input: FetchRemoteConfigInput): Promise<
 
   const request = (async (): Promise<RemoteWidgetOptions | null> => {
     try {
-      const response = await fetchImpl(url, { method: 'GET', mode: 'cors', credentials: 'omit', signal: controller?.signal });
+      const response = await fetchImpl(url, { method: 'GET', mode: 'cors', credentials: 'omit', referrerPolicy: 'no-referrer', signal: controller?.signal });
       if (!response.ok) return null;
       return parseRemoteConfig(await response.json());
     } catch {

@@ -11,8 +11,8 @@ async function routeConfig(page: Page, handler: Parameters<Page['route']>[1]): P
   await page.route(`${API}/v1/sites/${SITE_KEY}/config`, handler);
 }
 
-async function bootConnected(page: Page, extraAttributes = ''): Promise<void> {
-  await serve(page, pageHtml(`<script src="/pulxon.min.js" data-site-key="${SITE_KEY}" data-api="${API}"${extraAttributes}></script>`));
+async function bootConnected(page: Page, extraAttributes = '', headers: Record<string, string> = {}): Promise<void> {
+  await serve(page, pageHtml(`<script src="/pulxon.min.js" data-site-key="${SITE_KEY}" data-api="${API}"${extraAttributes}></script>`), headers);
   await page.goto(`${ORIGIN}/`);
 }
 
@@ -27,13 +27,15 @@ test('loads settings from the dashboard config', async ({ page }) => {
     requestHeaders = route.request().headers();
     await route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': ORIGIN }, body: CONTRACT });
   });
-  await bootConnected(page);
+  await bootConnected(page, '', { 'referrer-policy': 'unsafe-url' });
 
   const esLauncher = launcher(page, 'Abrir menú de accesibilidad');
   await expect(esLauncher).toBeVisible();
   await expect(esLauncher).toHaveCSS('background-color', 'rgb(15, 118, 110)');
   expect(await esLauncher.evaluate((el) => el.className)).toContain('launcher--bottom-left');
   expect(requestHeaders.cookie).toBeUndefined();
+  expect(requestHeaders.referer).toBeUndefined();
+  expect(requestHeaders.origin).toBe(ORIGIN);
 
   await esLauncher.click();
   const dialog = page.getByRole('dialog', { name: 'Accesibilidad' });

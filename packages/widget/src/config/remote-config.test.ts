@@ -68,7 +68,7 @@ describe('fetchRemoteConfig', () => {
     const fetch = vi.fn(async () => jsonResponse(CONTRACT));
     const result = await fetchRemoteConfig({ siteKey: SITE_KEY, apiBase: 'https://api.pulxon.com', fetch });
     expect(result).toMatchObject({ color: '#0f766e', branding: false });
-    expect(fetch).toHaveBeenCalledWith(`https://api.pulxon.com/v1/sites/${SITE_KEY}/config`, expect.objectContaining({ method: 'GET', mode: 'cors', credentials: 'omit' }));
+    expect(fetch).toHaveBeenCalledWith(`https://api.pulxon.com/v1/sites/${SITE_KEY}/config`, expect.objectContaining({ method: 'GET', mode: 'cors', credentials: 'omit', referrerPolicy: 'no-referrer' }));
   });
 
   it('returns null on HTTP errors, bad JSON and network failures', async () => {
