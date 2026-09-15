@@ -19,6 +19,12 @@ export const POSITIONS: readonly Position[] = [
   'bottom-right',
 ];
 
+export type LauncherIcon = 'person' | 'eye' | 'contrast';
+export const LAUNCHER_ICONS: readonly LauncherIcon[] = ['person', 'eye', 'contrast'];
+export const DEFAULT_API_BASE = 'https://api.pulxon.com';
+const MAX_DISABLED_FEATURES = 30;
+const MAX_OFFSET = 200;
+
 export interface WidgetOptions {
   position: Position;
   offsetX: number;
@@ -32,6 +38,11 @@ export interface WidgetOptions {
   siteKey: string | null;
   zIndex: number;
   fontBaseUrl: string | null;
+  mobilePosition: Position | null;
+  icon: LauncherIcon;
+  disabledFeatures: string[];
+  branding: boolean;
+  apiBase: string;
 }
 
 export const DEFAULT_OPTIONS: WidgetOptions = {
@@ -47,13 +58,53 @@ export const DEFAULT_OPTIONS: WidgetOptions = {
   siteKey: null,
   zIndex: 2147483000,
   fontBaseUrl: null,
+  mobilePosition: null,
+  icon: 'person',
+  disabledFeatures: [],
+  branding: true,
+  apiBase: DEFAULT_API_BASE,
 };
 
 const HEX_COLOR = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
 const SITE_KEY = /^pk_(?:live|test)_[A-Za-z0-9]{8,64}$/;
+const FEATURE_ID = /^[a-z][a-z0-9-]{0,39}$/;
+const LANG = /^[a-z]{2,3}(-[A-Za-z0-9]{2,8}){0,2}$/;
 
-function isPosition(value: string): value is Position {
-  return (POSITIONS as readonly string[]).includes(value);
+export function isPosition(value: unknown): value is Position {
+  return typeof value === 'string' && (POSITIONS as readonly string[]).includes(value);
+}
+
+function isIcon(value: unknown): value is LauncherIcon {
+  return typeof value === 'string' && (LAUNCHER_ICONS as readonly string[]).includes(value);
+}
+
+export function isOffset(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= MAX_OFFSET;
+}
+
+export function isHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
+export function parseFeatureList(value: string): string[] {
+  return value
+    .split(',')
+    .map((part) => part.trim())
+    .filter((part) => FEATURE_ID.test(part))
+    .slice(0, MAX_DISABLED_FEATURES);
+}
+
+export function isFeatureIdList(value: unknown): value is string[] {
+  return Array.isArray(value) && value.length <= MAX_DISABLED_FEATURES && value.every((item) => typeof item === 'string' && FEATURE_ID.test(item));
+}
+
+export function isLang(value: unknown): value is string {
+  return typeof value === 'string' && LANG.test(value);
 }
 
 export function parseDataAttributes(el: HTMLElement | null): Partial<WidgetOptions> {
@@ -64,12 +115,12 @@ export function parseDataAttributes(el: HTMLElement | null): Partial<WidgetOptio
   if (data.position && isPosition(data.position)) out.position = data.position;
   if (data.offset) {
     const [x, y] = data.offset.split(',').map((part) => Number.parseInt(part.trim(), 10));
-    if (x !== undefined && Number.isFinite(x)) out.offsetX = x;
-    if (y !== undefined && Number.isFinite(y)) out.offsetY = y;
+    if (x !== undefined && isOffset(x)) out.offsetX = x;
+    if (y !== undefined && isOffset(y)) out.offsetY = y;
   }
   if (data.color && HEX_COLOR.test(data.color)) out.color = data.color;
   if (data.size === 'small' || data.size === 'medium' || data.size === 'large') out.size = data.size;
-  if (data.lang) out.lang = data.lang;
+  if (data.lang && isLang(data.lang)) out.lang = data.lang;
   if (data.hideOnMobile !== undefined) out.hideOnMobile = data.hideOnMobile === 'true';
   if (data.trigger) out.trigger = data.trigger;
   if (data.nonce) out.nonce = data.nonce;
@@ -78,15 +129,43 @@ export function parseDataAttributes(el: HTMLElement | null): Partial<WidgetOptio
     const z = Number.parseInt(data.zIndex, 10);
     if (Number.isFinite(z)) out.zIndex = z;
   }
+  if (data.mobilePosition && isPosition(data.mobilePosition)) out.mobilePosition = data.mobilePosition;
+  if (data.icon && isIcon(data.icon)) out.icon = data.icon;
+  if (data.disabledFeatures !== undefined) out.disabledFeatures = parseFeatureList(data.disabledFeatures);
+  if (data.branding !== undefined) out.branding = data.branding !== 'false';
+  if (data.api && isHttpUrl(data.api)) out.apiBase = data.api;
   return out;
 }
 
 function isValidOption(key: string, value: unknown): boolean {
-  if (key === 'color') return typeof value === 'string' && HEX_COLOR.test(value);
-  if (key === 'position') return typeof value === 'string' && isPosition(value);
-  if (key === 'size') return value === 'small' || value === 'medium' || value === 'large';
-  if (key === 'fontBaseUrl') return value === null || typeof value === 'string';
-  return true;
+  switch (key) {
+    case 'color':
+      return typeof value === 'string' && HEX_COLOR.test(value);
+    case 'position':
+      return typeof value === 'string' && isPosition(value);
+    case 'mobilePosition':
+      return value === null || (typeof value === 'string' && isPosition(value));
+    case 'size':
+      return value === 'small' || value === 'medium' || value === 'large';
+    case 'icon':
+      return isIcon(value);
+    case 'offsetX':
+    case 'offsetY':
+      return isOffset(value);
+    case 'lang':
+      return value === null || isLang(value);
+    case 'hideOnMobile':
+    case 'branding':
+      return typeof value === 'boolean';
+    case 'disabledFeatures':
+      return isFeatureIdList(value);
+    case 'apiBase':
+      return typeof value === 'string' && isHttpUrl(value);
+    case 'fontBaseUrl':
+      return value === null || typeof value === 'string';
+    default:
+      return true;
+  }
 }
 
 export function resolveOptions(...parts: Array<Partial<WidgetOptions>>): WidgetOptions {

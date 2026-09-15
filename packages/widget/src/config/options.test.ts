@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_OPTIONS, parseDataAttributes, resolveOptions, type WidgetOptions } from './options';
+import { DEFAULT_OPTIONS, isHttpUrl, parseDataAttributes, parseFeatureList, resolveOptions, type WidgetOptions } from './options';
 
 function script(attrs: Record<string, string>): HTMLScriptElement {
   const el = document.createElement('script');
@@ -81,5 +81,87 @@ describe('resolveOptions', () => {
     expect(resolveOptions({}).fontBaseUrl).toBeNull();
     expect(resolveOptions({ fontBaseUrl: 'https://cdn.test/fonts/' }).fontBaseUrl).toBe('https://cdn.test/fonts/');
     expect(resolveOptions({ fontBaseUrl: 5 as unknown as string }).fontBaseUrl).toBeNull();
+  });
+});
+
+describe('connected-mode options', () => {
+  it('reads the new data attributes', () => {
+    const el = script({
+      'data-mobile-position': 'bottom-center',
+      'data-icon': 'contrast',
+      'data-disabled-features': 'read-aloud, hide-images,,',
+      'data-branding': 'false',
+      'data-api': 'http://localhost:3000',
+    });
+    expect(parseDataAttributes(el)).toEqual({
+      mobilePosition: 'bottom-center',
+      icon: 'contrast',
+      disabledFeatures: ['read-aloud', 'hide-images'],
+      branding: false,
+      apiBase: 'http://localhost:3000',
+    });
+    expect(parseDataAttributes(script({ 'data-branding': 'true' }))).toEqual({ branding: true });
+  });
+
+  it('ignores invalid new attributes', () => {
+    const el = script({
+      'data-mobile-position': 'middle',
+      'data-icon': 'rocket',
+      'data-api': 'javascript:alert(1)',
+    });
+    expect(parseDataAttributes(el)).toEqual({});
+    expect(parseDataAttributes(script({ 'data-api': '/relative' }))).toEqual({});
+  });
+
+  it('has safe defaults', () => {
+    expect(DEFAULT_OPTIONS).toMatchObject({
+      mobilePosition: null,
+      icon: 'person',
+      disabledFeatures: [],
+      branding: true,
+      apiBase: 'https://api.pulxon.com',
+    });
+  });
+
+  it('validates every known option in resolveOptions', () => {
+    const options = resolveOptions({
+      mobilePosition: 'middle' as unknown as WidgetOptions['mobilePosition'],
+      icon: 'rocket' as unknown as WidgetOptions['icon'],
+      disabledFeatures: ['ok-id', 'Bad Id'] as string[],
+      branding: 'no' as unknown as boolean,
+      apiBase: 'ftp://x',
+      offsetX: 5000,
+      offsetY: -1,
+      lang: '<script>',
+      hideOnMobile: 'yes' as unknown as boolean,
+    });
+    expect(options).toMatchObject({
+      mobilePosition: null,
+      icon: 'person',
+      disabledFeatures: [],
+      branding: true,
+      apiBase: 'https://api.pulxon.com',
+      offsetX: DEFAULT_OPTIONS.offsetX,
+      offsetY: DEFAULT_OPTIONS.offsetY,
+      lang: null,
+      hideOnMobile: false,
+    });
+    expect(resolveOptions({ mobilePosition: 'top-left', disabledFeatures: ['read-aloud'], offsetX: 0, lang: 'en-US' })).toMatchObject({
+      mobilePosition: 'top-left',
+      disabledFeatures: ['read-aloud'],
+      offsetX: 0,
+      lang: 'en-US',
+    });
+    expect(resolveOptions({ mobilePosition: 'top-left' }, { mobilePosition: null }).mobilePosition).toBeNull();
+  });
+
+  it('parses feature lists and URLs strictly', () => {
+    expect(parseFeatureList(' a-b ,c,, d ')).toEqual(['a-b', 'c', 'd']);
+    expect(parseFeatureList('ok,NOT OK,<x>')).toEqual(['ok']);
+    expect(parseFeatureList(Array.from({ length: 40 }, (_, i) => `f${i}`).join(','))).toHaveLength(30);
+    expect(isHttpUrl('https://api.pulxon.com')).toBe(true);
+    expect(isHttpUrl('http://localhost:3000/base')).toBe(true);
+    expect(isHttpUrl('javascript:alert(1)')).toBe(false);
+    expect(isHttpUrl('//api.pulxon.com')).toBe(false);
   });
 });

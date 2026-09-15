@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "widget": {
+    "position": "bottom-left",
+    "mobilePosition": "bottom-center",
+    "offsetX": 24,
+    "offsetY": 16,
+    "color": "#0f766e",
+    "size": "large",
+    "icon": "eye",
+    "lang": "es",
+    "hideOnMobile": false,
+    "disabledFeatures": ["read-aloud", "hide-images"],
+    "branding": false
+  }
+}
