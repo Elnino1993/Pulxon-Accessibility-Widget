@@ -32,12 +32,7 @@ export function filterFeatures(features: FeatureDefinition[], disabled: readonly
 export function filterProfiles(profiles: ProfileDefinition[], disabled: readonly string[]): ProfileDefinition[] {
   if (disabled.length === 0) return profiles;
   const off = new Set(disabled);
-  return profiles
-    .map((profile) => ({
-      ...profile,
-      features: Object.fromEntries(Object.entries(profile.features).filter(([id]) => !off.has(id))),
-    }))
-    .filter((profile) => Object.keys(profile.features).length > 0);
+  return profiles.filter((profile) => Object.keys(profile.features).every((id) => !off.has(id)));
 }
 
 export function createWidget(input: CreateWidgetInput = {}): PulxonApi {

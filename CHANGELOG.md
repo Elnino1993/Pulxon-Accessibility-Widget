@@ -8,6 +8,8 @@
   gives up after 3 seconds and falls back to local options. Explicit data attributes override dashboard settings.
 - `data-icon` (`person`, `eye`, `contrast`), `data-mobile-position`, `data-disabled-features` (comma-separated
   feature ids) and `data-branding="false"`.
+- Profiles that reference a disabled feature are hidden from the panel entirely, rather than trimmed down to
+  their remaining features.
 
 ### Changed
 - Offsets must be integers from 0 to 200 and `data-lang` must look like a language tag; invalid values are ignored.
