@@ -135,6 +135,14 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
   border-color: #111111;
 }
 
+/* The icon is decorative and inherits the tile's color, so it flips with the pressed state and
+   needs no palette of its own. Fixed size keeps every tile's label on the same baseline. */
+.tile__icon {
+  flex: none;
+  width: 22px;
+  height: 22px;
+}
+
 .tile__status { font-size: 0.875em; }
 
 .tile__dots { display: flex; gap: 4px; }

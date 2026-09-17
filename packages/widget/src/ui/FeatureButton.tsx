@@ -1,5 +1,6 @@
 import type { FeatureDefinition } from '../core/registry';
 import type { Translator } from '../i18n';
+import { TileIcon } from './icons';
 
 export interface FeatureButtonProps {
   feature: FeatureDefinition;
@@ -28,6 +29,7 @@ export function FeatureButton({ feature, level, t, onActivate }: FeatureButtonPr
       aria-pressed={active}
       onClick={() => onActivate(feature.id)}
     >
+      <TileIcon id={feature.id} />
       <span class="tile__label">{t(feature.labelKey)}</span>
       {status && <span class="tile__status">{status}</span>}
       {multiLevel && (

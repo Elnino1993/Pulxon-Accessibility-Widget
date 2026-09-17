@@ -7,6 +7,7 @@ import type { MessageKey, Translator } from '../i18n';
 import { FeatureButton } from './FeatureButton';
 import { handleTrapKeydown } from './focus-trap';
 import { PageStructure } from './PageStructure';
+import { TileIcon } from './icons';
 
 export interface PanelProps {
   t: Translator;
@@ -101,6 +102,7 @@ export function Panel({ t, doc, features, controller, settings, profiles, side, 
                       aria-pressed={active}
                       onClick={() => controller.setProfile(active ? null : profile.id)}
                     >
+                      <TileIcon id={profile.id} />
                       <span class="tile__label">{t(profile.labelKey)}</span>
                     </button>
                   );
@@ -117,6 +119,7 @@ export function Panel({ t, doc, features, controller, settings, profiles, side, 
               data-tool="page-structure"
               onClick={() => setView('structure')}
             >
+              <TileIcon id="page-structure" />
               <span class="tile__label">{t('tool.pageStructure')}</span>
             </button>
           </div>
