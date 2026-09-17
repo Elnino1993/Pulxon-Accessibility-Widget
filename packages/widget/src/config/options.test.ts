@@ -177,6 +177,16 @@ describe('connected-mode options', () => {
   });
 });
 
+describe('statement url', () => {
+  it('accepts an https statement url and rejects anything else', () => {
+    expect(resolveOptions(parseDataAttributes(script({ 'data-statement-url': 'https://example.com/a11y' }))).statementUrl).toBe(
+      'https://example.com/a11y',
+    );
+    expect(resolveOptions(parseDataAttributes(script({ 'data-statement-url': 'javascript:alert(1)' }))).statementUrl).toBeNull();
+    expect(resolveOptions(parseDataAttributes(script({ 'data-statement-url': 'not a url' }))).statementUrl).toBeNull();
+  });
+});
+
 describe('data-lang normalization', () => {
   it('normalizes common spellings before validating', () => {
     expect(parseDataAttributes(script({ 'data-lang': 'ES' }))).toEqual({ lang: 'es' });

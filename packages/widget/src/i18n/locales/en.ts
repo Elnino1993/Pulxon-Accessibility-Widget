@@ -5,6 +5,8 @@ export const en = {
   'panel.reset': 'Reset all settings',
   'panel.profiles': 'Profiles',
   'panel.poweredBy': 'Powered by Pulxon',
+  'panel.activeProfile': '{name} profile is on',
+  'panel.statement': 'Accessibility statement',
   'link.newTab': '(opens in a new tab)',
   'group.text': 'Text',
   'group.color': 'Color',

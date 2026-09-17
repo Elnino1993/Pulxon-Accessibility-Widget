@@ -17,7 +17,18 @@ export const REMOTE_CONFIG_TIMEOUT_MS = 3000;
 export type RemoteWidgetOptions = Partial<
   Pick<
     WidgetOptions,
-    'position' | 'mobilePosition' | 'offsetX' | 'offsetY' | 'color' | 'size' | 'icon' | 'lang' | 'hideOnMobile' | 'disabledFeatures' | 'branding'
+    | 'position'
+    | 'mobilePosition'
+    | 'offsetX'
+    | 'offsetY'
+    | 'color'
+    | 'size'
+    | 'icon'
+    | 'lang'
+    | 'hideOnMobile'
+    | 'disabledFeatures'
+    | 'branding'
+    | 'statementUrl'
   >
 >;
 
@@ -43,6 +54,9 @@ export function parseRemoteConfig(value: unknown): RemoteWidgetOptions | null {
   if (typeof widget.hideOnMobile === 'boolean') out.hideOnMobile = widget.hideOnMobile;
   if (isFeatureIdList(widget.disabledFeatures)) out.disabledFeatures = [...widget.disabledFeatures];
   if (typeof widget.branding === 'boolean') out.branding = widget.branding;
+  if (widget.statementUrl === null || (typeof widget.statementUrl === 'string' && isHttpUrl(widget.statementUrl))) {
+    out.statementUrl = widget.statementUrl as string | null;
+  }
   return out;
 }
 

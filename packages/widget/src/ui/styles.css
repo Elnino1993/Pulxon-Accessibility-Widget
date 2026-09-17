@@ -334,6 +334,24 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
 
 .tools { margin-top: 16px; }
 
+/* The active-profile row: a plain white card, same family as `.settings-row`, sitting above the tiles. */
+.active-profile {
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  font-weight: 600;
+  background: #ffffff;
+  border: 2px solid #e2e6f0;
+  border-radius: 12px;
+}
+
+/* Always shown beside the voice-navigation tile, never behind a disclosure — it is the whole
+   reason that feature is allowed to exist. Inherits the panel's own text color, so its contrast
+   against the panel background is the same already-checked contrast as the rest of the copy. */
+.voice-note {
+  margin: 8px 0 0;
+  font-size: 0.875em;
+}
+
 /* The page-structure tool spans the row and reads as a row, not a square card. */
 .tile--wide {
   width: 100%;

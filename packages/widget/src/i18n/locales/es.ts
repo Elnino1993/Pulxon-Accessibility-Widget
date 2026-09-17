@@ -7,6 +7,8 @@ export const es: Messages = {
   'panel.reset': 'Restablecer todos los ajustes',
   'panel.profiles': 'Perfiles',
   'panel.poweredBy': 'Con tecnología de Pulxon',
+  'panel.activeProfile': 'Perfil {name} activado',
+  'panel.statement': 'Declaración de accesibilidad',
   'link.newTab': '(se abre en una pestaña nueva)',
   'group.text': 'Texto',
   'group.color': 'Color',

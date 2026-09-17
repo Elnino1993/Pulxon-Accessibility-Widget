@@ -22,6 +22,7 @@ export interface PanelProps {
   profiles: ProfileDefinition[];
   side: 'left' | 'right';
   branding: boolean;
+  statementUrl: string | null;
   onClose: () => void;
   onNavigate: (element: HTMLElement) => void;
 }
@@ -38,6 +39,7 @@ export function Panel({
   profiles,
   side,
   branding,
+  statementUrl,
   onClose,
   onNavigate,
 }: PanelProps) {
@@ -76,6 +78,9 @@ export function Panel({
     items: features.filter((feature) => feature.group === group),
   })).filter((entry) => entry.items.length > 0);
 
+  const activeProfile = profiles.find((profile) => profile.id === settings.profile);
+  const hasVoiceNavigation = features.some((feature) => feature.id === 'voice-navigation');
+
   return (
     <div
       ref={dialogRef}
@@ -107,6 +112,12 @@ export function Panel({
         />
       ) : (
         <>
+          {activeProfile && (
+            <p data-pulxon-active-profile class="active-profile">
+              {t('panel.activeProfile', { name: t(activeProfile.labelKey) })}
+            </p>
+          )}
+
           {profiles.length > 0 && (
             <section aria-labelledby="pulxon-profiles">
               <h3 id="pulxon-profiles">{t('panel.profiles')}</h3>
@@ -158,6 +169,11 @@ export function Panel({
                   />
                 ))}
               </div>
+              {group === 'navigation' && hasVoiceNavigation && (
+                <p data-pulxon-voice-note class="voice-note">
+                  {t('feature.voiceNavigationNote')}
+                </p>
+              )}
             </section>
           ))}
         </>
@@ -167,6 +183,12 @@ export function Panel({
         <button type="button" class="reset" onClick={() => controller.reset()}>
           {t('panel.reset')}
         </button>
+        {statementUrl && (
+          <a data-pulxon-statement href={statementUrl} target="_blank" rel="noopener noreferrer">
+            {t('panel.statement')}
+            <span class="sr-only"> {t('link.newTab')}</span>
+          </a>
+        )}
         {branding && (
           <a href="https://pulxon.com/?utm_source=widget" target="_blank" rel="noopener noreferrer">
             {t('panel.poweredBy')}

@@ -102,6 +102,7 @@ export function App({ doc, options, controller, features, store, profiles, t, la
           profiles={profiles}
           side={side}
           branding={options.branding}
+          statementUrl={options.statementUrl}
           onClose={() => state.setOpen(false)}
           onNavigate={onNavigate}
         />

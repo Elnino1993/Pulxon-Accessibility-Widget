@@ -47,11 +47,14 @@ script (`dist/fonts/`). When you self-host the script, publish that folder too.
 | Color | `contrast` | 3 (inverted, dark, light) |
 | Color | `saturation` | 3 (low, high, grayscale) |
 | Navigation | `highlight-links` | 1 |
+| Navigation | `tooltips` | 1 |
 | Navigation | `highlight-headings` | 1 |
 | Navigation | `focus-highlight` | 1 |
+| Navigation | `voice-navigation` | 1 — only where the browser's speech recognition API exists |
 | Reading | `read-aloud` | 3 (normal, fast, slow) — only where the Web Speech API exists |
 | Reading | `reading-mask` | 1 |
 | Reading | `reading-guide` | 1 |
+| Reading | `dictionary` | 1 |
 | Reading | `big-cursor` | 1 |
 | Distractions | `pause-animations` | 1 |
 | Distractions | `hide-images` | 1 |
@@ -59,6 +62,12 @@ script (`dist/fonts/`). When you self-host the script, publish that folder too.
 Read aloud uses the voices of the visitor's browser or operating system and
 prefers an on-device voice for the page language when one is available. Some
 voices are provided by online services of the browser vendor.
+
+Voice navigation starts only after the visitor turns it on; the panel always
+shows, next to the tile, that the browser sends what they say to its own
+speech recognition service — Pulxon never receives the audio or the
+transcript. The dictionary never fetches anything itself: it renders a link
+to the visitor's browser dictionary (Wiktionary) that they choose to follow.
 
 The panel also has a **Page structure** tool that lists headings, landmarks
 and links and moves focus to the one you choose.
@@ -85,6 +94,7 @@ color), `keyboard`.
 | `data-mobile-position` | same values as `data-position` | same as `data-position` |
 | `data-disabled-features` | comma-separated feature ids to remove from the panel | — |
 | `data-branding` | `false` hides the "Powered by Pulxon" link; ignored when `data-site-key` is present | `true` |
+| `data-statement-url` | absolute `http:`/`https:` URL of your site's own accessibility statement | — |
 
 Keyboard: `Alt+A` opens or closes the menu. Add `data-pulxon-ignore` to any
 element to exclude it from page adjustments.

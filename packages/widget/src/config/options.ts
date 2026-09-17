@@ -43,6 +43,7 @@ export interface WidgetOptions {
   disabledFeatures: string[];
   branding: boolean;
   apiBase: string;
+  statementUrl: string | null;
 }
 
 export const DEFAULT_OPTIONS: WidgetOptions = {
@@ -63,6 +64,7 @@ export const DEFAULT_OPTIONS: WidgetOptions = {
   disabledFeatures: [],
   branding: true,
   apiBase: DEFAULT_API_BASE,
+  statementUrl: null,
 };
 
 const HEX_COLOR = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
@@ -163,6 +165,7 @@ export function parseDataAttributes(el: HTMLElement | null): Partial<WidgetOptio
   if (data.disabledFeatures !== undefined) out.disabledFeatures = parseFeatureList(data.disabledFeatures);
   if (data.branding !== undefined) out.branding = data.branding !== 'false';
   if (data.api && isHttpUrl(data.api)) out.apiBase = data.api;
+  if (data.statementUrl && isHttpUrl(data.statementUrl)) out.statementUrl = data.statementUrl;
   return out;
 }
 
@@ -192,6 +195,8 @@ function isValidOption(key: string, value: unknown): boolean {
       return typeof value === 'string' && isHttpUrl(value);
     case 'fontBaseUrl':
       return value === null || typeof value === 'string';
+    case 'statementUrl':
+      return value === null || (typeof value === 'string' && isHttpUrl(value));
     default:
       return true;
   }

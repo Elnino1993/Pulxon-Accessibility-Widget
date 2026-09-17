@@ -1,18 +1,28 @@
 import { act } from 'preact/test-utils';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { resolveOptions } from '../config/options';
+import { resolveOptions, type WidgetOptions } from '../config/options';
 import { createController } from '../core/controller';
 import { createRegistry, type FeatureDefinition, type ProfileDefinition } from '../core/registry';
 import { createMemoryStorage } from '../core/storage';
 import { createSettingsStore } from '../core/store';
 import { createStyleEngine } from '../core/style-engine';
-import { highlightLinks, pauseAnimations } from '../features';
+import { highlightLinks, pauseAnimations, voiceNavigation } from '../features';
 import { createTranslator } from '../i18n';
 import { mountUI, type UiHandle } from './mount';
 
 const handles: UiHandle[] = [];
 
-function setup(features: FeatureDefinition[] = [highlightLinks, pauseAnimations], profiles: ProfileDefinition[] = []) {
+const lowVision: ProfileDefinition = {
+  id: 'low-vision',
+  labelKey: 'profile.lowVision',
+  features: { 'bigger-text': 2 },
+};
+
+function setup(
+  features: FeatureDefinition[] = [highlightLinks, pauseAnimations],
+  profiles: ProfileDefinition[] = [],
+  options: Partial<WidgetOptions> = {},
+) {
   const store = createSettingsStore(createMemoryStorage());
   const registry = createRegistry(features);
   const styles = createStyleEngine(document, { mode: 'style-tag' });
@@ -21,7 +31,7 @@ function setup(features: FeatureDefinition[] = [highlightLinks, pauseAnimations]
   act(() => {
     holder.ui = mountUI({
       doc: document,
-      options: resolveOptions({}),
+      options: resolveOptions({}, options),
       controller,
       registry,
       store,
@@ -36,7 +46,7 @@ function setup(features: FeatureDefinition[] = [highlightLinks, pauseAnimations]
   const root = ui.host.shadowRoot;
   if (!root) throw new Error('missing shadow root');
   act(() => ui.open());
-  return { ui, root, controller, store };
+  return { ui, host: ui.host, root, controller, store };
 }
 
 function buttonByText(root: ShadowRoot, text: string): HTMLButtonElement | undefined {
@@ -296,5 +306,58 @@ describe('Page structure view', () => {
     expect(ui.isOpen()).toBe(false);
     expect(root.querySelector('[role="dialog"]')).toBeNull();
     expect(root.activeElement).toBe(root.querySelector('.launcher'));
+  });
+});
+
+describe('Panel chrome', () => {
+  it('names the active profile above the tiles', async () => {
+    const { host, controller } = setup([highlightLinks], [lowVision]);
+    await act(async () => {
+      controller.setProfile('low-vision');
+    });
+    const row = host.shadowRoot!.querySelector('[data-pulxon-active-profile]');
+    expect(row?.textContent).toContain('Low vision');
+  });
+
+  it('says nothing about a profile when none is active', () => {
+    const { host } = setup([highlightLinks], [lowVision]);
+    expect(host.shadowRoot!.querySelector('[data-pulxon-active-profile]')).toBeNull();
+  });
+
+  it('explains where voice navigation sends what you say', () => {
+    // `voiceNavigation.isSupported` gates on a `SpeechRecognition` constructor, which this test
+    // environment does not provide by default; stub the minimum shape so the tile (and its note)
+    // survive `mountUI`'s support filter, the same way voice-navigation.test.ts does.
+    class FakeRecognition {
+      continuous = false;
+      interimResults = false;
+      lang = '';
+      onresult: (() => void) | null = null;
+      onend: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      start() {}
+      stop() {}
+      abort() {}
+    }
+    (window as unknown as { SpeechRecognition: unknown }).SpeechRecognition = FakeRecognition;
+    try {
+      const { host } = setup([voiceNavigation], []);
+      const note = host.shadowRoot!.querySelector('[data-pulxon-voice-note]');
+      expect(note?.textContent).toContain('speech service');
+    } finally {
+      delete (window as unknown as { SpeechRecognition?: unknown }).SpeechRecognition;
+    }
+  });
+
+  it('links to the accessibility statement when the site gives one', () => {
+    const { host } = setup([highlightLinks], [], { statementUrl: 'https://example.com/accessibility' });
+    const link = host.shadowRoot!.querySelector<HTMLAnchorElement>('[data-pulxon-statement]');
+    expect(link?.href).toBe('https://example.com/accessibility');
+    expect(link?.target).toBe('_blank');
+  });
+
+  it('shows no statement link when the site gives none', () => {
+    const { host } = setup([highlightLinks], []);
+    expect(host.shadowRoot!.querySelector('[data-pulxon-statement]')).toBeNull();
   });
 });
