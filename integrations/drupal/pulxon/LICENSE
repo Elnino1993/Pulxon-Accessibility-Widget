@@ -1,0 +1,10 @@
+This module is licensed under the GNU General Public License, version 2 or
+later, the same license Drupal core itself uses. The full text is available
+at:
+
+    https://www.gnu.org/licenses/gpl-2.0.html
+
+The accessibility widget this module ships (assets/pulxon.min.js and the
+fonts beside it) is licensed under the MIT License; its notice is in
+LICENSE-widget-MIT.txt, and the dyslexia-friendly font carries its own
+licence in assets/fonts/.
