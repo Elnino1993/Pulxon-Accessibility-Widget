@@ -10,6 +10,7 @@ import { readAloud } from './read-aloud';
 import { readingGuide, readingMask } from './reading-overlays';
 import { boldText, lineHeight, textAlign, textSpacing } from './text-features';
 import { tooltips } from './tooltips';
+import { voiceNavigation } from './voice-navigation';
 
 export {
   bigCursor,
@@ -31,6 +32,7 @@ export {
   textAlign,
   textSpacing,
   tooltips,
+  voiceNavigation,
 };
 
 export const builtinFeatures: FeatureDefinition[] = [
@@ -46,6 +48,7 @@ export const builtinFeatures: FeatureDefinition[] = [
   tooltips,
   highlightHeadings,
   focusHighlight,
+  voiceNavigation,
   readAloud,
   readingMask,
   readingGuide,

@@ -28,6 +28,9 @@ export const es: Messages = {
   'feature.highlightHeadings': 'Resaltar encabezados',
   'feature.focusHighlight': 'Resaltar el foco',
   'feature.bigCursor': 'Cursor grande',
+  'feature.voiceNavigation': 'Navegación por voz',
+  'feature.voiceNavigationNote':
+    'Tu navegador envía lo que dices a su propio servicio de voz. Pulxon nunca lo recibe.',
   'feature.readingMask': 'Máscara de lectura',
   'feature.readingGuide': 'Guía de lectura',
   'feature.readAloud': 'Leer en voz alta',

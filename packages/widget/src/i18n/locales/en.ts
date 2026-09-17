@@ -26,6 +26,9 @@ export const en = {
   'feature.highlightHeadings': 'Highlight headings',
   'feature.focusHighlight': 'Focus highlight',
   'feature.bigCursor': 'Big cursor',
+  'feature.voiceNavigation': 'Voice navigation',
+  'feature.voiceNavigationNote':
+    'Your browser sends what you say to its own speech service. Pulxon never receives it.',
   'feature.readingMask': 'Reading mask',
   'feature.readingGuide': 'Reading guide',
   'feature.readAloud': 'Read aloud',

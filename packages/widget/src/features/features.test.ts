@@ -76,6 +76,7 @@ describe('builtinFeatures', () => {
       'tooltips',
       'highlight-headings',
       'focus-highlight',
+      'voice-navigation',
       'read-aloud',
       'reading-mask',
       'reading-guide',

@@ -116,6 +116,14 @@ const PATHS: Record<string, JSX.Element> = {
       <path d="M6 3.5 18.5 12l-5.4 1.1 2.6 5.8-2.6 1.2-2.7-5.9-4.4 3z" />
     </>
   ),
+  'voice-navigation': (
+    <>
+      <path d="M12 4a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V7a3 3 0 0 1 3-3z" />
+      <path d="M7 11a5 5 0 0 0 10 0" />
+      <path d="M12 16v4" />
+      <path d="M9 20h6" />
+    </>
+  ),
 
   // Reading
   'reading-mask': (
