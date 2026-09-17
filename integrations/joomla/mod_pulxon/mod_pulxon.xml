@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Joomla site module manifest, in the <extension> schema that has been stable
+  since Joomla 3.x and is unchanged in Joomla 4 and 5. This file has not been
+  installed against a live Joomla site: PHP and Joomla's installer cannot run
+  in the environment that produced it, so every attribute below was checked
+  against the documented manifest schema only, not executed.
+
+  The widget itself (assets/pulxon.min.js, added by the build that packages
+  this module) is MIT licensed; see LICENSE-widget-MIT.txt in the packaged
+  zip. This module's own code is GPL-2.0-or-later, compatible with bundling
+  an MIT-licensed file alongside it.
+-->
+<extension type="module" client="site" method="upgrade">
+	<name>Pulxon Accessibility Widget</name>
+	<author>Pulxon</author>
+	<creationDate>2026-09</creationDate>
+	<copyright>Copyright (C) 2026 Pulxon. All rights reserved.</copyright>
+	<license>GNU General Public License version 2 or later; see https://www.gnu.org/licenses/gpl-2.0.html</license>
+	<authorEmail>dev@pulxon.com</authorEmail>
+	<authorUrl>https://pulxon.com</authorUrl>
+	<version>0.4.0</version>
+	<description>Adds an on-page toolbar that lets a visitor adjust text size, color, spacing and other display preferences. The toolbar is served from this site's own files; the module makes no request to a third-party domain.</description>
+
+	<files>
+		<filename module="mod_pulxon">mod_pulxon.php</filename>
+		<folder>tmpl</folder>
+		<folder>assets</folder>
+	</files>
+
+	<config>
+		<fields name="params">
+			<fieldset name="basic">
+				<field
+					name="position"
+					type="list"
+					default="bottom-right"
+					label="Launcher position"
+					description="Where the widget's launcher button appears on the page.">
+					<option value="top-left">Top left</option>
+					<option value="top-center">Top center</option>
+					<option value="top-right">Top right</option>
+					<option value="center-left">Center left</option>
+					<option value="center-right">Center right</option>
+					<option value="bottom-left">Bottom left</option>
+					<option value="bottom-center">Bottom center</option>
+					<option value="bottom-right">Bottom right</option>
+				</field>
+
+				<field
+					name="size"
+					type="list"
+					default="medium"
+					label="Launcher size">
+					<option value="small">Small</option>
+					<option value="medium">Medium</option>
+					<option value="large">Large</option>
+				</field>
+
+				<field
+					name="icon"
+					type="list"
+					default="person"
+					label="Launcher icon">
+					<option value="person">Person</option>
+					<option value="eye">Eye</option>
+					<option value="contrast">Contrast</option>
+				</field>
+
+				<field
+					name="color"
+					type="color"
+					default="#1f4bff"
+					label="Accent color"
+					description="Hex color used for the launcher button." />
+
+				<field
+					name="lang"
+					type="list"
+					default=""
+					label="Language">
+					<option value="">Match the page</option>
+					<option value="en">English</option>
+					<option value="es">Español</option>
+				</field>
+
+				<field
+					name="statement_url"
+					type="url"
+					default=""
+					label="Accessibility statement URL"
+					description="Optional link to your own accessibility statement page." />
+
+				<field
+					name="hide_on_mobile"
+					type="radio"
+					class="switcher"
+					default="0"
+					label="Hide the widget on mobile"
+					description="Do not show the widget to visitors on small screens.">
+					<option value="0">No</option>
+					<option value="1">Yes</option>
+				</field>
+
+				<field
+					name="branding"
+					type="radio"
+					class="switcher"
+					default="1"
+					label='Show the "powered by Pulxon" link'
+					description='Show a small "powered by Pulxon" link in the widget panel.'>
+					<option value="0">No</option>
+					<option value="1">Yes</option>
+				</field>
+			</fieldset>
+		</fields>
+	</config>
+</extension>
