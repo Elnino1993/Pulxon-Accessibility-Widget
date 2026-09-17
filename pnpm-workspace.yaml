@@ -1,4 +1,7 @@
 packages:
   - packages/*
+  - integrations
+allowBuilds:
+  esbuild: true
 onlyBuiltDependencies:
   - esbuild
