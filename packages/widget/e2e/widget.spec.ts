@@ -111,6 +111,68 @@ test("a visitor's chosen corner overrides the owner's mobile position at narrow 
   expect(afterBox!.y).toBeLessThanOrEqual(OFFSET + 2);
 });
 
+test('the in-panel language picker switches the panel heading', async ({ page }) => {
+  await loadWidget(page);
+  await page.getByRole('button', { name: 'Open accessibility menu' }).click();
+  await page.locator('#pulxon-lang-select').selectOption('es');
+  await expect(page.locator('#pulxon-title')).toHaveText('Accesibilidad');
+});
+
+test('the large size button grows the rendered launcher', async ({ page }) => {
+  await loadWidget(page);
+  const launcher = page.getByRole('button', { name: 'Open accessibility menu' });
+  const before = await launcher.boundingBox();
+
+  await launcher.click();
+  await page.getByRole('button', { name: 'Large', exact: true }).click();
+
+  const after = await launcher.boundingBox();
+  expect(before).not.toBeNull();
+  expect(after).not.toBeNull();
+  expect(after!.width).toBeGreaterThan(before!.width);
+});
+
+test('pressing a corner in the position grid moves the launcher there', async ({ page }) => {
+  await loadWidget(page); // default position is bottom-right
+  const launcher = page.getByRole('button', { name: 'Open accessibility menu' });
+
+  await launcher.click();
+  await page.getByRole('button', { name: 'Top left' }).click();
+  await page.keyboard.press('Escape');
+
+  const box = await launcher.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box!.x).toBeLessThan(100);
+  expect(box!.y).toBeLessThan(100);
+});
+
+test('shows the accessibility statement link when the embed provides a data-statement-url', async ({ page }) => {
+  await loadWidget(page, { 'data-statement-url': 'https://example.com/accessibility' });
+  await page.getByRole('button', { name: 'Open accessibility menu' }).click();
+  const link = page.locator('[data-pulxon-statement]');
+  await expect(link).toBeVisible();
+  await expect(link).toHaveAttribute('href', 'https://example.com/accessibility');
+});
+
+test('shows no statement link when the embed has no data-statement-url', async ({ page }) => {
+  await loadWidget(page);
+  await page.getByRole('button', { name: 'Open accessibility menu' }).click();
+  await expect(page.locator('[data-pulxon-statement]')).toHaveCount(0);
+});
+
+test('the voice navigation tile is absent when the browser offers no speech recognition', async ({ page }) => {
+  await page.addInitScript(() => {
+    const win = window as unknown as { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown };
+    delete win.SpeechRecognition;
+    delete win.webkitSpeechRecognition;
+  });
+  await loadWidget(page);
+  await page.getByRole('button', { name: 'Open accessibility menu' }).click();
+  await expect(page.getByRole('button', { name: 'Voice navigation' })).toHaveCount(0);
+  // The rest of voice navigation (listening, commands, fatal-error handling) cannot be driven here:
+  // the e2e browser will not grant a microphone. It is covered by src/features/voice-navigation.test.ts.
+});
+
 test('panel text size does not depend on the host root font size', async ({ page }) => {
   await serve(page, pageHtml('<script src="/pulxon.min.js"></script>', '<style>html{font-size:62.5%}</style>'));
   await page.goto(`${ORIGIN}/`);

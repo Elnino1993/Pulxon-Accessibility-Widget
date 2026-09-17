@@ -9,7 +9,7 @@ const BODY =
   '<main><h1>Features fixture</h1><h2>Details</h2>' +
   '<p id="text" style="font-size:16px">Plain paragraph text for testing.</p>' +
   '<p id="rem-text" style="font-size:1rem">Rem paragraph.</p>' +
-  '<a id="link" href="#docs">documentation</a>' +
+  '<a id="link" href="#docs" title="Read the documentation">documentation</a>' +
   '<img id="img" alt="Example" width="10" height="10" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=">' +
   '<div id="div-text" style="font-size:16px">Div text</div>' +
   '</main><footer>Footer</footer>';
@@ -166,6 +166,13 @@ test('navigation helpers and the big cursor style the page', async ({ page }) =>
   await expect(home).toHaveCSS('outline-width', '4px');
 });
 
+test('tooltips show the accessible name of the hovered element', async ({ page }) => {
+  await load(page);
+  await enable(page, 'tooltips');
+  await page.locator('#link').hover();
+  await expect(page.locator('[data-pulxon-tooltip]')).toHaveText('Read the documentation');
+});
+
 test('the dyslexia font loads from the fonts folder next to the script', async ({ page }) => {
   const fontRequests: string[] = [];
   page.on('request', (request) => {
@@ -236,6 +243,30 @@ test('read aloud speaks the clicked paragraph through the Web Speech API', async
     '1.5:Plain paragraph text for testing.',
   ]);
   await expect(page.locator('#text')).toHaveAttribute('data-pulxon-reading', '');
+});
+
+test('dictionary offers a lookup link for a selected word without following it', async ({ page }) => {
+  await load(page);
+  await enable(page, 'dictionary');
+
+  // Select just the first word of #text ("Plain paragraph text for testing.") rather than clicking
+  // or double-clicking: a programmatic Range keeps the selected word deterministic across platforms,
+  // and setting it still fires the native `selectionchange` event the feature listens for.
+  await page.evaluate(() => {
+    const textNode = document.querySelector('#text')!.firstChild!;
+    const range = document.createRange();
+    range.setStart(textNode, 0);
+    range.setEnd(textNode, 5);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+  });
+
+  // Assert the link only — never click it or navigate to it; the suite must stay on the fixture.
+  const link = page.locator('[data-pulxon-dictionary]');
+  await expect(link).toHaveAttribute('href', 'https://en.wiktionary.org/wiki/Plain');
+  await expect(link).toHaveAttribute('target', '_blank');
+  await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
 });
 
 test('page structure is accessible and moves focus to the chosen heading', async ({ page }) => {
