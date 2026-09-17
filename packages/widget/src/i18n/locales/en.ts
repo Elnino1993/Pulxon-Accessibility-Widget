@@ -13,6 +13,7 @@ export const en = {
   'group.distraction': 'Distractions',
   'feature.biggerText': 'Bigger text',
   'feature.highlightLinks': 'Highlight links',
+  'feature.tooltips': 'Tooltips',
   'feature.pauseAnimations': 'Pause animations',
   'feature.boldText': 'Bold text',
   'feature.lineHeight': 'Line height',

@@ -15,6 +15,7 @@ export const es: Messages = {
   'group.distraction': 'Distracciones',
   'feature.biggerText': 'Texto más grande',
   'feature.highlightLinks': 'Resaltar enlaces',
+  'feature.tooltips': 'Descripciones',
   'feature.pauseAnimations': 'Pausar animaciones',
   'feature.boldText': 'Texto en negrita',
   'feature.lineHeight': 'Altura de línea',

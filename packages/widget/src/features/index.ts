@@ -8,6 +8,7 @@ import { pauseAnimations } from './pause-animations';
 import { readAloud } from './read-aloud';
 import { readingGuide, readingMask } from './reading-overlays';
 import { boldText, lineHeight, textAlign, textSpacing } from './text-features';
+import { tooltips } from './tooltips';
 
 export {
   bigCursor,
@@ -27,6 +28,7 @@ export {
   saturation,
   textAlign,
   textSpacing,
+  tooltips,
 };
 
 export const builtinFeatures: FeatureDefinition[] = [
@@ -39,6 +41,7 @@ export const builtinFeatures: FeatureDefinition[] = [
   contrast,
   saturation,
   highlightLinks,
+  tooltips,
   highlightHeadings,
   focusHighlight,
   readAloud,

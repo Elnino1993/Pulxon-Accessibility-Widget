@@ -73,6 +73,7 @@ describe('builtinFeatures', () => {
       'contrast',
       'saturation',
       'highlight-links',
+      'tooltips',
       'highlight-headings',
       'focus-highlight',
       'read-aloud',

@@ -106,6 +106,11 @@ const PATHS: Record<string, JSX.Element> = {
       <circle cx="12" cy="12" r="3" />
     </>
   ),
+  tooltips: (
+    <>
+      <path d="M4 5h16v11H9l-4 4z" />
+    </>
+  ),
   'big-cursor': (
     <>
       <path d="M6 3.5 18.5 12l-5.4 1.1 2.6 5.8-2.6 1.2-2.7-5.9-4.4 3z" />
