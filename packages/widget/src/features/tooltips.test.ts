@@ -7,6 +7,10 @@ function ctx() {
 }
 
 afterEach(() => {
+  // Unconditional, so a failed assertion mid-test can't leave the module-level
+  // CLEANUPS WeakMap pointing at a stale listener set for later tests (mirrors
+  // the pattern in reading-overlays.test.ts).
+  tooltips.teardown(ctx());
   document.body.innerHTML = '';
 });
 
@@ -66,5 +70,104 @@ describe('tooltips', () => {
 
     button.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
     expect(document.querySelector('[data-pulxon-tooltip]')).toBeNull();
+  });
+
+  it('is idempotent: applying twice does not double-register listeners or leave a second tooltip', () => {
+    const button = document.createElement('button');
+    button.title = 'Save';
+    document.body.append(button);
+    const context = ctx();
+    tooltips.apply(context, 1);
+    tooltips.apply(context, 1);
+
+    button.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    expect(document.querySelectorAll('[data-pulxon-tooltip]')).toHaveLength(1);
+
+    button.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+    expect(document.querySelector('[data-pulxon-tooltip]')).toBeNull();
+
+    tooltips.teardown(context);
+    button.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    expect(document.querySelector('[data-pulxon-tooltip]')).toBeNull();
+  });
+
+  it('ignores the widget’s own panel', () => {
+    document.body.innerHTML =
+      '<div data-pulxon-ignore><button id="inside" title="Widget control" type="button">Widget</button></div>';
+    const context = ctx();
+    tooltips.apply(context, 1);
+
+    document.getElementById('inside')?.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    expect(document.querySelector('[data-pulxon-tooltip]')).toBeNull();
+    tooltips.teardown(context);
+  });
+
+  it('keeps the tooltip inside the viewport when the element sits at the far right edge', () => {
+    const button = document.createElement('button');
+    button.title = 'Save';
+    document.body.append(button);
+    const context = ctx();
+    tooltips.apply(context, 1);
+
+    // First show creates the tooltip element so we can then stub its own measured size,
+    // matching how `reading-overlays.test.ts` stubs a target element's rect.
+    button.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    const tip = document.querySelector<HTMLElement>('[data-pulxon-tooltip]');
+    expect(tip).not.toBeNull();
+    tip!.getBoundingClientRect = () =>
+      ({ width: 280, height: 40, left: 0, top: 0, right: 280, bottom: 40, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
+
+    button.getBoundingClientRect = () =>
+      ({
+        left: window.innerWidth - 20,
+        right: window.innerWidth,
+        top: 100,
+        bottom: 120,
+        width: 20,
+        height: 20,
+        x: window.innerWidth - 20,
+        y: 100,
+        toJSON: () => ({}),
+      }) as DOMRect;
+
+    button.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    const left = Number.parseFloat(tip!.style.getPropertyValue('left'));
+    expect(left).toBeGreaterThanOrEqual(0);
+    expect(left + 280).toBeLessThanOrEqual(window.innerWidth);
+    tooltips.teardown(context);
+  });
+
+  it('flips the tooltip above the element when there is no room below', () => {
+    const button = document.createElement('button');
+    button.title = 'Save';
+    document.body.append(button);
+    const context = ctx();
+    tooltips.apply(context, 1);
+
+    button.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    const tip = document.querySelector<HTMLElement>('[data-pulxon-tooltip]');
+    expect(tip).not.toBeNull();
+    tip!.getBoundingClientRect = () =>
+      ({ width: 100, height: 40, left: 0, top: 0, right: 100, bottom: 40, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
+
+    const bottom = window.innerHeight - 5;
+    button.getBoundingClientRect = () =>
+      ({
+        left: 10,
+        right: 30,
+        top: bottom - 20,
+        bottom,
+        width: 20,
+        height: 20,
+        x: 10,
+        y: bottom - 20,
+        toJSON: () => ({}),
+      }) as DOMRect;
+
+    button.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    const top = Number.parseFloat(tip!.style.getPropertyValue('top'));
+    expect(top).toBeLessThan(bottom - 20);
+    expect(top + 40).toBeLessThanOrEqual(bottom - 20);
+    tooltips.teardown(context);
   });
 });

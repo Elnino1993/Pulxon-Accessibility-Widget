@@ -84,6 +84,12 @@ describe('ui settings', () => {
     storage.set(SETTINGS_KEY, JSON.stringify({ v: 1, features: {}, profile: null, lang: null, ui: { scale: 'huge', position: 'orbit' } }));
     expect(createSettingsStore(storage).get().ui).toEqual({ scale: 'normal', position: null });
   });
+
+  it('falls back per field rather than discarding the whole ui object', () => {
+    const storage = createMemoryStorage();
+    storage.set(SETTINGS_KEY, JSON.stringify({ v: 1, features: {}, profile: null, lang: null, ui: { scale: 'large', position: 'orbit' } }));
+    expect(createSettingsStore(storage).get().ui).toEqual({ scale: 'large', position: null });
+  });
 });
 
 describe('readStoredVersion', () => {

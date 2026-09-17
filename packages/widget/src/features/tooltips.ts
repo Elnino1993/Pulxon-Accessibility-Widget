@@ -3,7 +3,7 @@ import { overlayZIndex } from './reading-overlays';
 
 const ID = 'tooltips';
 const ATTR = 'data-pulxon-tooltip';
-const GAP_PX = 8;
+export const GAP_PX = 8;
 
 export function tooltipsCss(zIndex: number): string {
   return (
@@ -30,6 +30,38 @@ export function accessibleName(target: Element | null): string | null {
     el = el.parentElement;
   }
   return null;
+}
+
+interface Rect {
+  left: number;
+  top: number;
+  bottom: number;
+}
+
+interface Size {
+  width: number;
+  height: number;
+}
+
+interface Viewport {
+  width: number;
+  height: number;
+}
+
+/**
+ * Clamps the tooltip horizontally so it never runs past the viewport's right edge, and
+ * flips it above the anchor when there isn't room below — the same plain-number,
+ * viewport-aware math `pointer-overlay.ts`'s `place` callbacks use (`Math.max`/`Math.min`
+ * against a measured viewport size), just applied to both axes.
+ */
+export function positionTooltip(anchor: Rect, tip: Size, viewport: Viewport, gap: number): { left: number; top: number } {
+  const maxLeft = Math.max(0, viewport.width - tip.width);
+  const left = Math.min(Math.max(anchor.left, 0), maxLeft);
+
+  const fitsBelow = anchor.bottom + gap + tip.height <= viewport.height;
+  const top = fitsBelow ? anchor.bottom + gap : Math.max(0, anchor.top - gap - tip.height);
+
+  return { left, top };
 }
 
 const CLEANUPS = new WeakMap<Document, () => void>();
@@ -63,10 +95,13 @@ export const tooltips: FeatureDefinition = {
       }
       tip.textContent = name;
       const rect = target.getBoundingClientRect();
+      const tipRect = tip.getBoundingClientRect();
       const scrollX = win?.scrollX ?? 0;
       const scrollY = win?.scrollY ?? 0;
-      tip.style.setProperty('left', `${rect.left + scrollX}px`, 'important');
-      tip.style.setProperty('top', `${rect.bottom + scrollY + GAP_PX}px`, 'important');
+      const viewport = { width: win?.innerWidth ?? 0, height: win?.innerHeight ?? 0 };
+      const { left, top } = positionTooltip(rect, tipRect, viewport, GAP_PX);
+      tip.style.setProperty('left', `${left + scrollX}px`, 'important');
+      tip.style.setProperty('top', `${top + scrollY}px`, 'important');
     };
 
     const nameFor = (event: Event): { target: Element; name: string } | null => {
