@@ -33,6 +33,17 @@ export function resolveLanguage(
   return 'en';
 }
 
+/**
+ * Resolves the language the panel should render in right now: the visitor's own stored choice
+ * (`settings.lang`) when they made one, normalized to a language this widget ships, otherwise the
+ * language the widget was mounted with. Shared by `mount.tsx` (DOM attributes) and `App.tsx` (the
+ * translator) so both stay in lockstep when the visitor changes language from the panel.
+ */
+export function resolveStoredLanguage(storedLang: string | null, fallback: string): string {
+  if (!storedLang) return fallback;
+  return normalizeLanguage(storedLang) ?? fallback;
+}
+
 export function createTranslator(lang: string): Translator {
   const messages = CATALOG[lang] ?? en;
   return (key, vars) => {

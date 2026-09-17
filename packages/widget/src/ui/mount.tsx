@@ -3,9 +3,9 @@ import { readableOn } from '../config/contrast';
 import type { WidgetOptions } from '../config/options';
 import type { Controller } from '../core/controller';
 import type { ProfileDefinition, Registry } from '../core/registry';
-import type { SettingsStore } from '../core/store';
+import type { Settings, SettingsStore } from '../core/store';
 import { createStyleEngine, type StyleMode } from '../core/style-engine';
-import type { Translator } from '../i18n';
+import { resolveStoredLanguage, type Translator } from '../i18n';
 import { App } from './App';
 import css from './styles.css?inline';
 import { createUiState } from './ui-state';
@@ -57,16 +57,16 @@ export function mountUI(input: MountUiInput): UiHandle {
   const host = doc.createElement('div');
   host.id = HOST_ID;
   host.setAttribute('data-pulxon-ignore', '');
-  // Read from `document.querySelector`, which never pierces the shadow root below, so this must sit
-  // on the light-DOM host, not on `mountPoint` inside the shadow tree.
-  host.setAttribute('data-pulxon-lang', input.lang ?? 'en');
+  // `data-pulxon-lang` is read from `document.querySelector`, which never pierces the shadow root
+  // below, so it must sit on the light-DOM host, not on `mountPoint` inside the shadow tree. Its
+  // value (and the mount point's `lang` attribute below) is set below by `applyUiSettings`, which
+  // also keeps both in sync once the visitor changes language from the panel.
   if (options.hideOnMobile) host.setAttribute('data-hide-mobile', '');
 
   const shadow = host.attachShadow({ mode: 'open' });
   const styles = createStyleEngine(shadow, { nonce: options.nonce, mode: input.styleMode ?? 'auto' });
   styles.set('ui', css);
   const mountPoint = doc.createElement('div');
-  mountPoint.setAttribute('lang', input.lang ?? 'en');
   mountPoint.setAttribute('dir', 'ltr');
   mountPoint.style.setProperty('--pulxon-accent', options.color);
   mountPoint.style.setProperty('--pulxon-on-accent', readableOn(options.color));
@@ -79,6 +79,22 @@ export function mountUI(input: MountUiInput): UiHandle {
   const state = createUiState();
   const unsubscribe = state.subscribe((open) => input.onOpenChange?.(open));
   const trigger = options.trigger && isValidSelector(doc, options.trigger) ? options.trigger : null;
+
+  // `--pulxon-scale`, and the `lang`/`data-pulxon-lang` attributes, reflect the visitor's own panel
+  // choices. They live outside the Preact tree (on the mount point and the light-DOM host, which the
+  // dictionary feature reads via `document.querySelector`), so they're kept in sync here rather than
+  // through JSX. Scale is one CSS custom property both the launcher and the panel read, per the
+  // brief's "do not hard-code a second set of sizes".
+  const mountedLang = input.lang ?? 'en';
+  function applyUiSettings(settings: Settings): void {
+    const scale = settings.ui.scale === 'large' ? 1.25 : 1;
+    mountPoint.style.setProperty('--pulxon-scale', String(scale));
+    const lang = resolveStoredLanguage(settings.lang, mountedLang);
+    mountPoint.setAttribute('lang', lang);
+    host.setAttribute('data-pulxon-lang', lang);
+  }
+  applyUiSettings(input.store.get());
+  const unsubscribeUi = input.store.subscribe(applyUiSettings);
 
   function currentFocus(): HTMLElement | null {
     const active = doc.activeElement as HTMLElement | null;
@@ -98,6 +114,7 @@ export function mountUI(input: MountUiInput): UiHandle {
       doc.removeEventListener('keydown', onHotkey);
       doc.removeEventListener('click', onTriggerClick, true);
       unsubscribe();
+      unsubscribeUi();
       render(null, mountPoint);
       styles.clear();
       host.remove();
@@ -133,6 +150,7 @@ export function mountUI(input: MountUiInput): UiHandle {
       store={input.store}
       profiles={input.profiles}
       t={input.t}
+      lang={mountedLang}
       state={state}
     />,
     mountPoint,

@@ -1,5 +1,5 @@
 import type { Ref } from 'preact';
-import type { LauncherIcon, WidgetOptions } from '../config/options';
+import type { LauncherIcon, Position, WidgetOptions } from '../config/options';
 
 const ICON_PATHS: Record<LauncherIcon, string> = {
   person: 'M12 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM4 7.5 12 9l8-1.5.5 2L15 11v4l1.5 7h-2.2L12 16l-2.3 6H7.5L9 15v-4L3.5 9.5z',
@@ -9,15 +9,21 @@ const ICON_PATHS: Record<LauncherIcon, string> = {
 
 export interface LauncherProps {
   options: WidgetOptions;
+  /** The corner to render in: the visitor's own choice (`settings.ui.position`) when they made one,
+   *  otherwise `options.position`. */
+  position: Position;
+  /** `options.mobilePosition`, or `null` once the visitor has chosen their own corner — their choice
+   *  wins on narrow screens too instead of being clobbered by the embed's mobile override. */
+  mobilePosition: Position | null;
   label: string;
   expanded: boolean;
   onToggle: () => void;
   buttonRef: Ref<HTMLButtonElement>;
 }
 
-export function Launcher({ options, label, expanded, onToggle, buttonRef }: LauncherProps) {
-  const classes = ['launcher', `launcher--${options.size}`, `launcher--${options.position}`];
-  if (options.mobilePosition) classes.push(`launcher--m-${options.mobilePosition}`);
+export function Launcher({ options, position, mobilePosition, label, expanded, onToggle, buttonRef }: LauncherProps) {
+  const classes = ['launcher', `launcher--${options.size}`, `launcher--${position}`];
+  if (mobilePosition) classes.push(`launcher--m-${mobilePosition}`);
   return (
     <button
       ref={buttonRef}

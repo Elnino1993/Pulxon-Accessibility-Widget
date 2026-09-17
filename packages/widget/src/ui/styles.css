@@ -25,8 +25,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--pulxon-size, 52px);
-  height: var(--pulxon-size, 52px);
+  /* One scale variable drives both the launcher and the panel (see `.panel` below) — set once, on
+     the mount point, from `settings.ui.scale`; there is no second, hard-coded "large" size set. */
+  width: calc(var(--pulxon-size, 52px) * var(--pulxon-scale, 1));
+  height: calc(var(--pulxon-size, 52px) * var(--pulxon-scale, 1));
   padding: 0;
   border: 2px solid #ffffff;
   border-radius: 50%;
@@ -77,7 +79,9 @@
   padding: 0 16px 16px;
   background: #f4f6fb;
   color: #111111;
-  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* Same `--pulxon-scale` the launcher reads; everything else in the panel is sized in `em`/`%`
+     against this base, so it grows with it. */
+  font: calc(16px * var(--pulxon-scale, 1)) / 1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   box-shadow: 0 0 24px rgb(0 0 0 / 0.3);
 }
 
@@ -100,6 +104,114 @@
 
 h2 { margin: 0; font-size: 1.25em; }
 h3 { margin: 16px 0 8px; font-size: 1em; }
+
+/* The language/size/position block. One card per row: label on the left, control on the right,
+   like the rest of the panel's white tiles. */
+.settings-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 2px solid #e2e6f0;
+  border-radius: 12px;
+}
+
+.settings-row > label,
+.settings-row > span {
+  font-weight: 600;
+}
+
+.settings-row select {
+  min-height: 44px;
+  padding: 6px 10px;
+  font: inherit;
+  color: #111111;
+  background: #ffffff;
+  border: 2px solid #e2e6f0;
+  border-radius: 8px;
+}
+
+@media (max-width: 320px) {
+  .settings-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* The size toggle: two buttons sharing one pill. */
+.segmented {
+  display: inline-flex;
+  border: 2px solid #e2e6f0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.segmented button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 14px;
+  font: inherit;
+  font-weight: 600;
+  color: #111111;
+  background: #ffffff;
+  border: 0;
+  cursor: pointer;
+}
+
+.segmented button + button {
+  border-left: 2px solid #e2e6f0;
+}
+
+/* Border, not just fill, changes too: state is never colour alone. */
+.segmented button[aria-pressed="true"] {
+  color: var(--pulxon-on-accent, #ffffff);
+  background: var(--pulxon-accent, #1f4bff);
+}
+
+/* The position picker: a 3x3 grid of corners. The middle cell is a spacer — `Position` has no true
+   center placement. */
+.corner-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 32px);
+  grid-auto-rows: 32px;
+  gap: 6px;
+}
+
+.corner-grid__spacer {
+  width: 32px;
+  height: 32px;
+}
+
+.corner-grid button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: #ffffff;
+  border: 2px solid #e2e6f0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.corner-grid button[aria-pressed="true"] {
+  background: var(--pulxon-accent, #1f4bff);
+  border-color: #111111;
+}
+
+/* A dot, not just the fill, marks the active corner for a colour-blind or greyscale reader. */
+.corner-grid button[aria-pressed="true"]::after {
+  content: "";
+  display: block;
+  width: 8px;
+  height: 8px;
+  margin: 0 auto;
+  background: var(--pulxon-on-accent, #ffffff);
+  border-radius: 50%;
+}
 
 .icon-button {
   display: flex;

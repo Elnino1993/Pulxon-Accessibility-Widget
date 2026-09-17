@@ -1,9 +1,9 @@
-import { useEffect, useRef } from 'preact/hooks';
+import { useEffect, useMemo, useRef } from 'preact/hooks';
 import type { WidgetOptions } from '../config/options';
 import type { Controller } from '../core/controller';
 import type { FeatureDefinition, ProfileDefinition } from '../core/registry';
 import type { SettingsStore } from '../core/store';
-import type { Translator } from '../i18n';
+import { createTranslator, resolveStoredLanguage, type Translator } from '../i18n';
 import { Launcher } from './Launcher';
 import { Panel } from './Panel';
 import { focusElement } from './page-structure';
@@ -18,14 +18,36 @@ export interface AppProps {
   store: SettingsStore;
   profiles: ProfileDefinition[];
   t: Translator;
+  /** The language the widget was mounted with (embed code / dashboard config / browser default). */
+  lang: string;
   state: UiState;
 }
 
-export function App({ doc, options, controller, features, store, profiles, t, state }: AppProps) {
+export function App({ doc, options, controller, features, store, profiles, t, lang, state }: AppProps) {
   const open = useExternal(state.subscribe, state.isOpen);
   const settings = useExternal(store.subscribe, store.get);
   const launcherRef = useRef<HTMLButtonElement>(null);
   const wasOpen = useRef(false);
+
+  // The visitor's own language choice (settings.lang) wins once they make one; otherwise the panel
+  // keeps rendering with the language `t`/`lang` were mounted with. Recomputing the translator here,
+  // rather than once at mount time in create-widget.ts, is what makes the picker actually re-render
+  // the panel: without this, `t` stays frozen to the initial language forever.
+  const resolvedLang = resolveStoredLanguage(settings.lang, lang);
+  const activeT = useMemo(() => (resolvedLang === lang ? t : createTranslator(resolvedLang)), [resolvedLang, lang, t]);
+
+  const onLangChange = (next: string | null): void => {
+    store.update((s) => ({ ...s, lang: next }));
+  };
+
+  // The visitor's chosen corner wins over the embed code's default on every screen size. It also
+  // wins over `options.mobilePosition` on narrow screens once they've chosen one: the mobile
+  // override exists so a site owner can dodge their own mobile chrome, but the visitor picking a
+  // corner is the same kind of decision made more specifically, so it should not be clobbered by a
+  // media query the visitor never sees the reasoning for. Until they choose, `mobilePosition` keeps
+  // behaving exactly as it does today.
+  const position = settings.ui.position ?? options.position;
+  const mobilePosition = settings.ui.position ? null : options.mobilePosition;
 
   const focusOpenerOrLauncher = (): void => {
     const opener = state.opener();
@@ -54,24 +76,29 @@ export function App({ doc, options, controller, features, store, profiles, t, st
     if (!focusElement(element)) focusOpenerOrLauncher();
   };
 
-  const side = options.position.endsWith('left') ? 'left' : 'right';
+  const side = position.endsWith('left') ? 'left' : 'right';
 
   return (
     <>
       <Launcher
         options={options}
-        label={t('widget.open')}
+        position={position}
+        mobilePosition={mobilePosition}
+        label={activeT('widget.open')}
         expanded={open}
         onToggle={onToggle}
         buttonRef={launcherRef}
       />
       {open && (
         <Panel
-          t={t}
+          t={activeT}
           doc={doc}
           features={features}
           controller={controller}
           settings={settings}
+          store={store}
+          lang={resolvedLang}
+          onLangChange={onLangChange}
           profiles={profiles}
           side={side}
           branding={options.branding}

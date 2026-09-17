@@ -2,11 +2,12 @@ import type { JSX } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { Controller } from '../core/controller';
 import { GROUP_ORDER, type FeatureDefinition, type ProfileDefinition } from '../core/registry';
-import type { Settings } from '../core/store';
+import type { Settings, SettingsStore } from '../core/store';
 import type { MessageKey, Translator } from '../i18n';
 import { FeatureButton } from './FeatureButton';
 import { handleTrapKeydown } from './focus-trap';
 import { PageStructure } from './PageStructure';
+import { PanelSettings } from './PanelSettings';
 import { TileIcon } from './icons';
 
 export interface PanelProps {
@@ -15,6 +16,9 @@ export interface PanelProps {
   features: FeatureDefinition[];
   controller: Controller;
   settings: Settings;
+  store: SettingsStore;
+  lang: string;
+  onLangChange: (lang: string | null) => void;
   profiles: ProfileDefinition[];
   side: 'left' | 'right';
   branding: boolean;
@@ -22,7 +26,21 @@ export interface PanelProps {
   onNavigate: (element: HTMLElement) => void;
 }
 
-export function Panel({ t, doc, features, controller, settings, profiles, side, branding, onClose, onNavigate }: PanelProps) {
+export function Panel({
+  t,
+  doc,
+  features,
+  controller,
+  settings,
+  store,
+  lang,
+  onLangChange,
+  profiles,
+  side,
+  branding,
+  onClose,
+  onNavigate,
+}: PanelProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const toolRef = useRef<HTMLButtonElement>(null);
@@ -74,6 +92,8 @@ export function Panel({ t, doc, features, controller, settings, profiles, side, 
           <span aria-hidden="true">×</span>
         </button>
       </div>
+
+      <PanelSettings t={t} settings={settings} store={store} lang={lang} onLangChange={onLangChange} />
 
       {view === 'structure' ? (
         <PageStructure
