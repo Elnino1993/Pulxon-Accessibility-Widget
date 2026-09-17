@@ -7,6 +7,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "build": "tsx src/build.ts",
+    "generate:snippets": "tsx scripts/write-snippets.mts",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
