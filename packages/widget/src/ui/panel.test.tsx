@@ -116,6 +116,33 @@ describe('Panel', () => {
     expect(ui.isOpen()).toBe(false);
   });
 
+  it('ignores Escape from the language select instead of closing the whole panel underneath it', () => {
+    const { ui, root } = setup();
+    const select = root.querySelector<HTMLSelectElement>('[data-pulxon-lang-picker]')!;
+    act(() => {
+      select.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    });
+    expect(ui.isOpen()).toBe(true);
+    expect(root.querySelector('[role="dialog"]')).not.toBeNull();
+
+    // Escape from anywhere else in the panel still closes it as before.
+    const dialog = root.querySelector('[role="dialog"]') as HTMLElement;
+    act(() => {
+      dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    });
+    expect(ui.isOpen()).toBe(false);
+  });
+
+  it('puts the settings controls after the feature tiles, not in front of the product', () => {
+    const { root } = setup();
+    const picker = root.querySelector('[data-pulxon-lang-picker]')!;
+    const tile = root.querySelector('[data-feature="highlight-links"]')!;
+    // DOCUMENT_POSITION_FOLLOWING (4): `tile` comes before `picker` in the DOM, so a keyboard or
+    // screen-reader visitor reaches the accessibility tiles before the language/size/position block.
+    const position = tile.compareDocumentPosition(picker);
+    expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('reset clears all features', () => {
     const { root, store } = setup();
     act(() => root.querySelector<HTMLButtonElement>('[data-feature="pause-animations"]')?.click());

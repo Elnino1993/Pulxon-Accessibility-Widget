@@ -113,6 +113,48 @@ describe('dictionary', () => {
     expect(document.querySelector('[data-pulxon-dictionary]')).not.toBeNull();
   });
 
+  it('inserts the link right after the element containing the selection, not at the end of the body', () => {
+    const context = ctx();
+    dictionary.apply(context, 1);
+    select('bicycle');
+
+    const paragraph = document.querySelector('p')!;
+    const link = document.querySelector<HTMLAnchorElement>('[data-pulxon-dictionary]')!;
+    // Reachable by Tab right where the visitor already is: the very next element after the one that
+    // holds the selection, not appended after everything else in `<body>`.
+    expect(link.previousElementSibling).toBe(paragraph);
+    expect(link.parentElement).toBe(document.body);
+  });
+
+  it('moves the link when the visitor selects a word somewhere else on the page', () => {
+    const context = ctx();
+    dictionary.apply(context, 1);
+    select('bicycle');
+    const first = document.querySelector('p')!;
+    expect(document.querySelector<HTMLAnchorElement>('[data-pulxon-dictionary]')?.previousElementSibling).toBe(first);
+
+    select('scooter');
+    const second = document.querySelectorAll('p')[1]!;
+    // Re-queried rather than reusing the earlier reference: selecting new text collapses the old
+    // selection first, which (like a real click elsewhere) hides the old link before the new one for
+    // "scooter" appears — this asserts the current link sits next to the current selection, not that
+    // one DOM node persists across the change.
+    expect(document.querySelectorAll('[data-pulxon-dictionary]')).toHaveLength(1);
+    expect(document.querySelector<HTMLAnchorElement>('[data-pulxon-dictionary]')?.previousElementSibling).toBe(second);
+  });
+
+  it("appends the link.newTab suffix for screen readers, like the panel's other new-tab links", () => {
+    const context = ctx();
+    dictionary.apply(context, 1);
+    select('bicycle');
+
+    const link = document.querySelector<HTMLAnchorElement>('[data-pulxon-dictionary]')!;
+    expect(link.textContent).toBe('Look up this word (opens in a new tab)');
+    const suffix = link.querySelector('[data-pulxon-dictionary-newtab]');
+    expect(suffix).not.toBeNull();
+    expect(suffix?.textContent?.trim()).toBe('(opens in a new tab)');
+  });
+
   it('removes the button on teardown', () => {
     const context = ctx();
     dictionary.apply(context, 1);

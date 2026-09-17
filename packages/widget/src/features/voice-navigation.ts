@@ -43,7 +43,9 @@ export function voiceCommandsForLang(lang: string): readonly VoiceCommand[] {
 }
 
 export function matchCommand(transcript: string, lang = 'en'): string | null {
-  const said = transcript.trim().toLowerCase().replace(/\s+/g, ' ');
+  // Real speech recognizers commonly add trailing punctuation ("Scroll down.") that a plain phrase
+  // table never contains; strip it before matching rather than growing every phrase list to cover it.
+  const said = transcript.trim().toLowerCase().replace(/\s+/g, ' ').replace(/[.,!?]+$/, '');
   for (const command of voiceCommandsForLang(lang)) {
     if (command.phrases.includes(said)) return command.id;
   }

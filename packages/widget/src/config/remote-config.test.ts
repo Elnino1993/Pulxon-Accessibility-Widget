@@ -50,6 +50,16 @@ describe('parseRemoteConfig', () => {
   });
 });
 
+describe('parseRemoteConfig statementUrl', () => {
+  it('accepts an https statement url and rejects a javascript: one', () => {
+    expect(parseRemoteConfig({ version: 1, widget: { statementUrl: 'https://example.com/accessibility' } })).toEqual({
+      statementUrl: 'https://example.com/accessibility',
+    });
+    expect(parseRemoteConfig({ version: 1, widget: { statementUrl: 'javascript:alert(1)' } })).toEqual({});
+    expect(parseRemoteConfig({ version: 1, widget: { statementUrl: null } })).toEqual({ statementUrl: null });
+  });
+});
+
 describe('remoteConfigUrl', () => {
   it('builds the config URL under the API base', () => {
     expect(remoteConfigUrl(SITE_KEY, 'https://api.pulxon.com')).toBe(`https://api.pulxon.com/v1/sites/${SITE_KEY}/config`);

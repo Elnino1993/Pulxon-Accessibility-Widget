@@ -50,6 +50,13 @@ describe('matchCommand', () => {
     expect(matchCommand('order me a pizza')).toBeNull();
   });
 
+  it('strips trailing punctuation a real recognizer adds', () => {
+    expect(matchCommand('Scroll down.')).toBe('scroll-down');
+    expect(matchCommand('go to top!')).toBe('top');
+    expect(matchCommand('go to bottom?')).toBe('bottom');
+    expect(matchCommand('go back,,.')).toBe('back');
+  });
+
   it('documents every command it can match', () => {
     for (const command of VOICE_COMMANDS) {
       expect(matchCommand(command.phrases[0]!)).toBe(command.id);

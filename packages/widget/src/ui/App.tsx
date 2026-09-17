@@ -106,6 +106,7 @@ export function App({ doc, options, controller, features, store, profiles, t, la
           store={store}
           lang={resolvedLang}
           onLangChange={onLangChange}
+          optionsPosition={options.position}
           profiles={profiles}
           side={side}
           branding={options.branding}

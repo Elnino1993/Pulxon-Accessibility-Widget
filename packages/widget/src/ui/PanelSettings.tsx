@@ -9,6 +9,8 @@ export interface PanelSettingsProps {
   store: SettingsStore;
   lang: string;
   onLangChange: (lang: string | null) => void;
+  /** The embed's configured corner, used only until the visitor picks one of their own. */
+  optionsPosition: Position;
 }
 
 /** The widget's own name for each language it ships, shown regardless of the panel's current language. */
@@ -44,9 +46,20 @@ const GRID_CELLS: Array<Position | null> = [
 // `lang` (the panel's currently-resolved language) isn't needed here: the select's own value comes
 // straight from `settings.lang`. It stays part of the props contract because the caller (Panel) has
 // it on hand and other consumers of this component may want to display it.
-export function PanelSettings({ t, settings, store, onLangChange }: PanelSettingsProps) {
+export function PanelSettings({ t, settings, store, onLangChange, optionsPosition }: PanelSettingsProps) {
   const scale: WidgetScale = settings.ui.scale;
-  const position = settings.ui.position;
+  // Before the visitor picks a corner of their own, `settings.ui.position` is null — the launcher
+  // still sits wherever the embed's own `options.position` put it, so the grid must read that corner
+  // as pressed too, or all eight buttons show unpressed while the launcher plainly sits in one of
+  // them. `onPositionChange` below still always writes an explicit value on click.
+  const position = settings.ui.position ?? optionsPosition;
+
+  // A `settings.lang` the picker has no matching <option> for (e.g. a value stored by a newer widget
+  // version, or a stale/edited value) would otherwise leave the native <select> showing blank — no
+  // option matches its `value`. Falling back to "auto" keeps the control always showing something
+  // real; `resolveStoredLanguage` (i18n/index.ts) already falls back the same way for the language
+  // the panel actually renders in, so this just keeps the picker's own display in sync with that.
+  const selectedLang = settings.lang && (SUPPORTED_LANGUAGES as readonly string[]).includes(settings.lang) ? settings.lang : 'auto';
 
   const onScaleChange = (next: WidgetScale): void => {
     store.update((s) => ({ ...s, ui: { ...s.ui, scale: next } }));
@@ -71,7 +84,7 @@ export function PanelSettings({ t, settings, store, onLangChange }: PanelSetting
           id="pulxon-lang-select"
           data-pulxon-lang-picker
           aria-labelledby="pulxon-lang-label"
-          value={settings.lang ?? 'auto'}
+          value={selectedLang}
           onChange={onLangSelect}
         >
           <option value="auto">{t('settings.languageAuto')}</option>

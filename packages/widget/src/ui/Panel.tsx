@@ -1,5 +1,6 @@
 import type { JSX } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
+import type { Position } from '../config/options';
 import type { Controller } from '../core/controller';
 import { GROUP_ORDER, type FeatureDefinition, type ProfileDefinition } from '../core/registry';
 import type { Settings, SettingsStore } from '../core/store';
@@ -30,6 +31,8 @@ export interface PanelProps {
   store: SettingsStore;
   lang: string;
   onLangChange: (lang: string | null) => void;
+  /** The embed's configured corner; passed through to PanelSettings for its pressed-state fallback. */
+  optionsPosition: Position;
   profiles: ProfileDefinition[];
   side: 'left' | 'right';
   branding: boolean;
@@ -47,6 +50,7 @@ export function Panel({
   store,
   lang,
   onLangChange,
+  optionsPosition,
   profiles,
   side,
   branding,
@@ -73,6 +77,11 @@ export function Panel({
 
   const onKeyDown = (event: JSX.TargetedKeyboardEvent<HTMLDivElement>): void => {
     if (event.key === 'Escape') {
+      // A visitor pressing Escape to close the language dropdown (a native <select>'s own open
+      // listbox) must not also close the whole panel underneath it — the event still reaches here
+      // either way, so it's the select as the event's target, not "is the listbox open", that this
+      // checks.
+      if ((event.target as HTMLElement | null)?.tagName === 'SELECT') return;
       event.preventDefault();
       event.stopPropagation();
       onClose();
@@ -109,8 +118,6 @@ export function Panel({
           <span aria-hidden="true">×</span>
         </button>
       </div>
-
-      <PanelSettings t={t} settings={settings} store={store} lang={lang} onLangChange={onLangChange} />
 
       {view === 'structure' ? (
         <PageStructure
@@ -201,6 +208,15 @@ export function Panel({
               )}
             </section>
           ))}
+
+          <PanelSettings
+            t={t}
+            settings={settings}
+            store={store}
+            lang={lang}
+            onLangChange={onLangChange}
+            optionsPosition={optionsPosition}
+          />
         </>
       )}
 

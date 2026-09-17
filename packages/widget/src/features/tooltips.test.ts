@@ -91,6 +91,35 @@ describe('tooltips', () => {
     expect(document.querySelector('[data-pulxon-tooltip]')).toBeNull();
   });
 
+  it('stays on screen when the pointer moves from the target onto the tooltip bubble (WCAG 1.4.13 hoverable)', () => {
+    const button = document.createElement('button');
+    button.title = 'Save';
+    document.body.append(button);
+    const context = ctx();
+    tooltips.apply(context, 1);
+
+    button.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    const tip = document.querySelector<HTMLElement>('[data-pulxon-tooltip]');
+    expect(tip).not.toBeNull();
+
+    // The pointer crosses the gap from the button onto the tooltip bubble itself.
+    button.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: tip }));
+    expect(document.querySelector('[data-pulxon-tooltip]')).not.toBeNull();
+
+    // Entering the bubble fires its own mouseover too; it must not hide it or re-trigger a lookup.
+    tip!.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, relatedTarget: button }));
+    expect(document.querySelector('[data-pulxon-tooltip]')).not.toBeNull();
+
+    // Moving back from the bubble onto the button (the reverse crossing) must not hide it either.
+    tip!.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: button }));
+    expect(document.querySelector('[data-pulxon-tooltip]')).not.toBeNull();
+
+    // Only leaving both the target and the bubble for good hides it.
+    tip!.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: document.body }));
+    expect(document.querySelector('[data-pulxon-tooltip]')).toBeNull();
+    tooltips.teardown(context);
+  });
+
   it('ignores the widget’s own panel', () => {
     document.body.innerHTML =
       '<div data-pulxon-ignore><button id="inside" title="Widget control" type="button">Widget</button></div>';

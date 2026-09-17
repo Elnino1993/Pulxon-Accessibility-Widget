@@ -166,11 +166,16 @@ test('navigation helpers and the big cursor style the page', async ({ page }) =>
   await expect(home).toHaveCSS('outline-width', '4px');
 });
 
-test('tooltips show the accessible name of the hovered element', async ({ page }) => {
+test('tooltips show the accessible name of the hovered element and stay axe-clean', async ({ page }) => {
   await load(page);
   await enable(page, 'tooltips');
   await page.locator('#link').hover();
   await expect(page.locator('[data-pulxon-tooltip]')).toHaveText('Read the documentation');
+
+  // The tooltip bubble is injected into the host page, outside #pulxon-root, so it needs an
+  // unscoped scan (see connected.spec.ts for the same pattern) to actually be checked while on screen.
+  const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
+  expect(results.violations).toEqual([]);
 });
 
 test('the dyslexia font loads from the fonts folder next to the script', async ({ page }) => {
@@ -267,6 +272,11 @@ test('dictionary offers a lookup link for a selected word without following it',
   await expect(link).toHaveAttribute('href', 'https://en.wiktionary.org/wiki/Plain');
   await expect(link).toHaveAttribute('target', '_blank');
   await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+
+  // The dictionary link is injected into the host page, outside #pulxon-root, so it needs an
+  // unscoped scan (see connected.spec.ts for the same pattern) to actually be checked while on screen.
+  const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
+  expect(results.violations).toEqual([]);
 });
 
 test('a real click opens the dictionary link, surviving the mousedown that precedes it', async ({ page, context }) => {
@@ -347,6 +357,8 @@ test('profiles apply their feature sets and the panel stays axe-clean with every
     'big-cursor',
     'pause-animations',
     'hide-images',
+    'tooltips',
+    'dictionary',
   ]) {
     await enable(page, id);
   }

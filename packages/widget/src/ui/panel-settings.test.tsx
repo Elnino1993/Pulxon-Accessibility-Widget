@@ -1,9 +1,9 @@
 import { act } from 'preact/test-utils';
 import { afterEach, describe, expect, it } from 'vitest';
-import { resolveOptions } from '../config/options';
+import { resolveOptions, type WidgetOptions } from '../config/options';
 import { createController } from '../core/controller';
 import { createRegistry, type FeatureDefinition, type ProfileDefinition } from '../core/registry';
-import { createMemoryStorage } from '../core/storage';
+import { createMemoryStorage, type KeyValueStorage } from '../core/storage';
 import { createSettingsStore } from '../core/store';
 import { createStyleEngine } from '../core/style-engine';
 import { highlightLinks, pauseAnimations } from '../features';
@@ -12,8 +12,13 @@ import { mountUI, type UiHandle } from './mount';
 
 const handles: UiHandle[] = [];
 
-function setup(features: FeatureDefinition[] = [highlightLinks, pauseAnimations], profiles: ProfileDefinition[] = []) {
-  const store = createSettingsStore(createMemoryStorage());
+function setup(
+  features: FeatureDefinition[] = [highlightLinks, pauseAnimations],
+  profiles: ProfileDefinition[] = [],
+  options: Partial<WidgetOptions> = {},
+  storage: KeyValueStorage = createMemoryStorage(),
+) {
+  const store = createSettingsStore(storage);
   const registry = createRegistry(features);
   const styles = createStyleEngine(document, { mode: 'style-tag' });
   const controller = createController({ registry, store, ctx: { doc: document, styles }, profiles });
@@ -21,7 +26,7 @@ function setup(features: FeatureDefinition[] = [highlightLinks, pauseAnimations]
   act(() => {
     holder.ui = mountUI({
       doc: document,
-      options: resolveOptions({}),
+      options: resolveOptions({}, options),
       controller,
       registry,
       store,
@@ -67,6 +72,25 @@ describe('PanelSettings', () => {
     expect(store.get().ui.position).toBe('bottom-left');
   });
 
+  it("shows the launcher's current corner as pressed before the visitor makes any choice", () => {
+    // No stored `settings.ui.position` yet — the launcher still sits wherever the embed's own
+    // `data-position` (here, "top-left") put it, so the grid must read that corner as pressed too,
+    // not leave all eight buttons unpressed while the launcher plainly sits in one of them.
+    const { host } = setup([highlightLinks, pauseAnimations], [], { position: 'top-left' });
+    const pressed = host.shadowRoot!.querySelector<HTMLButtonElement>('[data-pulxon-position="top-left"]')!;
+    expect(pressed.getAttribute('aria-pressed')).toBe('true');
+    const other = host.shadowRoot!.querySelector<HTMLButtonElement>('[data-pulxon-position="bottom-right"]')!;
+    expect(other.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('still writes an explicit position on click even when the embed default was already showing as pressed', async () => {
+    const { host, store } = setup([highlightLinks, pauseAnimations], [], { position: 'top-left' });
+    expect(store.get().ui.position).toBeNull();
+    const corner = host.shadowRoot!.querySelector<HTMLButtonElement>('[data-pulxon-position="top-left"]')!;
+    await act(async () => corner.click());
+    expect(store.get().ui.position).toBe('top-left');
+  });
+
   it('re-renders the panel in the selected language, and reverts on auto', async () => {
     const { host } = setup();
     const title = () => host.shadowRoot!.querySelector('#pulxon-title')!.textContent;
@@ -84,6 +108,21 @@ describe('PanelSettings', () => {
       select.dispatchEvent(new Event('change', { bubbles: true }));
     });
     expect(title()).toBe('Accessibility');
+  });
+
+  it('falls back to "auto" in the picker when the stored language is outside the shipped set', () => {
+    // A `settings.lang` this widget has no matching <option> for — from a newer widget version, or
+    // a hand-edited/stale value — must not leave the native <select> with no option selected
+    // (blank). Pre-seed storage directly since parseSettings stores `lang` as-is, unvalidated.
+    const storage = createMemoryStorage();
+    storage.set(
+      'pulxon:settings',
+      JSON.stringify({ v: 1, features: {}, profile: null, lang: 'fr', ui: { scale: 'normal', position: null } }),
+    );
+    const { host, store } = setup([highlightLinks, pauseAnimations], [], {}, storage);
+    expect(store.get().lang).toBe('fr');
+    const select = host.shadowRoot!.querySelector<HTMLSelectElement>('[data-pulxon-lang-picker]')!;
+    expect(select.value).toBe('auto');
   });
 
   it('names every control for a screen reader', () => {

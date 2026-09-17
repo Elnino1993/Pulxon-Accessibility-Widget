@@ -9,7 +9,7 @@ export function tooltipsCss(zIndex: number): string {
   return (
     `[${ATTR}]{position:absolute!important;z-index:${zIndex}!important;` +
     'background:#111111!important;color:#ffffff!important;border-radius:4px!important;' +
-    'padding:6px 8px!important;max-width:280px!important;pointer-events:none!important;' +
+    'padding:6px 8px!important;max-width:280px!important;' +
     'font-size:13px!important;line-height:1.4!important;box-sizing:border-box!important;' +
     'font-family:system-ui,sans-serif!important}'
   );
@@ -82,10 +82,15 @@ export const tooltips: FeatureDefinition = {
 
     const win = doc.defaultView;
     let tip: HTMLDivElement | null = null;
+    // The element the currently-shown tooltip describes. Needed by `onMouseOut` to tell "the pointer
+    // crossed the gap onto the tooltip bubble" (keep it shown — WCAG 1.4.13 "hoverable") apart from
+    // "the pointer left the hovered element for good" (hide it).
+    let shownFor: Element | null = null;
 
     const hide = (): void => {
       tip?.remove();
       tip = null;
+      shownFor = null;
     };
 
     const show = (target: Element, name: string): void => {
@@ -97,6 +102,7 @@ export const tooltips: FeatureDefinition = {
         tip.setAttribute('aria-hidden', 'true');
         doc.body.appendChild(tip);
       }
+      shownFor = target;
       tip.textContent = name;
       const rect = target.getBoundingClientRect();
       const tipRect = tip.getBoundingClientRect();
@@ -116,7 +122,13 @@ export const tooltips: FeatureDefinition = {
       return name ? { target, name } : null;
     };
 
+    // The tooltip bubble itself carries `data-pulxon-ignore` (so it can never re-trigger its own name
+    // lookup), which would otherwise make `nameFor` treat the pointer entering it as "no name here,
+    // hide" — exactly backwards for a bubble the visitor is now hovering. Moving onto the bubble is a
+    // no-op: it is already shown, and its own content never changes what it displays.
     const onReveal = (event: Event): void => {
+      const target = event.target as Element | null;
+      if (tip && target && (target === tip || tip.contains(target))) return;
       const found = nameFor(event);
       if (!found) {
         hide();
@@ -125,26 +137,38 @@ export const tooltips: FeatureDefinition = {
       show(found.target, found.name);
     };
 
-    const onHide = (): void => hide();
+    // WCAG 1.4.13 "hoverable": a visitor with low vision or a tremor must be able to move the pointer
+    // off the hovered element and onto the tooltip bubble (crossing the gap between them) without it
+    // disappearing. `mouseout` fires as the pointer leaves an element; `relatedTarget` is where it
+    // went. Only hide when that destination is neither inside the element the tooltip describes nor
+    // inside the tooltip itself — i.e. the pointer actually left both.
+    const onMouseOut = (event: MouseEvent): void => {
+      const related = event.relatedTarget as Node | null;
+      if (related && shownFor && (shownFor === related || shownFor.contains(related))) return;
+      if (related && tip && (tip === related || tip.contains(related))) return;
+      hide();
+    };
+
+    const onFocusOut = (): void => hide();
 
     const onKeyDown = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') hide();
     };
 
     doc.addEventListener('mouseover', onReveal);
-    doc.addEventListener('mouseout', onHide);
+    doc.addEventListener('mouseout', onMouseOut);
     doc.addEventListener('focusin', onReveal);
-    doc.addEventListener('focusout', onHide);
+    doc.addEventListener('focusout', onFocusOut);
     doc.addEventListener('keydown', onKeyDown);
-    doc.addEventListener('scroll', onHide, true);
+    doc.addEventListener('scroll', hide, true);
 
     CLEANUPS.set(doc, () => {
       doc.removeEventListener('mouseover', onReveal);
-      doc.removeEventListener('mouseout', onHide);
+      doc.removeEventListener('mouseout', onMouseOut);
       doc.removeEventListener('focusin', onReveal);
-      doc.removeEventListener('focusout', onHide);
+      doc.removeEventListener('focusout', onFocusOut);
       doc.removeEventListener('keydown', onKeyDown);
-      doc.removeEventListener('scroll', onHide, true);
+      doc.removeEventListener('scroll', hide, true);
       hide();
     });
   },

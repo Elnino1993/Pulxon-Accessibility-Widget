@@ -6,6 +6,7 @@ import { positionOverlay } from './tooltips';
 
 const ID = 'dictionary';
 const ATTR = 'data-pulxon-dictionary';
+const NEW_TAB_ATTR = 'data-pulxon-dictionary-newtab';
 const GAP_PX = 8;
 
 // Requires at least one letter so a selection that is only punctuation/marks (e.g. `--`, `'`, or a
@@ -28,7 +29,13 @@ export function dictionaryCss(zIndex: number): string {
     'border-radius:4px!important;padding:6px 10px!important;text-decoration:none!important;' +
     'box-sizing:border-box!important;font-size:13px!important;line-height:1.4!important;' +
     'font-family:system-ui,sans-serif!important}' +
-    `[${ATTR}]:focus-visible{outline:3px solid #ffbf00!important;outline-offset:2px!important}`
+    `[${ATTR}]:focus-visible{outline:3px solid #ffbf00!important;outline-offset:2px!important}` +
+    // The " (opens in a new tab)" suffix (see NEW_TAB_ATTR below) is for screen readers only — same
+    // visually-hidden technique as the panel's own `.sr-only` class (styles.css), reimplemented here
+    // because this link lives in the host page, outside the widget's shadow root that class is scoped to.
+    `[${ATTR}] [${NEW_TAB_ATTR}]{position:absolute!important;width:1px!important;height:1px!important;` +
+    'padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;' +
+    'white-space:nowrap!important;border:0!important}'
   );
 }
 
@@ -52,6 +59,18 @@ function closestAcrossShadow(node: Node | null, selector: string): Element | nul
   return null;
 }
 
+/**
+ * The nearest element containing `node` — `node` itself when it is already an element, otherwise its
+ * parent. Used to find where the selection's end sits in the document, so the lookup link can be
+ * inserted right after it: a keyboard visitor who just selected text there with Shift+Arrow and
+ * presses Tab lands on the link immediately, instead of having to traverse the rest of the page to
+ * reach it at the end of `<body>`.
+ */
+function insertionAnchor(node: Node | null): Element | null {
+  if (!node) return null;
+  return node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+}
+
 const CLEANUPS = new WeakMap<Document, () => void>();
 
 export const dictionary: FeatureDefinition = {
@@ -72,7 +91,7 @@ export const dictionary: FeatureDefinition = {
       link = null;
     };
 
-    const show = (rect: DOMRect, href: string, label: string): void => {
+    const show = (rect: DOMRect, href: string, label: string, newTabSuffix: string, anchor: Element | null): void => {
       if (!link) {
         link = doc.createElement('a');
         link.setAttribute(ATTR, '');
@@ -87,10 +106,21 @@ export const dictionary: FeatureDefinition = {
         // it does not stop the click, and every other way the selection collapses (the visitor
         // clicking elsewhere, pressing an arrow key, and so on) still hides the link as before.
         link.addEventListener('mousedown', (event) => event.preventDefault());
-        doc.body.appendChild(link);
       }
       link.textContent = label;
+      const newTab = doc.createElement('span');
+      newTab.setAttribute(NEW_TAB_ATTR, '');
+      newTab.textContent = ` ${newTabSuffix}`;
+      link.appendChild(newTab);
       link.setAttribute('href', href);
+      // Placed right after the element containing the selection's end, so it sits in the tab order
+      // exactly where the visitor already is, and moved there again on every show in case the
+      // visitor selected a word somewhere else on the page since the link was last shown.
+      if (anchor?.parentNode) {
+        anchor.insertAdjacentElement('afterend', link);
+      } else if (!link.isConnected) {
+        doc.body.appendChild(link);
+      }
       const scrollX = win?.scrollX ?? 0;
       const scrollY = win?.scrollY ?? 0;
       const linkRect = link.getBoundingClientRect();
@@ -120,7 +150,8 @@ export const dictionary: FeatureDefinition = {
         return;
       }
       const range = selection.getRangeAt(0);
-      show(range.getBoundingClientRect(), href, createTranslator(lang)('feature.dictionaryLookup'));
+      const t = createTranslator(lang);
+      show(range.getBoundingClientRect(), href, t('feature.dictionaryLookup'), t('link.newTab'), insertionAnchor(range.endContainer));
     };
 
     doc.addEventListener('selectionchange', onSelectionChange);
