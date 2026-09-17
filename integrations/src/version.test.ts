@@ -18,7 +18,12 @@ const read = (relative: string) => readFileSync(join(here, '..', relative), 'utf
 
 const widgetVersion = readWidgetVersion();
 
-function parseXml(source: string): Document {
+// xmldom's own `Document` (returned by `parseFromString`) is not structurally compatible with
+// the DOM lib's `Document`, so the local is typed as the parser's own return type rather than
+// importing (or shadowing) the DOM lib's name.
+type XmlDocument = ReturnType<DOMParser['parseFromString']>;
+
+function parseXml(source: string): XmlDocument {
   const parser = new DOMParser({ onError: onErrorStopParsing });
   return parser.parseFromString(source, 'application/xml');
 }

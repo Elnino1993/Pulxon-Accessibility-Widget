@@ -74,8 +74,10 @@ describe('buildPackages', () => {
         it('contains the widget script, stripped of its sourceMappingURL comment, plus the two font files and both licence files, alongside the platform\'s own files', async () => {
           const outDir = makeTempDir('pulxon-build-');
           const [result] = await buildPackages({ outDir, only: [pkg.id] });
+          expect(result, `buildPackages did not return a result for ${pkg.id}`).toBeDefined();
+          const built = result!;
 
-          const zip = new AdmZip(result.path);
+          const zip = new AdmZip(built.path);
           const entryNames = zip.getEntries().map((entry) => entry.entryName);
           const root = pkg.zipFolderName;
 
@@ -101,7 +103,9 @@ describe('buildPackages', () => {
         it('ships no shipped script that still references a source map, since no zip carries the .map file', async () => {
           const outDir = makeTempDir('pulxon-build-');
           const [result] = await buildPackages({ outDir, only: [pkg.id] });
-          const zip = new AdmZip(result.path);
+          expect(result, `buildPackages did not return a result for ${pkg.id}`).toBeDefined();
+          const built = result!;
+          const zip = new AdmZip(built.path);
           for (const entry of zip.getEntries()) {
             if (entry.isDirectory || !entry.entryName.endsWith('.js')) continue;
             expect(entry.getData().toString('utf8'), entry.entryName).not.toContain('sourceMappingURL');
@@ -111,7 +115,9 @@ describe('buildPackages', () => {
         it('contains exactly the expected files — the platform\'s own (filtered) source directory plus the widget\'s built assets, nothing more', async () => {
           const outDir = makeTempDir('pulxon-build-');
           const [result] = await buildPackages({ outDir, only: [pkg.id] });
-          const zip = new AdmZip(result.path);
+          expect(result, `buildPackages did not return a result for ${pkg.id}`).toBeDefined();
+          const built = result!;
+          const zip = new AdmZip(built.path);
           const root = pkg.zipFolderName;
 
           const fileEntries = zip

@@ -21,9 +21,11 @@ function splitSections(source: string): Map<string, string> {
   const sections = new Map<string, string>();
   for (let i = 0; i < matches.length; i += 1) {
     const match = matches[i];
+    if (!match) continue;
     const name = `___${match[1]}___`;
     const start = (match.index ?? 0) + match[0].length;
-    const end = i + 1 < matches.length ? (matches[i + 1].index ?? source.length) : source.length;
+    const next = matches[i + 1];
+    const end = next ? (next.index ?? source.length) : source.length;
     sections.set(name, source.slice(start, end).trim());
   }
   return sections;
@@ -87,12 +89,15 @@ describe('___TEMPLATE_PARAMETERS___', () => {
 
   it('takes only the script URL — Tag Manager cannot set data-* attributes on an injected script, so there is nothing else to configure here', () => {
     expect(params.length).toBe(1);
-    expect(params[0].name).toBe('scriptUrl');
+    const [param] = params;
+    expect(param).toBeDefined();
+    expect(param!.name).toBe('scriptUrl');
   });
 
   it('accepts any https:// URL — the widget is self-hosted per site, not published to a fixed npm/CDN path', () => {
     const [scriptUrl] = params;
-    const validators = (scriptUrl.valueValidators as Array<Record<string, unknown>>) ?? [];
+    expect(scriptUrl).toBeDefined();
+    const validators = (scriptUrl!.valueValidators as Array<Record<string, unknown>>) ?? [];
     expect(validators.some((v) => v.type === 'NON_EMPTY')).toBe(true);
 
     const schemeValidator = validators.find((v) => v.type !== 'NON_EMPTY');
@@ -103,8 +108,9 @@ describe('___TEMPLATE_PARAMETERS___', () => {
       expect((schemeValidator.args as string[])[0]).toBe('https://');
     } else if (schemeValidator?.type === 'REGEX') {
       const pattern = (schemeValidator.args as string[])[0];
-      expect(new RegExp(pattern).test('https://example.com/pulxon/pulxon.min.js')).toBe(true);
-      expect(new RegExp(pattern).test('http://example.com/pulxon/pulxon.min.js')).toBe(false);
+      expect(pattern).toBeDefined();
+      expect(new RegExp(pattern!).test('https://example.com/pulxon/pulxon.min.js')).toBe(true);
+      expect(new RegExp(pattern!).test('http://example.com/pulxon/pulxon.min.js')).toBe(false);
     } else {
       throw new Error(`unexpected validator type: ${JSON.stringify(schemeValidator)}`);
     }
@@ -146,7 +152,8 @@ describe('___WEB_PERMISSIONS___', () => {
     // permission has to be widened to match — but it must still require https, and must
     // still stop short of an unrestricted "inject from anywhere" grant.
     const [permission] = permissions.filter((entry) => entry.instance?.key?.publicId === 'inject_script');
-    const urlsParam = permission.instance?.param?.find((p) => p.key === 'urls');
+    expect(permission).toBeDefined();
+    const urlsParam = permission!.instance?.param?.find((p) => p.key === 'urls');
     const urls = urlsParam?.value.listItem?.map((item) => item.string) ?? [];
     expect(urls.length).toBeGreaterThan(0);
     for (const url of urls) {

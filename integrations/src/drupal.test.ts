@@ -44,11 +44,16 @@ describe('pulxon.libraries.yml', () => {
     const names = Object.keys(libraries);
     expect(names.length).toBe(1);
 
-    const library = libraries[names[0]];
-    const jsEntries = Object.entries(library.js ?? {});
+    const [name] = names;
+    expect(name, 'no library name found').toBeDefined();
+    const library = libraries[name!];
+    expect(library, `no library entry for "${name}"`).toBeDefined();
+    const jsEntries = Object.entries(library!.js ?? {});
     expect(jsEntries.length).toBe(1);
 
-    const [file, definition] = jsEntries[0];
+    const [entry] = jsEntries;
+    expect(entry, 'no js entry found').toBeDefined();
+    const [file, definition] = entry!;
     expect(file).toMatch(/pulxon\.min\.js$/);
     expect(definition.attributes).toEqual(expect.objectContaining({ defer: true }));
   });
@@ -59,7 +64,7 @@ describe('pulxon.routing.yml', () => {
     const routing = parseYaml(routingYamlSource) as Record<string, { requirements?: Record<string, string> }>;
     const route = routing['pulxon.settings'];
     expect(route).toBeDefined();
-    expect(route.requirements?._permission).toBe('administer site configuration');
+    expect(route!.requirements?._permission).toBe('administer site configuration');
   });
 });
 
@@ -88,8 +93,9 @@ describe('config/schema/pulxon.schema.yml', () => {
     const schema = parseYaml(schemaYamlSource) as Record<string, { mapping?: Record<string, { type?: string }> }>;
     const mapping = schema['pulxon.settings']?.mapping ?? {};
     for (const setting of SETTINGS) {
-      expect(mapping[setting], `schema must type "${setting}"`).toBeDefined();
-      expect(mapping[setting].type).toBeTruthy();
+      const entry = mapping[setting];
+      expect(entry, `schema must type "${setting}"`).toBeDefined();
+      expect(entry!.type).toBeTruthy();
     }
   });
 });

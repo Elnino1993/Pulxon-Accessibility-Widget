@@ -28,13 +28,21 @@ const POSITIONS = ['top-left', 'top-center', 'top-right', 'center-left', 'center
 const SIZES = ['small', 'medium', 'large'];
 const ICONS = ['person', 'eye', 'contrast'];
 
-function parseXml(source: string): Document {
+// xmldom's own `Document` (returned by `parseFromString`) is not structurally compatible with
+// the DOM lib's `Document`, so the local is typed as the parser's own return type rather than
+// importing (or shadowing) the DOM lib's name.
+type XmlDocument = ReturnType<DOMParser['parseFromString']>;
+// Likewise, xmldom's own `Element` (as returned by its `Document`) is not the DOM lib's
+// `Element`, so it's derived from the parser's own types rather than the global name.
+type XmlElement = NonNullable<XmlDocument['documentElement']>;
+
+function parseXml(source: string): XmlDocument {
   const parser = new DOMParser({ onError: onErrorStopParsing });
   return parser.parseFromString(source, 'application/xml');
 }
 
-function fieldsByName(doc: Document): Map<string, Element> {
-  const fields = new Map<string, Element>();
+function fieldsByName(doc: XmlDocument): Map<string, XmlElement> {
+  const fields = new Map<string, XmlElement>();
   const nodes = doc.getElementsByTagName('field');
   for (let i = 0; i < nodes.length; i += 1) {
     const field = nodes.item(i);
@@ -45,7 +53,7 @@ function fieldsByName(doc: Document): Map<string, Element> {
   return fields;
 }
 
-function optionValues(field: Element): string[] {
+function optionValues(field: XmlElement): string[] {
   const options = field.getElementsByTagName('option');
   const values: string[] = [];
   for (let i = 0; i < options.length; i += 1) {
@@ -62,9 +70,10 @@ describe('the Joomla module manifest', () => {
   it('declares a site module with a version and its shipped files', () => {
     const doc = parseXml(manifestSource);
     const extension = doc.documentElement;
-    expect(extension.tagName).toBe('extension');
-    expect(extension.getAttribute('type')).toBe('module');
-    expect(extension.getAttribute('client')).toBe('site');
+    expect(extension, 'manifest has no document element').not.toBeNull();
+    expect(extension!.tagName).toBe('extension');
+    expect(extension!.getAttribute('type')).toBe('module');
+    expect(extension!.getAttribute('client')).toBe('site');
 
     const version = doc.getElementsByTagName('version').item(0);
     expect(version?.textContent?.trim()).toBeTruthy();
