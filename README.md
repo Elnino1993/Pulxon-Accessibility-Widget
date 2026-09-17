@@ -96,6 +96,10 @@ color), `keyboard`.
 | `data-branding` | `false` hides the "Powered by Pulxon" link; ignored when `data-site-key` is present | `true` |
 | `data-statement-url` | absolute `http:`/`https:` URL of your site's own accessibility statement | — |
 
+`data-mobile-position` is only a default for visitors who haven't chosen anything: the panel lets a
+visitor move the widget to any corner themselves, and once they have, their choice follows them at
+every screen size — including narrow ones — instead of being reset back to `data-mobile-position`.
+
 Keyboard: `Alt+A` opens or closes the menu. Add `data-pulxon-ignore` to any
 element to exclude it from page adjustments.
 

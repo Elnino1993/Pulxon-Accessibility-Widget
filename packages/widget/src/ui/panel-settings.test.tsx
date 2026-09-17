@@ -67,6 +67,25 @@ describe('PanelSettings', () => {
     expect(store.get().ui.position).toBe('bottom-left');
   });
 
+  it('re-renders the panel in the selected language, and reverts on auto', async () => {
+    const { host } = setup();
+    const title = () => host.shadowRoot!.querySelector('#pulxon-title')!.textContent;
+    expect(title()).toBe('Accessibility');
+
+    const select = host.shadowRoot!.querySelector<HTMLSelectElement>('[data-pulxon-lang-picker]')!;
+    await act(async () => {
+      select.value = 'es';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    expect(title()).toBe('Accesibilidad');
+
+    await act(async () => {
+      select.value = 'auto';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    expect(title()).toBe('Accessibility');
+  });
+
   it('names every control for a screen reader', () => {
     const { host } = setup();
     for (const selector of ['[data-pulxon-lang-picker]', '[data-pulxon-scale="large"]', '[data-pulxon-position="bottom-left"]']) {

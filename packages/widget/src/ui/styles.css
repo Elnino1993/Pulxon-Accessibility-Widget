@@ -79,8 +79,10 @@
   padding: 0 16px 16px;
   background: #f4f6fb;
   color: #111111;
-  /* Same `--pulxon-scale` the launcher reads; everything else in the panel is sized in `em`/`%`
-     against this base, so it grows with it. */
+  /* Same `--pulxon-scale` the launcher reads. Text throughout the panel is sized in `em`/`%` against
+     this base, so it grows with it — and so are the settings block's own controls (`.segmented` and
+     `.corner-grid` buttons, below): a visitor who asks for a larger widget wants those bigger too,
+     not just the text next to them. */
   font: calc(16px * var(--pulxon-scale, 1)) / 1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   box-shadow: 0 0 24px rgb(0 0 0 / 0.3);
 }
@@ -152,9 +154,11 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
 }
 
 .segmented button {
-  min-width: 44px;
-  min-height: 44px;
-  padding: 8px 14px;
+  /* 2.75em == 44px at the panel's base font size (16px * --pulxon-scale) — the shared touch-target
+     minimum — and grows from there with --pulxon-scale, same as .corner-grid button below. */
+  min-width: 2.75em;
+  min-height: 2.75em;
+  padding: 0.5em 0.875em;
   font: inherit;
   font-weight: 600;
   color: #111111;
@@ -177,19 +181,24 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
    center placement. */
 .corner-grid {
   display: grid;
-  grid-template-columns: repeat(3, 32px);
-  grid-auto-rows: 32px;
+  /* 2.75em == 44px at the panel's base font size — the shared touch-target minimum (see
+     .segmented button) — not a fixed 32px, so the grid grows with --pulxon-scale like the rest of
+     the panel's controls. Nine 2.75em cells plus their gaps still fit inside the 420px-wide panel
+     at a 320px viewport (the narrowest supported): 3 * 44px + 2 * 6px = 144px, well under the
+     ~260px left once the panel's and settings-row's own padding are subtracted. */
+  grid-template-columns: repeat(3, 2.75em);
+  grid-auto-rows: 2.75em;
   gap: 6px;
 }
 
 .corner-grid__spacer {
-  width: 32px;
-  height: 32px;
+  width: 2.75em;
+  height: 2.75em;
 }
 
 .corner-grid button {
-  width: 32px;
-  height: 32px;
+  width: 2.75em;
+  height: 2.75em;
   padding: 0;
   background: #ffffff;
   border: 2px solid #e2e6f0;

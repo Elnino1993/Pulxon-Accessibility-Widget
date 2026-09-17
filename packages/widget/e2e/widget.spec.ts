@@ -86,6 +86,31 @@ test('a configured mobile top-left position also wins over the reset', async ({ 
   expect(box!.y).toBeLessThanOrEqual(OFFSET + 2);
 });
 
+test("a visitor's chosen corner overrides the owner's mobile position at narrow viewports", async ({ page }) => {
+  const OFFSET = 20; // DEFAULT_OPTIONS.offsetX / offsetY
+  await loadWidget(page, { 'data-position': 'top-right', 'data-mobile-position': 'bottom-center' });
+  await page.setViewportSize({ width: 390, height: 844 });
+  const launcher = page.getByRole('button', { name: 'Open accessibility menu' });
+
+  // No visitor choice yet: the owner's `data-mobile-position` still wins (unchanged default).
+  const beforeBox = await launcher.boundingBox();
+  expect(beforeBox).not.toBeNull();
+  const beforeCenterX = beforeBox!.x + beforeBox!.width / 2;
+  expect(beforeCenterX).toBeGreaterThanOrEqual(390 / 2 - 2);
+  expect(beforeCenterX).toBeLessThanOrEqual(390 / 2 + 2);
+
+  // The visitor picks their own corner from the panel — an explicit act about their own need.
+  await launcher.click();
+  await page.getByRole('button', { name: 'Top left' }).click();
+  await page.keyboard.press('Escape');
+
+  // Their choice now wins over the owner's mobile-position default, still at a narrow viewport.
+  const afterBox = await launcher.boundingBox();
+  expect(afterBox).not.toBeNull();
+  expect(afterBox!.x).toBeLessThanOrEqual(OFFSET + 2);
+  expect(afterBox!.y).toBeLessThanOrEqual(OFFSET + 2);
+});
+
 test('panel text size does not depend on the host root font size', async ({ page }) => {
   await serve(page, pageHtml('<script src="/pulxon.min.js"></script>', '<style>html{font-size:62.5%}</style>'));
   await page.goto(`${ORIGIN}/`);
