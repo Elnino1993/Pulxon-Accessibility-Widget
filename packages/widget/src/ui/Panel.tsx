@@ -3,12 +3,23 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import type { Controller } from '../core/controller';
 import { GROUP_ORDER, type FeatureDefinition, type ProfileDefinition } from '../core/registry';
 import type { Settings, SettingsStore } from '../core/store';
+import { voiceCommandsForLang } from '../features/voice-navigation';
 import type { MessageKey, Translator } from '../i18n';
 import { FeatureButton } from './FeatureButton';
 import { handleTrapKeydown } from './focus-trap';
 import { PageStructure } from './PageStructure';
 import { PanelSettings } from './PanelSettings';
 import { TileIcon } from './icons';
+
+const VOICE_NOTE_ID = 'pulxon-voice-note';
+const DICTIONARY_NOTE_ID = 'pulxon-dictionary-note';
+
+/** Id of the note that describes a tile for assistive tech, when that feature has one. */
+function noteIdFor(featureId: string): string | undefined {
+  if (featureId === 'voice-navigation') return VOICE_NOTE_ID;
+  if (featureId === 'dictionary') return DICTIONARY_NOTE_ID;
+  return undefined;
+}
 
 export interface PanelProps {
   t: Translator;
@@ -80,6 +91,7 @@ export function Panel({
 
   const activeProfile = profiles.find((profile) => profile.id === settings.profile);
   const hasVoiceNavigation = features.some((feature) => feature.id === 'voice-navigation');
+  const hasDictionary = features.some((feature) => feature.id === 'dictionary');
 
   return (
     <div
@@ -166,12 +178,25 @@ export function Panel({
                     level={settings.features[feature.id] ?? 0}
                     t={t}
                     onActivate={(id) => controller.toggle(id)}
+                    describedById={noteIdFor(feature.id)}
                   />
                 ))}
               </div>
               {group === 'navigation' && hasVoiceNavigation && (
-                <p data-pulxon-voice-note class="voice-note">
-                  {t('feature.voiceNavigationNote')}
+                <>
+                  <p id={VOICE_NOTE_ID} data-pulxon-voice-note class="feature-note">
+                    {t('feature.voiceNavigationNote')}
+                  </p>
+                  <ul data-pulxon-voice-commands class="voice-commands">
+                    {voiceCommandsForLang(lang).map((command) => (
+                      <li key={command.id}>{command.phrases[0]}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
+              {group === 'reading' && hasDictionary && (
+                <p id={DICTIONARY_NOTE_ID} data-pulxon-dictionary-note class="feature-note">
+                  {t('feature.dictionaryNote')}
                 </p>
               )}
             </section>

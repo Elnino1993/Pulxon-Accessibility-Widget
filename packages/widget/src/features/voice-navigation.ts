@@ -1,4 +1,5 @@
 import type { FeatureDefinition } from '../core/registry';
+import { widgetLang } from './shared';
 
 const ID = 'voice-navigation';
 
@@ -8,6 +9,7 @@ export interface VoiceCommand {
   phrases: readonly string[];
 }
 
+/** English commands, also the fallback table for a language the widget has no commands for. */
 export const VOICE_COMMANDS: readonly VoiceCommand[] = [
   { id: 'scroll-down', phrases: ['scroll down', 'page down'] },
   { id: 'scroll-up', phrases: ['scroll up', 'page up'] },
@@ -16,9 +18,33 @@ export const VOICE_COMMANDS: readonly VoiceCommand[] = [
   { id: 'back', phrases: ['go back'] },
 ] as const;
 
-export function matchCommand(transcript: string): string | null {
+const VOICE_COMMANDS_ES: readonly VoiceCommand[] = [
+  { id: 'scroll-down', phrases: ['bajar', 'desplazar hacia abajo', 'página abajo'] },
+  { id: 'scroll-up', phrases: ['subir', 'desplazar hacia arriba', 'página arriba'] },
+  { id: 'top', phrases: ['ir arriba', 'principio de la página'] },
+  { id: 'bottom', phrases: ['ir abajo', 'final de la página'] },
+  { id: 'back', phrases: ['volver', 'atrás'] },
+] as const;
+
+const COMMANDS_BY_LANG: Record<string, readonly VoiceCommand[]> = {
+  en: VOICE_COMMANDS,
+  es: VOICE_COMMANDS_ES,
+};
+
+/** The BCP-47 tag `SpeechRecognition.lang` is set to, per widget language. */
+const RECOGNITION_LANG_TAGS: Record<string, string> = {
+  en: 'en-US',
+  es: 'es-ES',
+};
+
+/** The command table for a widget language, falling back to the English one it has none for. */
+export function voiceCommandsForLang(lang: string): readonly VoiceCommand[] {
+  return COMMANDS_BY_LANG[lang] ?? VOICE_COMMANDS;
+}
+
+export function matchCommand(transcript: string, lang = 'en'): string | null {
   const said = transcript.trim().toLowerCase().replace(/\s+/g, ' ');
-  for (const command of VOICE_COMMANDS) {
+  for (const command of voiceCommandsForLang(lang)) {
     if (command.phrases.includes(said)) return command.id;
   }
   return null;
@@ -81,6 +107,13 @@ export const voiceNavigation: FeatureDefinition = {
     if (!Ctor) return;
 
     const win = doc.defaultView;
+    // Read once per session: the widget's resolved language, and the command table and recognizer
+    // language tag that go with it. Chrome (and every UA implementing the Web Speech API) transcribes
+    // in whatever `lang` the recognizer is given, defaulting to the document's own language when it
+    // is left unset — never the language the panel happens to be showing. Without setting it here, a
+    // Spanish visitor's audio would be transcribed as English text that can never match a command.
+    const lang = widgetLang(doc);
+    const recognitionLang = RECOGNITION_LANG_TAGS[lang] ?? RECOGNITION_LANG_TAGS.en!;
     // Once teardown runs, no pending restart may fire a new recognizer against a dead feature.
     let active = true;
     let recognition: SpeechRecognitionLike | null = null;
@@ -118,7 +151,7 @@ export const voiceNavigation: FeatureDefinition = {
       const last = results[results.length - 1];
       const transcript = last?.[last.length - 1]?.transcript;
       if (!transcript) return;
-      const command = matchCommand(transcript);
+      const command = matchCommand(transcript, lang);
       if (command) runCommand(command);
     };
 
@@ -130,6 +163,7 @@ export const voiceNavigation: FeatureDefinition = {
       const instance = new Ctor();
       instance.continuous = true;
       instance.interimResults = false;
+      instance.lang = recognitionLang;
       instance.onresult = onResult;
       instance.onend = () => {
         if (active) startOne();

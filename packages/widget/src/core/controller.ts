@@ -112,7 +112,11 @@ export function createController({ registry, store, ctx, profiles }: ControllerI
     const features: Record<string, number> = {};
     for (const [featureId, requested] of Object.entries(profile.features)) {
       const def = registry.get(featureId);
-      if (!def || !supported(def)) continue;
+      // An ephemeral feature (see its doc comment in registry.ts) must never be applied or
+      // persisted by a profile either, for the same reason `applyAll` skips it: it needs a fresh
+      // gesture on its own tile, not a gesture on the profile. Leaving it in here would apply and
+      // persist it, then the very next `applyAll` on reload would drop it and clear the profile too.
+      if (!def || !supported(def) || def.ephemeral) continue;
       if (registry.conflicts(featureId).some((other) => hasOwn(features, other))) continue;
       const next = clampLevel(requested, def.levels);
       if (safely(() => def.apply(ctx, next), featureId)) features[featureId] = next;

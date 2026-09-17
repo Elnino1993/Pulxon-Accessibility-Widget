@@ -7,6 +7,8 @@ export interface FeatureButtonProps {
   level: number;
   t: Translator;
   onActivate: (id: string) => void;
+  /** Id of an element (e.g. a privacy note) that describes this tile for assistive tech. */
+  describedById?: string;
 }
 
 function statusText(feature: FeatureDefinition, level: number, t: Translator): string | null {
@@ -16,7 +18,7 @@ function statusText(feature: FeatureDefinition, level: number, t: Translator): s
   return named ? t(named) : t('level.of', { current: level, total: feature.levels });
 }
 
-export function FeatureButton({ feature, level, t, onActivate }: FeatureButtonProps) {
+export function FeatureButton({ feature, level, t, onActivate, describedById }: FeatureButtonProps) {
   const active = level > 0;
   const multiLevel = feature.levels > 1;
   const status = statusText(feature, level, t);
@@ -27,6 +29,7 @@ export function FeatureButton({ feature, level, t, onActivate }: FeatureButtonPr
       class="tile"
       data-feature={feature.id}
       aria-pressed={active}
+      aria-describedby={describedById}
       onClick={() => onActivate(feature.id)}
     >
       <TileIcon id={feature.id} />

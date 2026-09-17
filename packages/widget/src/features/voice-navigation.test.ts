@@ -4,7 +4,7 @@ import { createRegistry } from '../core/registry';
 import { createMemoryStorage } from '../core/storage';
 import { SETTINGS_KEY, createSettingsStore } from '../core/store';
 import { createStyleEngine } from '../core/style-engine';
-import { matchCommand, voiceNavigation, VOICE_COMMANDS } from './voice-navigation';
+import { matchCommand, voiceCommandsForLang, voiceNavigation, VOICE_COMMANDS } from './voice-navigation';
 
 class FakeRecognition {
   static instances: FakeRecognition[] = [];
@@ -55,6 +55,18 @@ describe('matchCommand', () => {
       expect(matchCommand(command.phrases[0]!)).toBe(command.id);
     }
   });
+
+  it('matches the Spanish table when told to, and does not match Spanish phrases in the English table', () => {
+    for (const command of voiceCommandsForLang('es')) {
+      expect(matchCommand(command.phrases[0]!, 'es')).toBe(command.id);
+    }
+    expect(matchCommand('bajar', 'en')).toBeNull();
+    expect(matchCommand('scroll down', 'es')).toBeNull();
+  });
+
+  it('falls back to the English table for a language the widget has no commands for', () => {
+    expect(matchCommand('scroll down', 'fr')).toBe('scroll-down');
+  });
 });
 
 describe('voiceNavigation', () => {
@@ -73,6 +85,32 @@ describe('voiceNavigation', () => {
 
     voiceNavigation.teardown(context);
     expect(FakeRecognition.instances[0]?.stopped).toBeGreaterThan(0);
+  });
+
+  it('sets the recognizer language from the widget language, defaulting to English', () => {
+    const context = { doc: document, styles: createStyleEngine(document, { mode: 'style-tag' }) };
+    voiceNavigation.apply(context, 1);
+    expect(FakeRecognition.instances[0]?.lang).toBe('en-US');
+    voiceNavigation.teardown(context);
+  });
+
+  it('matches a Spanish phrase and sets the recognizer language on a Spanish widget', () => {
+    // `dictionary.ts` reads the widget's resolved language the same way, from the
+    // `data-pulxon-lang` attribute `mountUI` sets on the (light-DOM) host.
+    const host = document.createElement('div');
+    host.setAttribute('data-pulxon-lang', 'es');
+    document.body.append(host);
+
+    const scroll = vi.spyOn(window, 'scrollBy').mockImplementation(() => undefined);
+    const context = { doc: document, styles: createStyleEngine(document, { mode: 'style-tag' }) };
+    voiceNavigation.apply(context, 1);
+
+    expect(FakeRecognition.instances[0]?.lang).toBe('es-ES');
+    FakeRecognition.instances[0]?.onresult?.({ results: [[{ transcript: 'bajar' }]] });
+    expect(scroll).toHaveBeenCalled();
+
+    voiceNavigation.teardown(context);
+    scroll.mockRestore();
   });
 
   it('scrolls when it hears a command', () => {

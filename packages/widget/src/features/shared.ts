@@ -13,6 +13,11 @@ export function pick<T>(values: readonly [T, ...T[]], level: number): T {
   return values[index] ?? values[0];
 }
 
+/** The widget's resolved language, read from the `data-pulxon-lang` attribute `mountUI` sets on its mount point. */
+export function widgetLang(doc: Document): string {
+  return doc.querySelector('[data-pulxon-lang]')?.getAttribute('data-pulxon-lang') ?? 'en';
+}
+
 export interface CssFeatureInput {
   id: string;
   group: FeatureGroup;

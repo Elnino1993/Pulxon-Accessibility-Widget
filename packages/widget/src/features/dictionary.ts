@@ -1,6 +1,7 @@
 import type { FeatureContext, FeatureDefinition } from '../core/registry';
 import { createTranslator, normalizeLanguage } from '../i18n';
 import { overlayZIndex } from './reading-overlays';
+import { widgetLang } from './shared';
 import { positionOverlay } from './tooltips';
 
 const ID = 'dictionary';
@@ -29,11 +30,6 @@ export function dictionaryCss(zIndex: number): string {
     'font-family:system-ui,sans-serif!important}' +
     `[${ATTR}]:focus-visible{outline:3px solid #ffbf00!important;outline-offset:2px!important}`
   );
-}
-
-/** The widget's resolved language, read from the `data-pulxon-lang` attribute `mountUI` sets on its mount point. */
-function widgetLang(doc: Document): string {
-  return doc.querySelector('[data-pulxon-lang]')?.getAttribute('data-pulxon-lang') ?? 'en';
 }
 
 /**
@@ -83,6 +79,14 @@ export const dictionary: FeatureDefinition = {
         link.setAttribute('data-pulxon-ignore', '');
         link.setAttribute('target', '_blank');
         link.setAttribute('rel', 'noopener noreferrer');
+        // A `mousedown` on the link is the browser's cue to move the caret (and so collapse the
+        // active selection) to wherever the pointer went down — the same default action it would
+        // take on any other click outside the current selection. Left alone, that collapse (via
+        // `onSelectionChange` below) could remove the link before the `click` that follows it ever
+        // gets a chance to fire. `preventDefault()` here stops only that default caret-move action;
+        // it does not stop the click, and every other way the selection collapses (the visitor
+        // clicking elsewhere, pressing an arrow key, and so on) still hides the link as before.
+        link.addEventListener('mousedown', (event) => event.preventDefault());
         doc.body.appendChild(link);
       }
       link.textContent = label;

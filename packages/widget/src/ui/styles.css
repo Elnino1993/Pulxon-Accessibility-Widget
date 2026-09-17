@@ -353,11 +353,20 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
   border-radius: 12px;
 }
 
-/* Always shown beside the voice-navigation tile, never behind a disclosure — it is the whole
-   reason that feature is allowed to exist. Inherits the panel's own text color, so its contrast
-   against the panel background is the same already-checked contrast as the rest of the copy. */
-.voice-note {
+/* Always shown beside the voice-navigation and dictionary tiles, never behind a disclosure — it is
+   the whole reason those features are allowed to send anything anywhere. Inherits the panel's own
+   text color, so its contrast against the panel background is the same already-checked contrast as
+   the rest of the copy. */
+.feature-note {
   margin: 8px 0 0;
+  font-size: 0.875em;
+}
+
+/* The phrases a visitor can say, right under the voice note so turning the tile on tells them what
+   to do next instead of leaving them guessing. */
+.voice-commands {
+  margin: 6px 0 0;
+  padding: 0 0 0 20px;
   font-size: 0.875em;
 }
 

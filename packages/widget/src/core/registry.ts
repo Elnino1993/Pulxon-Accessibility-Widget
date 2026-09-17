@@ -36,7 +36,9 @@ export interface FeatureDefinition {
    * The feature never survives a page load: `applyAll()` skips it and does not persist its level,
    * so a reload always finds it off. Starting it again on its own, without the visitor asking,
    * would be wrong — e.g. it captures the microphone or camera, or otherwise needs a fresh gesture
-   * each time.
+   * each time. `setProfile()` skips it too, for the same reason: a click on a profile tile is not a
+   * gesture on this feature's own tile, so a profile that names an ephemeral feature must neither
+   * apply nor persist it.
    */
   ephemeral?: boolean;
   /** Return false when the environment cannot support the feature; it is then hidden and never applied. */

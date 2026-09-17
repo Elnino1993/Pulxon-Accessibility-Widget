@@ -81,6 +81,38 @@ describe('dictionary', () => {
     fetchSpy.mockRestore();
   });
 
+  it('hides the link once the selection collapses (e.g. the visitor clicks elsewhere on the page)', () => {
+    const context = ctx();
+    dictionary.apply(context, 1);
+    select('bicycle');
+    expect(document.querySelector('[data-pulxon-dictionary]')).not.toBeNull();
+
+    window.getSelection()?.removeAllRanges();
+    document.dispatchEvent(new Event('selectionchange'));
+    expect(document.querySelector('[data-pulxon-dictionary]')).toBeNull();
+  });
+
+  it('prevents the default mousedown action on the link, so a real click does not collapse the selection first', () => {
+    // In a real browser, `mousedown` on any element other than the current selection collapses
+    // that selection by default — and the link sits outside the selected text. That collapse fires
+    // `selectionchange` synchronously, which used to remove the link before the `click` event that
+    // follows even had a chance to fire on it, so the link was never actually reachable by mouse.
+    // Calling `preventDefault()` on the link's own `mousedown` stops that default collapse without
+    // stopping the click, and this is the behaviour under test — a plain unit test can't reproduce
+    // the browser's own collapse-on-mousedown default, so it checks the one thing that stops it.
+    const context = ctx();
+    dictionary.apply(context, 1);
+    select('bicycle');
+    const link = document.querySelector<HTMLAnchorElement>('[data-pulxon-dictionary]')!;
+
+    const mousedown = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+    link.dispatchEvent(mousedown);
+
+    expect(mousedown.defaultPrevented).toBe(true);
+    // The mousedown must not itself hide the link (only a real selection collapse should).
+    expect(document.querySelector('[data-pulxon-dictionary]')).not.toBeNull();
+  });
+
   it('removes the button on teardown', () => {
     const context = ctx();
     dictionary.apply(context, 1);

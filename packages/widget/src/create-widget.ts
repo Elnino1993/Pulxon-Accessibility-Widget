@@ -53,7 +53,14 @@ export function createWidget(input: CreateWidgetInput = {}): PulxonApi {
 
   controller.applyAll();
 
-  const lang = resolveLanguage(store.get().lang ?? options.lang, doc, win?.navigator);
+  // `pageLang` is the site's own language (embed code / dashboard config / browser default), never
+  // folding in the visitor's stored choice. It becomes `App`'s `lang` prop — the fallback "auto"
+  // falls back to — so clearing a stored choice (the panel's "Match this site" option) really lands
+  // back on the page, not on the very choice being undone. `initialLang` keeps today's behaviour for
+  // the translator `mountUI` renders with before the visitor touches anything: the stored choice
+  // when there is one, otherwise the same page language.
+  const pageLang = resolveLanguage(options.lang, doc, win?.navigator);
+  const initialLang = resolveLanguage(store.get().lang ?? options.lang, doc, win?.navigator);
   const ui = mountUI({
     doc,
     options,
@@ -61,8 +68,8 @@ export function createWidget(input: CreateWidgetInput = {}): PulxonApi {
     registry,
     store,
     profiles,
-    t: createTranslator(lang),
-    lang,
+    t: createTranslator(initialLang),
+    lang: pageLang,
     styleMode: input.styleMode,
     onOpenChange: (open) => emitter.emit(open ? 'open' : 'close', undefined),
   });

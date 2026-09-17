@@ -113,6 +113,32 @@ describe('createWidget', () => {
     expect(mountPoint?.getAttribute('lang')).toBe('es');
   });
 
+  // The shipped version of this test above passes even when create-widget.ts folds the stored
+  // language into the language it hands App as a fallback, because its store starts empty (no
+  // stored choice to fold in). Starting from a store that already holds a chosen language, and then
+  // clearing that choice the way the panel's "Match this site" option does, is what exercises the
+  // fold bug: the fallback must be the page's own language, not the very choice being undone.
+  it('falls back to the page language, not the cleared choice, when the visitor clears a stored language', () => {
+    const storage = createMemoryStorage();
+    storage.set(SETTINGS_KEY, JSON.stringify({ v: 1, features: {}, profile: null, lang: 'es' }));
+    const api = start(storage, undefined, { lang: 'en' });
+    const shadow = () => document.getElementById('pulxon-root')?.shadowRoot;
+    const mountPoint = () => shadow()?.querySelector('button.launcher')?.parentElement;
+    expect(mountPoint()?.getAttribute('lang')).toBe('es');
+
+    act(() => api.open());
+    const select = shadow()!.querySelector<HTMLSelectElement>('[data-pulxon-lang-picker]')!;
+    expect(select.value).toBe('es');
+
+    act(() => {
+      select.value = 'auto';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    expect(mountPoint()?.getAttribute('lang')).toBe('en');
+    expect(shadow()?.querySelector('#pulxon-title')?.textContent).toBe('Accessibility');
+  });
+
   it('turns the API into no-ops after destroy', () => {
     const api = start();
     api.destroy();

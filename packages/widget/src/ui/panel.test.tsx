@@ -6,7 +6,8 @@ import { createRegistry, type FeatureDefinition, type ProfileDefinition } from '
 import { createMemoryStorage } from '../core/storage';
 import { createSettingsStore } from '../core/store';
 import { createStyleEngine } from '../core/style-engine';
-import { highlightLinks, pauseAnimations, voiceNavigation } from '../features';
+import { dictionary, highlightLinks, pauseAnimations, voiceNavigation } from '../features';
+import { VOICE_COMMANDS } from '../features/voice-navigation';
 import { createTranslator } from '../i18n';
 import { mountUI, type UiHandle } from './mount';
 
@@ -119,7 +120,7 @@ describe('Panel', () => {
     const { root, store } = setup();
     act(() => root.querySelector<HTMLButtonElement>('[data-feature="pause-animations"]')?.click());
     expect(store.get().features).toEqual({ 'pause-animations': 1 });
-    act(() => buttonByText(root, 'Reset all settings')?.click());
+    act(() => buttonByText(root, 'Reset page adjustments')?.click());
     expect(store.get().features).toEqual({});
     expect(root.querySelector('[data-feature="pause-animations"]')?.getAttribute('aria-pressed')).toBe('false');
   });
@@ -324,7 +325,7 @@ describe('Panel chrome', () => {
     expect(host.shadowRoot!.querySelector('[data-pulxon-active-profile]')).toBeNull();
   });
 
-  it('explains where voice navigation sends what you say', () => {
+  it('explains where voice navigation sends what you say, lists the commands, and describes the tile for screen readers', () => {
     // `voiceNavigation.isSupported` gates on a `SpeechRecognition` constructor, which this test
     // environment does not provide by default; stub the minimum shape so the tile (and its note)
     // survive `mountUI`'s support filter, the same way voice-navigation.test.ts does.
@@ -344,9 +345,34 @@ describe('Panel chrome', () => {
       const { host } = setup([voiceNavigation], []);
       const note = host.shadowRoot!.querySelector('[data-pulxon-voice-note]');
       expect(note?.textContent).toContain('speech service');
+      expect(note?.id).toBeTruthy();
+
+      // A visitor who turns the tile on needs to see what to say; the panel renders every command's
+      // display phrase as a list under the note.
+      const list = host.shadowRoot!.querySelector('[data-pulxon-voice-commands]');
+      expect(list).not.toBeNull();
+      const items = [...list!.querySelectorAll('li')].map((li) => li.textContent);
+      for (const command of VOICE_COMMANDS) {
+        expect(items).toContain(command.phrases[0]);
+      }
+
+      // A screen-reader visitor on the tile itself must hear the privacy note, not just a visitor
+      // who happens to read the paragraph below the whole group.
+      const tile = host.shadowRoot!.querySelector('[data-feature="voice-navigation"]');
+      expect(tile?.getAttribute('aria-describedby')).toBe(note?.id);
     } finally {
       delete (window as unknown as { SpeechRecognition?: unknown }).SpeechRecognition;
     }
+  });
+
+  it('explains where the dictionary link sends the visitor and describes the tile for screen readers', () => {
+    const { host } = setup([dictionary], []);
+    const note = host.shadowRoot!.querySelector('[data-pulxon-dictionary-note]');
+    expect(note?.textContent).toContain('Wiktionary');
+    expect(note?.id).toBeTruthy();
+
+    const tile = host.shadowRoot!.querySelector('[data-feature="dictionary"]');
+    expect(tile?.getAttribute('aria-describedby')).toBe(note?.id);
   });
 
   it('links to the accessibility statement when the site gives one', () => {

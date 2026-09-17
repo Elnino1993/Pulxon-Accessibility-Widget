@@ -269,6 +269,38 @@ test('dictionary offers a lookup link for a selected word without following it',
   await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
 });
 
+test('a real click opens the dictionary link, surviving the mousedown that precedes it', async ({ page, context }) => {
+  // Unlike the test above, this one drives a real click: in a real browser, `mousedown` on any
+  // element other than the current selection collapses that selection by default, and the link
+  // sits outside the selected text. jsdom/happy-dom (used by the unit tests) never reproduce that
+  // default action, so only a real-browser test can confirm the link is actually clickable.
+  await load(page);
+  await enable(page, 'dictionary');
+
+  await page.evaluate(() => {
+    const textNode = document.querySelector('#text')!.firstChild!;
+    const range = document.createRange();
+    range.setStart(textNode, 0);
+    range.setEnd(textNode, 5);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+  });
+
+  const link = page.locator('[data-pulxon-dictionary]');
+  await expect(link).toBeVisible();
+
+  // Stub the destination so the click never makes a real network request to Wiktionary.
+  await context.route('https://en.wiktionary.org/**', (route) =>
+    route.fulfill({ status: 200, contentType: 'text/html', body: '<title>stub</title>' }),
+  );
+
+  const [popup] = await Promise.all([context.waitForEvent('page', { timeout: 5000 }), link.click()]);
+  await popup.waitForLoadState('domcontentloaded');
+  expect(popup.url()).toBe('https://en.wiktionary.org/wiki/Plain');
+  await popup.close();
+});
+
 test('page structure is accessible and moves focus to the chosen heading', async ({ page }) => {
   await load(page);
   await page.getByRole('button', { name: 'Open accessibility menu' }).click();

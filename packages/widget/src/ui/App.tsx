@@ -30,11 +30,18 @@ export function App({ doc, options, controller, features, store, profiles, t, la
   const wasOpen = useRef(false);
 
   // The visitor's own language choice (settings.lang) wins once they make one; otherwise the panel
-  // keeps rendering with the language `t`/`lang` were mounted with. Recomputing the translator here,
-  // rather than once at mount time in create-widget.ts, is what makes the picker actually re-render
-  // the panel: without this, `t` stays frozen to the initial language forever.
+  // falls back to `lang` (the page's own language). Recomputing the translator here, rather than
+  // once at mount time in create-widget.ts, is what makes the picker actually re-render the panel:
+  // without this, `t` stays frozen to the initial language forever.
   const resolvedLang = resolveStoredLanguage(settings.lang, lang);
-  const activeT = useMemo(() => (resolvedLang === lang ? t : createTranslator(resolvedLang)), [resolvedLang, lang, t]);
+  // `t` was built for whatever language first resolved to (create-widget.ts's stored-language-aware
+  // `initialLang`), which is this render's `resolvedLang` value the very first time this component
+  // runs and never again after — `lang` alone (the page language) is a different thing and, once the
+  // visitor's stored choice happens to equal it again after being something else, would wrongly
+  // reuse a `t` built for a language that render's `resolvedLang` no longer matches. Capturing that
+  // first value once, rather than comparing against `lang`, is what keeps the reuse correct.
+  const tHomeLang = useRef(resolvedLang).current;
+  const activeT = useMemo(() => (resolvedLang === tHomeLang ? t : createTranslator(resolvedLang)), [resolvedLang, tHomeLang, t]);
 
   const onLangChange = (next: string | null): void => {
     store.update((s) => ({ ...s, lang: next }));

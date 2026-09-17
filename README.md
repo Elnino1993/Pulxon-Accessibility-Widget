@@ -4,11 +4,12 @@ Open-source, lightweight accessibility preferences widget for websites.
 Visitors can adjust how a page looks and behaves for them. Settings stay in
 the visitor's browser (`localStorage`). Without `data-site-key`, the widget
 makes no requests other than loading its own files (the script and,
-optionally, its font). In connected mode (`data-site-key` set) it makes one
-request per page view to the Pulxon API to fetch your dashboard settings;
-that request carries the site key in the URL, no cookies and not the page
-URL — though, as with any request, the browser sends the visitor's IP address
-and the page's origin.
+optionally, its font) — except that voice navigation and read aloud, once the
+visitor turns them on, use the browser's own speech services (see below). In
+connected mode (`data-site-key` set) it makes one request per page view to
+the Pulxon API to fetch your dashboard settings; that request carries the
+site key in the URL, no cookies and not the page URL — though, as with any
+request, the browser sends the visitor's IP address and the page's origin.
 
 > A widget is not a substitute for accessible code. Use it together with
 > automated scanning and manual accessibility testing.
@@ -67,7 +68,7 @@ Voice navigation starts only after the visitor turns it on; the panel always
 shows, next to the tile, that the browser sends what they say to its own
 speech recognition service — Pulxon never receives the audio or the
 transcript. The dictionary never fetches anything itself: it renders a link
-to the visitor's browser dictionary (Wiktionary) that they choose to follow.
+to Wiktionary, a third-party site, that the visitor chooses to open.
 
 The panel also has a **Page structure** tool that lists headings, landmarks
 and links and moves focus to the one you choose.

@@ -311,6 +311,21 @@ describe('createController', () => {
     expect(controller.level('a')).toBe(0);
   });
 
+  // Mirrors the applyAll test above: a profile that names an ephemeral feature must not apply or
+  // persist it either. Without this, setProfile would apply it (e.g. resuming the microphone with
+  // no fresh gesture on that specific tile) and persist the level, and the very next page load
+  // would then see applyAll drop it and clear the whole profile choice — the bug the microphone fix
+  // in applyAll was meant to close, just reachable through the other entry point.
+  it('setProfile skips an ephemeral feature and does not persist it', () => {
+    const a = { ...fakeFeature('a'), ephemeral: true };
+    const profile: ProfileDefinition = { id: 'p', labelKey: 'panel.profiles', features: { a: 1 } };
+    const { controller, store } = setup([a], [profile]);
+    expect(controller.setProfile('p')).toBe(true);
+    expect(a.apply).not.toHaveBeenCalled();
+    expect(store.get().features).toEqual({});
+    expect(store.get().profile).toBe('p');
+  });
+
   it('refuses unsupported features and keeps their stored level', () => {
     const a = { ...fakeFeature('a'), isSupported: () => false };
     const seed = JSON.stringify({ v: 1, features: { a: 1 }, profile: null, lang: null });
