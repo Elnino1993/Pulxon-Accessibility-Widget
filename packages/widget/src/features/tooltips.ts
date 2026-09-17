@@ -49,17 +49,21 @@ interface Viewport {
 }
 
 /**
- * Clamps the tooltip horizontally so it never runs past the viewport's right edge, and
- * flips it above the anchor when there isn't room below — the same plain-number,
- * viewport-aware math `pointer-overlay.ts`'s `place` callbacks use (`Math.max`/`Math.min`
- * against a measured viewport size), just applied to both axes.
+ * Clamps a viewport-anchored overlay (a tooltip bubble, the dictionary lookup link, ...) so it
+ * never runs past the viewport's right edge, and flips it above the anchor when there isn't room
+ * below — the same plain-number, viewport-aware math `pointer-overlay.ts`'s `place` callbacks use
+ * (`Math.max`/`Math.min` against a measured viewport size), just applied to both axes.
+ *
+ * Shared by `tooltips.ts` and `dictionary.ts`: both position a small absolutely-positioned element
+ * relative to an anchor rect and must keep it fully on screen, so this is one implementation with
+ * two callers rather than two near-identical copies of the same clamp.
  */
-export function positionTooltip(anchor: Rect, tip: Size, viewport: Viewport, gap: number): { left: number; top: number } {
-  const maxLeft = Math.max(0, viewport.width - tip.width);
+export function positionOverlay(anchor: Rect, size: Size, viewport: Viewport, gap: number): { left: number; top: number } {
+  const maxLeft = Math.max(0, viewport.width - size.width);
   const left = Math.min(Math.max(anchor.left, 0), maxLeft);
 
-  const fitsBelow = anchor.bottom + gap + tip.height <= viewport.height;
-  const top = fitsBelow ? anchor.bottom + gap : Math.max(0, anchor.top - gap - tip.height);
+  const fitsBelow = anchor.bottom + gap + size.height <= viewport.height;
+  const top = fitsBelow ? anchor.bottom + gap : Math.max(0, anchor.top - gap - size.height);
 
   return { left, top };
 }
@@ -99,7 +103,7 @@ export const tooltips: FeatureDefinition = {
       const scrollX = win?.scrollX ?? 0;
       const scrollY = win?.scrollY ?? 0;
       const viewport = { width: win?.innerWidth ?? 0, height: win?.innerHeight ?? 0 };
-      const { left, top } = positionTooltip(rect, tipRect, viewport, GAP_PX);
+      const { left, top } = positionOverlay(rect, tipRect, viewport, GAP_PX);
       tip.style.setProperty('left', `${left + scrollX}px`, 'important');
       tip.style.setProperty('top', `${top + scrollY}px`, 'important');
     };

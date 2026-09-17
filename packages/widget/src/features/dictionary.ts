@@ -1,12 +1,16 @@
 import type { FeatureContext, FeatureDefinition } from '../core/registry';
 import { createTranslator, normalizeLanguage } from '../i18n';
 import { overlayZIndex } from './reading-overlays';
+import { positionOverlay } from './tooltips';
 
 const ID = 'dictionary';
 const ATTR = 'data-pulxon-dictionary';
 const GAP_PX = 8;
 
-const WORD = /^[\p{L}\p{M}'-]{1,40}$/u;
+// Requires at least one letter so a selection that is only punctuation/marks (e.g. `--`, `'`, or a
+// bare combining mark with no base letter) can never pass as a "word" — `'`/`-` remain allowed
+// *within* a word (`it's`, `co-op`), just not as the entire content of one.
+const WORD = /^(?=.*\p{L})[\p{L}\p{M}'-]{1,40}$/u;
 
 /** The Wiktionary entry for a single selected word, or null when the selection is not one word. */
 export function lookupUrl(selection: string, lang: string): string | null {
@@ -85,8 +89,11 @@ export const dictionary: FeatureDefinition = {
       link.setAttribute('href', href);
       const scrollX = win?.scrollX ?? 0;
       const scrollY = win?.scrollY ?? 0;
-      link.style.setProperty('left', `${rect.left + scrollX}px`, 'important');
-      link.style.setProperty('top', `${rect.bottom + scrollY + GAP_PX}px`, 'important');
+      const linkRect = link.getBoundingClientRect();
+      const viewport = { width: win?.innerWidth ?? 0, height: win?.innerHeight ?? 0 };
+      const { left, top } = positionOverlay(rect, linkRect, viewport, GAP_PX);
+      link.style.setProperty('left', `${left + scrollX}px`, 'important');
+      link.style.setProperty('top', `${top + scrollY}px`, 'important');
     };
 
     const onSelectionChange = (): void => {
