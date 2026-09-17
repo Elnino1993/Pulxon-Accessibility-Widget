@@ -131,6 +131,14 @@ export function createController({ registry, store, ctx, profiles }: ControllerI
     for (const [id, storedLevel] of Object.entries(stored)) {
       const def = registry.get(id);
       if (!def || !supported(def)) continue;
+      if (def.ephemeral) {
+        // Never resumed from storage: starting it again without the visitor asking would be wrong
+        // (e.g. it would restart microphone capture). Drop the persisted level too, so the panel
+        // shows the tile as off rather than claiming it is on while nothing is actually running.
+        delete features[id];
+        dropped = true;
+        continue;
+      }
       if (registry.conflicts(id).some((other) => applied.has(other))) {
         delete features[id];
         dropped = true;

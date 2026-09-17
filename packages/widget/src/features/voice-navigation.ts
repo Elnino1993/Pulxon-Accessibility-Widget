@@ -14,7 +14,6 @@ export const VOICE_COMMANDS: readonly VoiceCommand[] = [
   { id: 'top', phrases: ['go to top', 'top of page'] },
   { id: 'bottom', phrases: ['go to bottom', 'bottom of page'] },
   { id: 'back', phrases: ['go back'] },
-  { id: 'stop', phrases: ['stop listening'] },
 ] as const;
 
 export function matchCommand(transcript: string): string | null {
@@ -29,17 +28,28 @@ interface RecognitionResultEvent {
   results: ArrayLike<ArrayLike<{ transcript: string }>>;
 }
 
+/** The subset of `SpeechRecognitionErrorEvent` this feature reads. */
+interface RecognitionErrorEvent {
+  error: string;
+}
+
 interface SpeechRecognitionLike {
   continuous: boolean;
   interimResults: boolean;
   lang: string;
   onresult: ((event: RecognitionResultEvent) => void) | null;
   onend: (() => void) | null;
-  onerror: (() => void) | null;
+  onerror: ((event: RecognitionErrorEvent) => void) | null;
   start(): void;
   stop(): void;
   abort(): void;
 }
+
+// Errors that mean the browser has decided to refuse and must not be retried: a denied or revoked
+// permission, a browser policy blocking the service, or no microphone available. Every other error
+// (e.g. 'no-speech', the browser's own silence timeout, or a transient 'network' failure) falls
+// through to the normal end-of-session restart in `onend`.
+const FATAL_ERRORS = new Set(['not-allowed', 'service-not-allowed', 'audio-capture']);
 
 type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
 
@@ -61,6 +71,9 @@ export const voiceNavigation: FeatureDefinition = {
   group: 'navigation',
   labelKey: 'feature.voiceNavigation',
   levels: 1,
+  // Starting the microphone again on page load, without the visitor asking, would break the
+  // consent promise this feature was built around — see the field's doc comment in registry.ts.
+  ephemeral: true,
   isSupported: (doc) => recognitionCtor(doc) !== null,
   apply: ({ doc }) => {
     if (STATES.has(doc)) return;
@@ -95,9 +108,6 @@ export const voiceNavigation: FeatureDefinition = {
         case 'back':
           win?.history.back();
           break;
-        case 'stop':
-          stopListening();
-          break;
         default:
           break;
       }
@@ -113,8 +123,8 @@ export const voiceNavigation: FeatureDefinition = {
     };
 
     // The browser ends a recognition session after silence; restart it so "listening" stays on
-    // until the visitor or teardown turns it off. A session that ends right after `stop()` (or
-    // during teardown) must not spawn a new one, so both check `active` first.
+    // until the visitor or teardown turns it off. A session that ends right after `stopListening()`
+    // (or during teardown) must not spawn a new one, so both check `active` first.
     const startOne = (): void => {
       if (!active) return;
       const instance = new Ctor();
@@ -124,10 +134,12 @@ export const voiceNavigation: FeatureDefinition = {
       instance.onend = () => {
         if (active) startOne();
       };
-      instance.onerror = () => {
-        // A denied microphone or a browser that refuses mid-session must not throw into the host
-        // page and must not retry in a loop; treat it the same as the visitor saying "stop".
-        stopListening();
+      instance.onerror = (event) => {
+        // A fatal error (permission denied or revoked, browser policy, no microphone) must not
+        // retry in a loop; stop for good. Anything else — most commonly 'no-speech', the browser's
+        // own silence timeout, or a transient 'network' blip — is not fatal: leave `active` alone
+        // and let the `end` event that follows restart the session as usual.
+        if (FATAL_ERRORS.has(event.error)) stopListening();
       };
       recognition = instance;
       try {

@@ -32,6 +32,13 @@ export interface FeatureDefinition {
   levelLabelKeys?: readonly MessageKey[];
   /** Declared in one direction; the registry makes conflicts symmetric. */
   conflictsWith?: string[];
+  /**
+   * The feature never survives a page load: `applyAll()` skips it and does not persist its level,
+   * so a reload always finds it off. Starting it again on its own, without the visitor asking,
+   * would be wrong — e.g. it captures the microphone or camera, or otherwise needs a fresh gesture
+   * each time.
+   */
+  ephemeral?: boolean;
   /** Return false when the environment cannot support the feature; it is then hidden and never applied. */
   isSupported?(doc: Document): boolean;
   apply(ctx: FeatureContext, level: number): void;

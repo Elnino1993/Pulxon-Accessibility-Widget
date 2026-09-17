@@ -301,6 +301,16 @@ describe('createController', () => {
     expect(store.get()).toMatchObject({ features: { a: 2 }, profile: 'calm' });
   });
 
+  it('applyAll skips an ephemeral feature and drops its persisted level', () => {
+    const a = { ...fakeFeature('a'), ephemeral: true };
+    const seed = JSON.stringify({ v: 1, features: { a: 1 }, profile: null, lang: null });
+    const { controller, store } = setup([a], [], seed);
+    controller.applyAll();
+    expect(a.apply).not.toHaveBeenCalled();
+    expect(store.get().features).toEqual({});
+    expect(controller.level('a')).toBe(0);
+  });
+
   it('refuses unsupported features and keeps their stored level', () => {
     const a = { ...fakeFeature('a'), isSupported: () => false };
     const seed = JSON.stringify({ v: 1, features: { a: 1 }, profile: null, lang: null });
