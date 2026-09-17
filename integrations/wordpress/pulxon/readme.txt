@@ -2,13 +2,27 @@
 Contributors: pulxon
 Tags: accessibility, widget, toolbar, usability
 Requires at least: 6.3
-Tested up to: 6.6
 Requires PHP: 7.4
 Stable tag: 0.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 Adds an on-page toolbar that lets a visitor adjust text size, color, spacing and other display preferences.
+
+== This plugin has not been executed ==
+
+This plugin has not been run against a live WordPress installation — it was written and checked
+against WordPress's own documented API only, never installed on a real site. Install it on a
+staging site first, not a production one, and check:
+
+1. The script tag appears before `</body>` (view source, or your browser's network panel — it
+   should load with a 200, from your own site's domain).
+2. The settings save. Open Settings → Pulxon, change something, save, and reload to confirm the
+   value stuck.
+3. The widget opens. Reload a front-end page, find the launcher button, click it, and confirm the
+   panel opens.
+
+If any of those fail, treat it as a real defect and do not proceed to a production install.
 
 == Description ==
 
@@ -57,10 +71,6 @@ enqueues them with `plugins_url()`, so nothing loads from a third-party domain.
 
 The toolbar stops loading immediately. Your saved settings are kept so they are ready again if
 you reactivate the plugin.
-
-== Screenshots ==
-
-1. The Settings → Pulxon options page.
 
 == Changelog ==
 

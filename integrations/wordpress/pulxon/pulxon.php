@@ -84,6 +84,14 @@ function pulxon_add_data_attributes( $attributes ) {
 		return $attributes;
 	}
 
+	// Already validated against the widget's own SITE_KEY shape by the sanitize callback in
+	// includes/settings.php at save time; esc_attr() here is still the same defense-in-depth
+	// every other value in this array gets on the way out.
+	$site_key = get_option( 'pulxon_site_key', '' );
+	if ( $site_key ) {
+		$attributes['data-site-key'] = esc_attr( $site_key );
+	}
+
 	$color = get_option( 'pulxon_color', '' );
 	if ( $color ) {
 		$attributes['data-color'] = esc_attr( $color );

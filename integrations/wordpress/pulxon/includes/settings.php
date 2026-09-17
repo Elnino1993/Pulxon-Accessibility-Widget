@@ -77,6 +77,22 @@ add_action( 'admin_init', 'pulxon_register_settings' );
 function pulxon_register_settings() {
 	register_setting(
 		PULXON_OPTION_GROUP,
+		'pulxon_site_key',
+		array(
+			'type'              => 'string',
+			'sanitize_callback' => function ( $value ) {
+				// The exact shape `SITE_KEY` in `packages/widget/src/config/options.ts`
+				// accepts, spelled the same way (not a looser rule), so a value this plugin
+				// accepts is never one the widget itself would then silently ignore.
+				$value = trim( (string) $value );
+				return '' !== $value && preg_match( '/^pk_(?:live|test)_[A-Za-z0-9]{8,64}$/', $value ) ? $value : '';
+			},
+			'default'           => '',
+		)
+	);
+
+	register_setting(
+		PULXON_OPTION_GROUP,
 		'pulxon_color',
 		array(
 			'type'              => 'string',
@@ -174,6 +190,7 @@ function pulxon_register_settings() {
 		PULXON_SETTINGS_SLUG
 	);
 
+	add_settings_field( 'pulxon_site_key', __( 'Site key', 'pulxon' ), 'pulxon_render_site_key_field', PULXON_SETTINGS_SLUG, PULXON_SETTINGS_SECTION );
 	add_settings_field( 'pulxon_color', __( 'Accent color', 'pulxon' ), 'pulxon_render_color_field', PULXON_SETTINGS_SLUG, PULXON_SETTINGS_SECTION );
 	add_settings_field( 'pulxon_position', __( 'Launcher position', 'pulxon' ), 'pulxon_render_position_field', PULXON_SETTINGS_SLUG, PULXON_SETTINGS_SECTION );
 	add_settings_field( 'pulxon_size', __( 'Launcher size', 'pulxon' ), 'pulxon_render_size_field', PULXON_SETTINGS_SLUG, PULXON_SETTINGS_SECTION );
@@ -182,6 +199,18 @@ function pulxon_register_settings() {
 	add_settings_field( 'pulxon_statement_url', __( 'Accessibility statement URL', 'pulxon' ), 'pulxon_render_statement_url_field', PULXON_SETTINGS_SLUG, PULXON_SETTINGS_SECTION );
 	add_settings_field( 'pulxon_hide_on_mobile', __( 'Hide the widget on mobile', 'pulxon' ), 'pulxon_render_hide_on_mobile_field', PULXON_SETTINGS_SLUG, PULXON_SETTINGS_SECTION );
 	add_settings_field( 'pulxon_branding', __( 'Show the "powered by Pulxon" link', 'pulxon' ), 'pulxon_render_branding_field', PULXON_SETTINGS_SLUG, PULXON_SETTINGS_SECTION );
+}
+
+function pulxon_render_site_key_field() {
+	$value = get_option( 'pulxon_site_key', '' );
+	printf(
+		'<input type="text" name="pulxon_site_key" value="%s" class="regular-text" placeholder="pk_live_..." />',
+		esc_attr( $value )
+	);
+	printf(
+		'<p class="description">%s</p>',
+		esc_html__( "Your site's key, found on the site's page in the Pulxon dashboard. Leaving this empty is fine — the widget then uses only the options set here.", 'pulxon' )
+	);
 }
 
 function pulxon_render_color_field() {

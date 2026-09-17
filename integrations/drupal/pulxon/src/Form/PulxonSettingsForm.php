@@ -76,6 +76,13 @@ class PulxonSettingsForm extends ConfigFormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config('pulxon.settings');
 
+    $form['site_key'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Site key'),
+      '#description' => $this->t("Your site's key, found on the site's page in the Pulxon dashboard. Leaving this empty is fine — the widget then uses only the options set here."),
+      '#default_value' => $config->get('site_key') ?: '',
+    ];
+
     $form['position'] = [
       '#type' => 'select',
       '#title' => $this->t('Launcher position'),
@@ -137,9 +144,26 @@ class PulxonSettingsForm extends ConfigFormBase {
 
   /**
    * {@inheritdoc}
+   *
+   * Rejects a site key that does not match the exact shape `SITE_KEY` in
+   * packages/widget/src/config/options.ts accepts, server-side — the HTML5 pattern attribute
+   * client-side hint alone would not stop a request built by hand.
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    parent::validateForm($form, $form_state);
+
+    $site_key = trim((string) $form_state->getValue('site_key'));
+    if ('' !== $site_key && !preg_match('/^pk_(?:live|test)_[A-Za-z0-9]{8,64}$/', $site_key)) {
+      $form_state->setErrorByName('site_key', $this->t('This does not look like a Pulxon site key. Check the site\'s page in the Pulxon dashboard, or leave this empty.'));
+    }
+  }
+
+  /**
+   * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $this->config('pulxon.settings')
+      ->set('site_key', trim((string) $form_state->getValue('site_key')))
       ->set('position', $form_state->getValue('position'))
       ->set('size', $form_state->getValue('size'))
       ->set('icon', $form_state->getValue('icon'))

@@ -18,6 +18,7 @@
  *
  * This file has not been executed against a live Joomla installation.
  *
+ * @var string $siteKey
  * @var string $position
  * @var string $size
  * @var string $icon
@@ -35,6 +36,9 @@ use Joomla\CMS\Uri\Uri;
 $src = Uri::root() . 'modules/mod_pulxon/assets/pulxon.min.js';
 ?>
 <script src="<?php echo htmlspecialchars($src, ENT_QUOTES, 'UTF-8'); ?>"
+<?php if ('' !== $siteKey) : ?>
+	data-site-key="<?php echo htmlspecialchars($siteKey, ENT_QUOTES, 'UTF-8'); ?>"
+<?php endif; ?>
 <?php if ('' !== $color) : ?>
 	data-color="<?php echo htmlspecialchars($color, ENT_QUOTES, 'UTF-8'); ?>"
 <?php endif; ?>

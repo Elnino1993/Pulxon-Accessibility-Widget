@@ -13,6 +13,14 @@ const manifestSource = read(`${MODULE_DIR}/mod_pulxon.xml`);
 const modulePhp = read(`${MODULE_DIR}/mod_pulxon.php`);
 const templatePhp = read(`${MODULE_DIR}/tmpl/default.php`);
 
+/**
+ * The exact shape `SITE_KEY` in `packages/widget/src/config/options.ts` accepts — hand-copied,
+ * not imported, the same way `POSITIONS`/`SIZES`/`ICONS` are hand-copied below. Joomla's
+ * `validate="regex"` `pattern` attribute takes the raw pattern with no delimiters, so this is
+ * exactly what should appear there.
+ */
+const SITE_KEY_PATTERN_SOURCE = 'pk_(?:live|test)_[A-Za-z0-9]{8,64}';
+
 // The same closed lists the WordPress plugin and `packages/widget/src/config/options.ts`
 // use, spelled exactly the same way, so the module's <option> lists cannot drift from what
 // the widget itself accepts.
@@ -89,13 +97,23 @@ describe('the Joomla module manifest', () => {
     expect(filenames).toContain('LICENSE-widget-MIT.txt');
   });
 
+  it('names README.md in <files>, so Joomla installs it instead of discarding it', () => {
+    const doc = parseXml(manifestSource);
+    const files = doc.getElementsByTagName('files').item(0);
+    expect(files).not.toBeNull();
+    const filenames = Array.from({ length: files?.getElementsByTagName('filename').length ?? 0 }, (_, i) =>
+      files?.getElementsByTagName('filename').item(i)?.textContent?.trim(),
+    );
+    expect(filenames).toContain('README.md');
+  });
+
   it('declares a <config> with one field per option, each with name, type and label', () => {
     const doc = parseXml(manifestSource);
     const config = doc.getElementsByTagName('config').item(0);
     expect(config).not.toBeNull();
 
     const fields = fieldsByName(doc);
-    const expectedOptionFields = ['position', 'size', 'icon', 'color', 'lang', 'statement_url', 'hide_on_mobile', 'branding'];
+    const expectedOptionFields = ['site_key', 'position', 'size', 'icon', 'color', 'lang', 'statement_url', 'hide_on_mobile', 'branding'];
     for (const name of expectedOptionFields) {
       const field = fields.get(name);
       expect(field, `field "${name}" must exist`).toBeDefined();
@@ -114,11 +132,41 @@ describe('the Joomla module manifest', () => {
     expect(optionValues(fields.get('icon')!)).toEqual(ICONS);
     expect(optionValues(fields.get('lang')!)).toEqual(['', 'en', 'es']);
   });
+
+  it('puts the site key field first, before every other option field', () => {
+    const doc = parseXml(manifestSource);
+    const fieldset = doc.getElementsByTagName('fieldset').item(0);
+    expect(fieldset).not.toBeNull();
+    const fields = fieldset!.getElementsByTagName('field');
+    expect(fields.length).toBeGreaterThan(0);
+    expect(fields.item(0)?.getAttribute('name')).toBe('site_key');
+  });
+
+  it('validates the site key field against the widget\'s own accepted shape, and tells the owner where to find it', () => {
+    const doc = parseXml(manifestSource);
+    const fields = fieldsByName(doc);
+    const siteKey = fields.get('site_key');
+    expect(siteKey).toBeDefined();
+    expect(siteKey?.getAttribute('type')).toBe('text');
+    expect(siteKey?.getAttribute('validate')).toBe('regex');
+    expect(siteKey?.getAttribute('pattern')).toBe(SITE_KEY_PATTERN_SOURCE);
+    expect(siteKey?.getAttribute('description')).toMatch(/pulxon dashboard/i);
+    expect(siteKey?.getAttribute('description')).toMatch(/leav(e|ing)[^.]*empty/i);
+  });
 });
 
 describe('mod_pulxon.php', () => {
   it('refuses to run when loaded directly', () => {
     expect(modulePhp).toMatch(/defined\(\s*'_JEXEC'\s*\)\s*or\s*die;/);
+  });
+
+  it('re-validates the site key against the widget\'s own pattern before handing it to the template', () => {
+    // The manifest's validate="regex" rule only runs when an administrator saves through
+    // Joomla's own module-edit UI; a directly-edited params.ini bypasses it entirely. This is
+    // the defense-in-depth re-check, the same discipline every other value in this module gets.
+    expect(modulePhp).toContain(SITE_KEY_PATTERN_SOURCE);
+    expect(modulePhp).toMatch(/preg_match/);
+    expect(modulePhp).toMatch(/\$siteKey\s*=/);
   });
 });
 
@@ -141,10 +189,25 @@ describe('tmpl/default.php', () => {
   it('refuses to run when loaded directly', () => {
     expect(templatePhp).toMatch(/defined\(\s*'_JEXEC'\s*\)\s*or\s*die;/);
   });
+
+  it('emits data-site-key when a site key is set', () => {
+    expect(templatePhp).toContain('$siteKey');
+    expect(templatePhp).toContain('data-site-key=');
+  });
 });
 
 describe('the Joomla module as a whole', () => {
   it('makes no compliance or legal claim', () => {
     expect(`${manifestSource}${modulePhp}${templatePhp}`).not.toMatch(/\b(ADA|WCAG compliant|compliance|certified|lawsuit)\b/i);
+  });
+
+  it('ships its own README.md, disclosing that it has never been executed and telling the owner to publish the module with style="none"', () => {
+    const readme = read(`${MODULE_DIR}/README.md`);
+    expect(readme).toMatch(/has not been (run|executed)/i);
+    expect(readme).toMatch(/staging/i);
+    expect(readme).toMatch(/<\/body>/);
+    expect(readme).toMatch(/settings save/i);
+    expect(readme).toMatch(/widget opens/i);
+    expect(readme).toMatch(/style="none"/);
   });
 });

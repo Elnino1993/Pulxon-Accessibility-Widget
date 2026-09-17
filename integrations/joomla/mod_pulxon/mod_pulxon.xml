@@ -26,6 +26,7 @@
 		<filename module="mod_pulxon">mod_pulxon.php</filename>
 		<filename>LICENSE</filename>
 		<filename>LICENSE-widget-MIT.txt</filename>
+		<filename>README.md</filename>
 		<folder>tmpl</folder>
 		<folder>assets</folder>
 	</files>
@@ -33,6 +34,15 @@
 	<config>
 		<fields name="params">
 			<fieldset name="basic">
+				<field
+					name="site_key"
+					type="text"
+					default=""
+					label="Site key"
+					description="Your site's key, found on the site's page in the Pulxon dashboard. Leaving this empty is fine — the widget then uses only the options set here."
+					validate="regex"
+					pattern="pk_(?:live|test)_[A-Za-z0-9]{8,64}" />
+
 				<field
 					name="position"
 					type="list"

@@ -10,6 +10,14 @@ const plugin = read('wordpress/pulxon/pulxon.php');
 const settings = read('wordpress/pulxon/includes/settings.php');
 const readme = read('wordpress/pulxon/readme.txt');
 
+/**
+ * The exact shape `SITE_KEY` in `packages/widget/src/config/options.ts` accepts — hand-copied,
+ * not imported (PHP cannot import a TypeScript module), the same way `POSITIONS`/`SIZES` are
+ * hand-copied elsewhere in this file. A sanitize callback that accepted anything looser than
+ * this would let a customer save a value the widget itself would silently reject.
+ */
+const SITE_KEY_PATTERN_SOURCE = 'pk_(?:live|test)_[A-Za-z0-9]{8,64}';
+
 describe('the WordPress plugin', () => {
   it('declares the header WordPress needs to list it', () => {
     for (const field of ['Plugin Name:', 'Description:', 'Version:', 'License:', 'Requires at least:', 'Requires PHP:']) {
@@ -89,5 +97,59 @@ describe('the WordPress plugin', () => {
 
   it('makes no claim about compliance', () => {
     expect(`${plugin}${settings}${readme}`).not.toMatch(/\b(ADA|WCAG compliant|compliance|certified|lawsuit)\b/i);
+  });
+
+  describe('the site key field', () => {
+    it('registers pulxon_site_key with a sanitize callback that enforces the widget\'s own site-key shape', () => {
+      const registrationStart = settings.indexOf("register_setting(\n\t\tPULXON_OPTION_GROUP,\n\t\t'pulxon_site_key'");
+      expect(registrationStart, 'no register_setting(...) call for pulxon_site_key').toBeGreaterThanOrEqual(0);
+      const nextRegistration = settings.indexOf('register_setting(', registrationStart + 1);
+      const body = settings.slice(registrationStart, nextRegistration > 0 ? nextRegistration : undefined);
+      expect(body).toContain(SITE_KEY_PATTERN_SOURCE);
+      expect(body).toMatch(/preg_match/);
+    });
+
+    it('renders the site key as the very first field on the settings screen', () => {
+      const siteKeyField = settings.indexOf("add_settings_field( 'pulxon_site_key'");
+      expect(siteKeyField, "add_settings_field( 'pulxon_site_key', ... ) not found").toBeGreaterThanOrEqual(0);
+      const otherFields = ['pulxon_color', 'pulxon_position', 'pulxon_size', 'pulxon_icon', 'pulxon_lang', 'pulxon_statement_url', 'pulxon_hide_on_mobile', 'pulxon_branding'];
+      for (const field of otherFields) {
+        const index = settings.indexOf(`add_settings_field( '${field}'`);
+        expect(index, `add_settings_field( '${field}', ... ) not found`).toBeGreaterThanOrEqual(0);
+        expect(siteKeyField, `site key field must render before ${field}`).toBeLessThan(index);
+      }
+    });
+
+    it('tells the customer where to find their site key and that leaving it empty is fine', () => {
+      const renderFn = settings.match(/function\s+pulxon_render_site_key_field\s*\(\s*\)\s*\{[\s\S]*?\n\}/);
+      expect(renderFn, 'pulxon_render_site_key_field() not found').not.toBeNull();
+      expect(settings).toMatch(/pulxon dashboard/i);
+      expect(settings).toMatch(/leav(e|ing)[^.]*empty/i);
+    });
+
+    it('emits data-site-key on the script tag when a site key is saved', () => {
+      const filterFn = plugin.match(/function\s+pulxon_add_data_attributes[\s\S]*?\n}/);
+      expect(filterFn, 'pulxon_add_data_attributes() not found').not.toBeNull();
+      expect(filterFn![0]).toContain("get_option( 'pulxon_site_key'");
+      expect(filterFn![0]).toContain("\$attributes['data-site-key']");
+    });
+  });
+
+  describe('readme.txt', () => {
+    it('does not claim a Screenshots section it does not ship', () => {
+      expect(readme).not.toMatch(/==\s*Screenshots\s*==/i);
+    });
+
+    it('does not claim a WordPress version was tested, since none was', () => {
+      expect(readme).not.toMatch(/Tested up to:/i);
+    });
+
+    it('discloses plainly that the plugin has never been run, and gives the same first-install checklist as integrations/README.md', () => {
+      expect(readme).toMatch(/has not been (run|executed)/i);
+      expect(readme).toMatch(/staging/i);
+      expect(readme).toMatch(/<\/body>/);
+      expect(readme).toMatch(/settings save/i);
+      expect(readme).toMatch(/widget opens/i);
+    });
   });
 });

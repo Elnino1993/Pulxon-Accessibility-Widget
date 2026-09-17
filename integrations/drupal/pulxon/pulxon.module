@@ -69,6 +69,13 @@ function pulxon_library_info_alter(array &$libraries, $extension) {
   $config = \Drupal::config('pulxon.settings');
   $attributes = [];
 
+  // Already validated against the widget's own SITE_KEY shape by
+  // PulxonSettingsForm::validateForm() before it could ever be saved.
+  $site_key = (string) $config->get('site_key');
+  if ('' !== $site_key) {
+    $attributes['data-site-key'] = $site_key;
+  }
+
   $position = (string) $config->get('position');
   if ('' !== $position) {
     $attributes['data-position'] = $position;

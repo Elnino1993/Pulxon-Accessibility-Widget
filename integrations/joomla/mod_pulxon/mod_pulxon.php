@@ -28,6 +28,15 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Helper\ModuleHelper;
 
 /** @var \Joomla\Registry\Registry $params */
+$siteKey = (string) $params->get('site_key', '');
+// The manifest's validate="regex" rule (mod_pulxon.xml) only runs when an administrator saves
+// through Joomla's own module-edit form; a directly-edited params.ini bypasses it entirely. This
+// re-checks against the exact same shape `SITE_KEY` in
+// packages/widget/src/config/options.ts accepts, so an invalid value is dropped rather than
+// reaching the template.
+if ('' === $siteKey || !preg_match('/^pk_(?:live|test)_[A-Za-z0-9]{8,64}$/', $siteKey)) {
+	$siteKey = '';
+}
 $position     = (string) $params->get('position', 'bottom-right');
 $size         = (string) $params->get('size', 'medium');
 $icon         = (string) $params->get('icon', 'person');

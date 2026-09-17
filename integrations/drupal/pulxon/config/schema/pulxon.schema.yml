@@ -2,6 +2,9 @@ pulxon.settings:
   type: config_object
   label: 'Pulxon settings'
   mapping:
+    site_key:
+      type: string
+      label: 'Site key'
     position:
       type: string
       label: 'Launcher position'

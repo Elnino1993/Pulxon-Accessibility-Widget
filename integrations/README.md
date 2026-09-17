@@ -1,11 +1,11 @@
 # Pulxon integrations
 
-Installable packages and copy-paste snippets that put the Pulxon
-accessibility widget on the platforms site owners actually run, without
-depending on a CDN we have not built. Every package and snippet emits the
-same `<script>` markup, defined once in `src/snippet.ts`
-(`buildScriptTag`), so there is exactly one behaviour to reason about
-across every platform.
+Installable packages, copy-paste snippets and a Google Tag Manager template
+that put the Pulxon accessibility widget on the platforms site owners
+actually run — every one of them self-hosted, with no dependency on any CDN
+Pulxon has not built. Every package and snippet emits the same `<script>`
+markup, defined once in `src/snippet.ts` (`buildScriptTag`), so there is
+exactly one behaviour to reason about across every platform.
 
 ## What each package is
 

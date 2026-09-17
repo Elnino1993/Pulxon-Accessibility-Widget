@@ -9,9 +9,9 @@
  * widget itself.
  */
 import { ZipArchive } from 'archiver';
-import { copyFileSync, createWriteStream, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
+import { copyFileSync, createWriteStream, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -45,14 +45,14 @@ export const PACKAGES: PackageSpec[] = [
     sourceDir: join(integrationsRoot, 'joomla', 'mod_pulxon'),
     zipFolderName: 'mod_pulxon',
     zipBaseName: 'mod_pulxon',
-    ownFiles: ['mod_pulxon.php', 'mod_pulxon.xml', 'tmpl/default.php'],
+    ownFiles: ['mod_pulxon.php', 'mod_pulxon.xml', 'tmpl/default.php', 'README.md'],
   },
   {
     id: 'drupal',
     sourceDir: join(integrationsRoot, 'drupal', 'pulxon'),
     zipFolderName: 'pulxon',
     zipBaseName: 'pulxon-drupal',
-    ownFiles: ['pulxon.info.yml', 'pulxon.module', 'src/Form/PulxonSettingsForm.php'],
+    ownFiles: ['pulxon.info.yml', 'pulxon.module', 'src/Form/PulxonSettingsForm.php', 'README.md'],
   },
 ];
 
@@ -92,6 +92,31 @@ export function assertWidgetBuilt(widgetDistDir: string): void {
   if (!existsSync(fontsDir)) {
     throw new Error(`The widget has not been built: "${fontsDir}" does not exist. Run "pnpm --filter @pulxon/widget build" first.`);
   }
+}
+
+/**
+ * Names that must never reach a customer's zip: editor backups, OS-generated junk, and
+ * directories that don't belong in a source tree in the first place. Used as the `filter` for
+ * every `cpSync` call in `buildOnePackage` below, so a stray `.DS_Store` or a `node_modules`
+ * accidentally created next to a package's source can't get copied in wholesale.
+ */
+const IGNORED_BASENAMES = new Set(['.DS_Store', 'Thumbs.db', 'node_modules', '.git']);
+const IGNORED_SUFFIXES = [/~$/, /\.swp$/i, /\.swo$/i, /\.bak$/i];
+
+export function shouldCopyEntry(path: string): boolean {
+  const name = basename(path);
+  if (IGNORED_BASENAMES.has(name)) return false;
+  return !IGNORED_SUFFIXES.some((suffix) => suffix.test(name));
+}
+
+/**
+ * Strips a trailing `//# sourceMappingURL=...` (or the legacy `//@`) comment from a built
+ * script. None of the zips this build produces carry the matching `.map` file, so a script that
+ * still references one sends anyone who opens devtools on a customer's site to a 404 on their
+ * own domain.
+ */
+export function stripSourceMappingComment(source: string): string {
+  return source.replace(/\r?\n?\/\/[#@]\s*sourceMappingURL=\S*\s*$/, '');
 }
 
 export function readWidgetVersion(widgetPackageJsonPath: string = join(widgetPackageDir, 'package.json')): string {
@@ -138,15 +163,21 @@ async function buildOnePackage(pkg: PackageSpec, widgetDistDir: string, widgetLi
 
     // The platform's own files first (manifest/module code, settings screen, readme, and
     // its own GPL licence) — everything this package needs that isn't produced by a build.
-    cpSync(pkg.sourceDir, pkgStagingDir, { recursive: true });
+    // `filter` keeps an editor backup, OS junk file, or a stray `node_modules` out of the zip.
+    cpSync(pkg.sourceDir, pkgStagingDir, { recursive: true, filter: shouldCopyEntry });
 
     // Then the widget's own built output, which is never committed inside a platform's
     // source directory (it's a build artifact) — added here so the zip is self-contained
     // and the site never depends on a CDN we have not built.
     const assetsDir = join(pkgStagingDir, 'assets');
     mkdirSync(assetsDir, { recursive: true });
-    copyFileSync(join(widgetDistDir, 'pulxon.min.js'), join(assetsDir, 'pulxon.min.js'));
-    cpSync(join(widgetDistDir, 'fonts'), join(assetsDir, 'fonts'), { recursive: true });
+    // Copied as text (not a raw file copy) so the trailing `//# sourceMappingURL=` comment can
+    // be stripped — no zip this build produces carries the matching `.map` file, so a script
+    // that still referenced one would send anyone who opens devtools on a customer's site to a
+    // 404 on their own domain.
+    const widgetScript = readFileSync(join(widgetDistDir, 'pulxon.min.js'), 'utf8');
+    writeFileSync(join(assetsDir, 'pulxon.min.js'), stripSourceMappingComment(widgetScript));
+    cpSync(join(widgetDistDir, 'fonts'), join(assetsDir, 'fonts'), { recursive: true, filter: shouldCopyEntry });
 
     // The widget's own MIT notice, copied from the repo's single canonical copy so it can
     // never drift from what LICENSE actually says, even if a platform directory's own copy
