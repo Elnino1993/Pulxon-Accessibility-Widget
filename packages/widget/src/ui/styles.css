@@ -74,8 +74,8 @@
   bottom: 0;
   width: min(420px, 100vw);
   overflow-y: auto;
-  padding: 16px;
-  background: #ffffff;
+  padding: 0 16px 16px;
+  background: #f4f6fb;
   color: #111111;
   font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   box-shadow: 0 0 24px rgb(0 0 0 / 0.3);
@@ -85,54 +85,93 @@
 .panel--right { right: 0; }
 
 .panel__header {
+  position: sticky;
+  z-index: 1;
+  top: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 8px;
+  margin: 0 -16px 12px;
+  padding: 14px 16px;
+  color: var(--pulxon-on-accent, #ffffff);
+  background: var(--pulxon-accent, #1f4bff);
 }
 
 h2 { margin: 0; font-size: 1.25em; }
 h3 { margin: 16px 0 8px; font-size: 1em; }
 
 .icon-button {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
   min-width: 44px;
   min-height: 44px;
   font-size: 24px;
   line-height: 1;
   color: inherit;
   background: transparent;
-  border: 1px solid #767676;
-  border-radius: 8px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
   cursor: pointer;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* Three columns at the panel's full width, two when a narrow phone shrinks it. */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
+@media (max-width: 380px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .tile {
+  position: relative;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  min-height: 64px;
-  padding: 10px 12px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 92px;
+  padding: 12px 8px;
   font: inherit;
-  text-align: start;
+  font-size: 0.9375em;
+  text-align: center;
   color: #111111;
-  background: #f3f4f6;
-  border: 2px solid transparent;
-  border-radius: 10px;
+  background: #ffffff;
+  border: 2px solid #e2e6f0;
+  border-radius: 12px;
   cursor: pointer;
 }
 
 .tile[aria-pressed="true"] {
+  color: #111111;
+  background: #eef2ff;
+  border-color: var(--pulxon-accent, #1f4bff);
+}
+
+/* A shape, not just a colour: the check tells a colour-blind or greyscale reader the tile is on. */
+.tile[aria-pressed="true"]::after {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
   color: var(--pulxon-on-accent, #ffffff);
+  font-size: 12px;
+  line-height: 1;
   background: var(--pulxon-accent, #1f4bff);
-  border-color: #111111;
+  border-radius: 50%;
+  /* The literal glyph, not a CSS hex escape: the escape is fragile through minification. */
+  content: "✓";
 }
 
 /* The icon is decorative and inherits the tile's color, so it flips with the pressed state and
@@ -145,27 +184,28 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
 
 .tile__status { font-size: 0.875em; }
 
-.tile__dots { display: flex; gap: 4px; }
+.tile__dots { display: flex; justify-content: center; gap: 4px; }
 .dot { width: 8px; height: 8px; border: 1px solid currentColor; border-radius: 50%; }
 .dot--on { background: currentColor; }
 
 .panel__footer {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 16px;
+  gap: 10px;
+  margin-top: 20px;
 }
 
 .reset {
-  min-height: 44px;
-  padding: 8px 16px;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 16px;
   font: inherit;
-  color: #ffffff;
-  background: #111111;
-  border: 0;
-  border-radius: 8px;
+  font-weight: 600;
+  color: var(--pulxon-on-accent, #ffffff);
+  background: var(--pulxon-accent, #1f4bff);
+  border: 2px solid transparent;
+  border-radius: 999px;
   cursor: pointer;
 }
 
@@ -182,7 +222,14 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
 
 .tools { margin-top: 16px; }
 
-.tile--wide { width: 100%; }
+/* The page-structure tool spans the row and reads as a row, not a square card. */
+.tile--wide {
+  width: 100%;
+  flex-direction: row;
+  justify-content: flex-start;
+  min-height: 56px;
+  text-align: start;
+}
 
 .back {
   min-height: 44px;
