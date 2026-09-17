@@ -1,12 +1,25 @@
+import type { Position } from '../config/options';
+import { isPosition } from '../config/options';
 import type { KeyValueStorage } from './storage';
 
 export type FeatureLevels = Record<string, number>;
+
+export type WidgetScale = 'normal' | 'large';
+
+export interface WidgetUiSettings {
+  scale: WidgetScale;
+  /** null means "keep whatever the embed code chose". */
+  position: Position | null;
+}
+
+export const DEFAULT_UI_SETTINGS: WidgetUiSettings = Object.freeze({ scale: 'normal', position: null });
 
 export interface Settings {
   v: 1;
   features: FeatureLevels;
   profile: string | null;
   lang: string | null;
+  ui: WidgetUiSettings;
 }
 
 export const SETTINGS_KEY = 'pulxon:settings';
@@ -16,17 +29,27 @@ export const EMPTY_SETTINGS: Settings = Object.freeze({
   features: Object.freeze({}) as FeatureLevels,
   profile: null,
   lang: null,
+  ui: DEFAULT_UI_SETTINGS,
 }) as Settings;
 
 const MAX_LEVEL = 10;
 
 function freezeSettings(settings: Settings): Settings {
   Object.freeze(settings.features);
+  Object.freeze(settings.ui);
   return Object.freeze(settings);
 }
 
 function emptySettings(): Settings {
-  return freezeSettings({ v: 1, features: {}, profile: null, lang: null });
+  return freezeSettings({ v: 1, features: {}, profile: null, lang: null, ui: DEFAULT_UI_SETTINGS });
+}
+
+function parseUiSettings(value: unknown): WidgetUiSettings {
+  if (!isRecord(value)) return DEFAULT_UI_SETTINGS;
+  return {
+    scale: value.scale === 'normal' || value.scale === 'large' ? value.scale : DEFAULT_UI_SETTINGS.scale,
+    position: isPosition(value.position) ? value.position : DEFAULT_UI_SETTINGS.position,
+  };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -61,6 +84,7 @@ export function parseSettings(raw: string | null): Settings {
       features,
       profile: typeof data.profile === 'string' ? data.profile : null,
       lang: typeof data.lang === 'string' ? data.lang : null,
+      ui: parseUiSettings(data.ui),
     });
   } catch {
     return emptySettings();

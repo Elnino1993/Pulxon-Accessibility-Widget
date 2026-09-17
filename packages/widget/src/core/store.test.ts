@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createMemoryStorage } from './storage';
-import { EMPTY_SETTINGS, SETTINGS_KEY, createSettingsStore, parseSettings, readStoredVersion, type Settings } from './store';
+import { DEFAULT_UI_SETTINGS, EMPTY_SETTINGS, SETTINGS_KEY, createSettingsStore, parseSettings, readStoredVersion, type Settings } from './store';
 
 describe('parseSettings', () => {
   it('returns empty settings for missing, broken or unknown-version data', () => {
@@ -16,7 +16,7 @@ describe('parseSettings', () => {
       profile: 'adhd',
       lang: 5,
     });
-    expect(parseSettings(raw)).toEqual({ v: 1, features: { a: 2 }, profile: 'adhd', lang: null });
+    expect(parseSettings(raw)).toEqual({ v: 1, features: { a: 2 }, profile: 'adhd', lang: null, ui: DEFAULT_UI_SETTINGS });
   });
 
   it('returns a distinct frozen object each time', () => {
@@ -35,7 +35,7 @@ describe('createSettingsStore', () => {
   it('loads existing settings', () => {
     const storage = createMemoryStorage();
     storage.set(SETTINGS_KEY, JSON.stringify({ v: 1, features: { y: 1 }, profile: null, lang: 'es' }));
-    expect(createSettingsStore(storage).get()).toEqual({ v: 1, features: { y: 1 }, profile: null, lang: 'es' });
+    expect(createSettingsStore(storage).get()).toEqual({ v: 1, features: { y: 1 }, profile: null, lang: 'es', ui: DEFAULT_UI_SETTINGS });
   });
 
   it('keeps state frozen after load and after updates', () => {
@@ -66,6 +66,23 @@ describe('createSettingsStore', () => {
 
     expect(seen).toEqual([2]);
     expect(parseSettings(storage.get(SETTINGS_KEY))).toEqual(EMPTY_SETTINGS);
+  });
+});
+
+describe('ui settings', () => {
+  it('defaults the ui settings and keeps them across a reload', () => {
+    const storage = createMemoryStorage();
+    const store = createSettingsStore(storage);
+    expect(store.get().ui).toEqual({ scale: 'normal', position: null });
+
+    store.update((settings) => ({ ...settings, ui: { scale: 'large', position: 'bottom-left' } }));
+    expect(createSettingsStore(storage).get().ui).toEqual({ scale: 'large', position: 'bottom-left' });
+  });
+
+  it('ignores a stored ui object with unknown values', () => {
+    const storage = createMemoryStorage();
+    storage.set(SETTINGS_KEY, JSON.stringify({ v: 1, features: {}, profile: null, lang: null, ui: { scale: 'huge', position: 'orbit' } }));
+    expect(createSettingsStore(storage).get().ui).toEqual({ scale: 'normal', position: null });
   });
 });
 
