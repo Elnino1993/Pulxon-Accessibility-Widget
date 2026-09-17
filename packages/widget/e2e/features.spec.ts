@@ -129,9 +129,11 @@ test('inverted contrast keeps the widget and the reading mask in their real colo
   await enable(page, 'contrast', 1);
   expect(await launcher.evaluate((el) => getComputedStyle(el).filter)).toContain('invert(1)');
   await expect(launcher).toHaveCSS('position', 'fixed');
+  // The default corner: bottom LEFT. What is under test is that the launcher stays pinned to the
+  // viewport, not to the document, so it is the corner that matters, not which one.
   const viewport = page.viewportSize();
   const box = await launcher.boundingBox();
-  expect(box?.x ?? 0).toBeGreaterThan((viewport?.width ?? 0) - 100);
+  expect(box?.x ?? 0).toBeLessThan(100);
   expect(box?.y ?? 0).toBeGreaterThan((viewport?.height ?? 0) - 100);
 
   await enable(page, 'reading-mask');

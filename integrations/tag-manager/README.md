@@ -19,7 +19,7 @@ and so on — from `data-*` attributes on its own `<script>` tag, and only
 from there today (see `packages/widget/src/config/options.ts`,
 `parseDataAttributes`, in the widget repository). Put those two facts
 together and the result is: **a site installed through this template runs
-the widget with its built-in defaults** (bottom-right, medium, a blue
+the widget with its built-in defaults** (bottom-left, medium, a blue
 accent, branding on). There is no field here for a site key, a color, a
 position, or anything else, because a field that did nothing would be worse
 than no field at all.

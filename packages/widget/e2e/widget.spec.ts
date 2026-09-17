@@ -133,16 +133,22 @@ test('the large size button grows the rendered launcher', async ({ page }) => {
 });
 
 test('pressing a corner in the position grid moves the launcher there', async ({ page }) => {
-  await loadWidget(page); // default position is bottom-right
+  await loadWidget(page); // default position is bottom-left
   const launcher = page.getByRole('button', { name: 'Open accessibility menu' });
 
+  const start = await launcher.boundingBox();
+  expect(start).not.toBeNull();
+  expect(start!.x, 'the default launcher sits on the left').toBeLessThan(100);
+
+  // The opposite corner, so both axes have to move: from the default, a move to top LEFT would
+  // leave x where it already was and the assertion would prove half of what it claims.
   await launcher.click();
-  await page.getByRole('button', { name: 'Top left' }).click();
+  await page.getByRole('button', { name: 'Top right' }).click();
   await page.keyboard.press('Escape');
 
   const box = await launcher.boundingBox();
   expect(box).not.toBeNull();
-  expect(box!.x).toBeLessThan(100);
+  expect(box!.x).toBeGreaterThan(start!.x);
   expect(box!.y).toBeLessThan(100);
 });
 
@@ -196,10 +202,12 @@ test('host page transforms do not break fixed positioning of the launcher', asyn
   );
   await page.goto(`${ORIGIN}/`);
   await page.waitForFunction(() => 'Pulxon' in window);
+  // A transformed ancestor makes `position: fixed` resolve against that ancestor instead of the
+  // viewport, which is the bug this guards. The launcher's default corner is bottom left.
   const viewport = page.viewportSize();
   const box = await page.getByRole('button', { name: 'Open accessibility menu' }).boundingBox();
   expect(viewport).not.toBeNull();
-  expect(box?.x ?? 0).toBeGreaterThan((viewport?.width ?? 0) - 100);
+  expect(box?.x ?? 0).toBeLessThan(100);
   expect(box?.y ?? 0).toBeGreaterThan((viewport?.height ?? 0) - 100);
 });
 

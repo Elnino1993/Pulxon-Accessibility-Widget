@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.5.0
+
+### Changed
+
+- The default launcher position is now `bottom-left` instead of `bottom-right`, in the widget
+  itself and in every platform package that ships a default (WordPress, Joomla, Drupal, Tag
+  Manager, the snippets). The bottom-right corner is where sites already put chat bubbles, cookie
+  banners and back-to-top buttons, and a launcher stacked under one of those is unreachable for
+  exactly the visitor who needs it. An embed that sets `data-position`, and a connected site that
+  saved a position in the dashboard, both keep what they chose.
+- The "Powered by Pulxon" signature in the panel footer is now underlined, bold and padded to a
+  24px target, so it reads as the link it always was rather than as coloured text. It still opens
+  https://pulxon.com in a new tab and still disappears when branding is turned off.
+
+### Fixed
+
+- Added `.gitattributes` (`* text=auto eol=lf`). On Windows, git rewrote the committed snippets to
+  CRLF on checkout while the generator emitted LF, so `integrations`' byte-for-byte tests failed on
+  a clean checkout and the zips' contents depended on which machine built them.
+
 ## 0.4.0
 
 ### Added

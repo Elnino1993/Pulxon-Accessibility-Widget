@@ -413,4 +413,21 @@ describe('Panel chrome', () => {
     const { host } = setup([highlightLinks], []);
     expect(host.shadowRoot!.querySelector('[data-pulxon-statement]')).toBeNull();
   });
+
+  it('signs the panel with a link to pulxon.com, on by default', () => {
+    const { host } = setup([highlightLinks], []);
+    const link = host.shadowRoot!.querySelector<HTMLAnchorElement>('[data-pulxon-branding]');
+    expect(link?.href).toBe('https://pulxon.com/?utm_source=widget');
+    expect(link?.textContent).toContain('Pulxon');
+    expect(link?.target).toBe('_blank');
+    // Opening a new tab without saying so leaves a screen-reader user somewhere they did not ask
+    // to be; `noopener` keeps the opened page from reaching back into the customer's site.
+    expect(link?.rel).toContain('noopener');
+    expect(link?.textContent).toMatch(/new tab/i);
+  });
+
+  it('drops the signature when the site turns branding off', () => {
+    const { host } = setup([highlightLinks], [], { branding: false });
+    expect(host.shadowRoot!.querySelector('[data-pulxon-branding]')).toBeNull();
+  });
 });

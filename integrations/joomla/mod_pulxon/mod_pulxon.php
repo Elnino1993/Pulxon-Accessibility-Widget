@@ -37,7 +37,7 @@ $siteKey = (string) $params->get('site_key', '');
 if ('' === $siteKey || !preg_match('/^pk_(?:live|test)_[A-Za-z0-9]{8,64}$/', $siteKey)) {
 	$siteKey = '';
 }
-$position     = (string) $params->get('position', 'bottom-right');
+$position     = (string) $params->get('position', 'bottom-left');
 $size         = (string) $params->get('size', 'medium');
 $icon         = (string) $params->get('icon', 'person');
 $color        = (string) $params->get('color', '#1f4bff');

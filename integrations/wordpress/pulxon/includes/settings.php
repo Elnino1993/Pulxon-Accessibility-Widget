@@ -107,9 +107,9 @@ function pulxon_register_settings() {
 		array(
 			'type'              => 'string',
 			'sanitize_callback' => function ( $value ) {
-				return in_array( $value, pulxon_allowed_positions(), true ) ? $value : 'bottom-right';
+				return in_array( $value, pulxon_allowed_positions(), true ) ? $value : 'bottom-left';
 			},
-			'default'           => 'bottom-right',
+			'default'           => 'bottom-left',
 		)
 	);
 
@@ -222,7 +222,7 @@ function pulxon_render_color_field() {
 }
 
 function pulxon_render_position_field() {
-	$value = get_option( 'pulxon_position', 'bottom-right' );
+	$value = get_option( 'pulxon_position', 'bottom-left' );
 	print '<select name="pulxon_position">';
 	foreach ( pulxon_allowed_positions() as $position ) {
 		printf(

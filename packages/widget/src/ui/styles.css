@@ -330,7 +330,21 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
   cursor: pointer;
 }
 
-.panel__footer a { color: #1f4bff; }
+/* Underlined, not colour alone: these two are the only links in the panel, and a visitor who
+   cannot separate blue text from black text has nothing else to go on (WCAG 1.4.1). The padding
+   also gives them a target of at least 24px, which the plain text line did not have. */
+.panel__footer a {
+  color: #1f4bff;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+}
+.panel__footer a:hover { text-decoration-thickness: 2px; }
 
 .sr-only {
   position: absolute;
