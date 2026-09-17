@@ -1,0 +1,7 @@
+pulxon.settings:
+  path: '/admin/config/user-interface/pulxon'
+  defaults:
+    _form: '\Drupal\pulxon\Form\PulxonSettingsForm'
+    _title: 'Pulxon'
+  requirements:
+    _permission: 'administer site configuration'

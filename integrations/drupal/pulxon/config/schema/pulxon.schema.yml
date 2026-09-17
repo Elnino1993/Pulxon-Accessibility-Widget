@@ -1,0 +1,28 @@
+pulxon.settings:
+  type: config_object
+  label: 'Pulxon settings'
+  mapping:
+    position:
+      type: string
+      label: 'Launcher position'
+    size:
+      type: string
+      label: 'Launcher size'
+    icon:
+      type: string
+      label: 'Launcher icon'
+    color:
+      type: string
+      label: 'Accent color'
+    lang:
+      type: string
+      label: 'Language'
+    statement_url:
+      type: string
+      label: 'Accessibility statement URL'
+    hide_on_mobile:
+      type: boolean
+      label: 'Hide the widget on mobile'
+    branding:
+      type: boolean
+      label: 'Show the "powered by Pulxon" link'

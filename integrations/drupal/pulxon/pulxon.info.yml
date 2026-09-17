@@ -1,0 +1,6 @@
+name: 'Pulxon Accessibility Widget'
+type: module
+description: 'Adds an on-page toolbar that lets a visitor adjust text size, color, spacing and other display preferences. Served from this site''s own files; no third-party request is made.'
+package: Pulxon
+core_version_requirement: ^10 || ^11
+configure: pulxon.settings

@@ -1,0 +1,10 @@
+# The widget's own script, shipped inside this module's assets/ directory
+# (added when the package is built) so the site serves it from its own
+# domain. `preprocess: false` keeps Drupal's JS aggregator from concatenating
+# it with other files: the widget reads its configuration from
+# `document.currentScript` at parse time (see pulxon.module,
+# hook_library_info_alter), and an aggregated file has no single
+# `currentScript` to read from.
+pulxon.widget:
+  js:
+    assets/pulxon.min.js: { attributes: { defer: true }, preprocess: false }

@@ -1,0 +1,115 @@
+<?php
+
+/**
+ * @file
+ * Attaches the Pulxon accessibility widget to the site's front end.
+ *
+ * This file has not been executed against a live Drupal installation: PHP
+ * cannot run in the environment that produced it. Every call below was
+ * checked against the documented Drupal 10/11 API only.
+ */
+
+/**
+ * Implements hook_page_attachments().
+ *
+ * Attaches the widget's own library — the script this module ships in its
+ * own assets/ directory, served from the site's own domain — to every
+ * front-end page. Never attached on an admin route: the widget is a
+ * visitor-facing on-page tool, not an editing aid.
+ */
+function pulxon_page_attachments(array &$attachments) {
+  if (\Drupal::service('router.admin_context')->isAdminRoute()) {
+    return;
+  }
+
+  $attachments['#attached']['library'][] = 'pulxon/pulxon.widget';
+}
+
+/**
+ * Implements hook_library_info_alter().
+ *
+ * The bundled widget reads its configuration from data-* attributes on its
+ * own <script> tag at parse time (`document.currentScript`; see
+ * integrations/src/snippet.ts and
+ * packages/widget/src/config/options.ts, `parseDataAttributes`), not from
+ * `drupalSettings`. So the saved site configuration is added here, to the
+ * library's own JS entry, rather than passed as `drupalSettings` or built
+ * by hand into a second <script> tag. This keeps the widget attached
+ * exactly once, through Drupal's own asset pipeline (see
+ * pulxon.libraries.yml, `preprocess: false`), which still renders the tag
+ * through the Attribute render system — every value assigned into
+ * $libraries[...]['js'][...]['attributes'] is escaped on output the same
+ * way any other render-array attribute is (Drupal's core render pipeline
+ * autoescapes, matching Twig's own autoescape for template output), so no
+ * value here is concatenated into markup by hand.
+ *
+ * Settings are attacker-controlled the moment a site has a second
+ * administrator with the `administer site configuration` permission, which
+ * is exactly why this reads back through Drupal's own escaping rather than
+ * trusting the saved config to already be safe.
+ *
+ * @param array $libraries
+ *   The library definitions for $extension, keyed by library name.
+ * @param string $extension
+ *   The name of the extension that registered the libraries.
+ */
+function pulxon_library_info_alter(array &$libraries, $extension) {
+  if ('pulxon' !== $extension || empty($libraries['pulxon.widget']['js'])) {
+    return;
+  }
+
+  $config = \Drupal::config('pulxon.settings');
+  $attributes = [];
+
+  $position = (string) $config->get('position');
+  if ('' !== $position) {
+    $attributes['data-position'] = $position;
+  }
+
+  $size = (string) $config->get('size');
+  if ('' !== $size) {
+    $attributes['data-size'] = $size;
+  }
+
+  $icon = (string) $config->get('icon');
+  if ('' !== $icon) {
+    $attributes['data-icon'] = $icon;
+  }
+
+  $color = (string) $config->get('color');
+  if ('' !== $color) {
+    $attributes['data-color'] = $color;
+  }
+
+  $lang = (string) $config->get('lang');
+  if ('' !== $lang) {
+    $attributes['data-lang'] = $lang;
+  }
+
+  $statement_url = (string) $config->get('statement_url');
+  if ('' !== $statement_url) {
+    $attributes['data-statement-url'] = $statement_url;
+  }
+
+  // The widget reads `data-hide-on-mobile` as the literal string "true" and
+  // defaults to false, so only an explicit true needs the attribute.
+  if ($config->get('hide_on_mobile')) {
+    $attributes['data-hide-on-mobile'] = 'true';
+  }
+
+  // The widget reads `data-branding` as anything but the string "false" and
+  // defaults to true, so only an explicit false needs the attribute. Unset
+  // config (before the settings form has ever been saved) must not be
+  // treated as an explicit false.
+  if (FALSE === $config->get('branding')) {
+    $attributes['data-branding'] = 'false';
+  }
+
+  if (!$attributes) {
+    return;
+  }
+
+  foreach ($libraries['pulxon.widget']['js'] as $source => $definition) {
+    $libraries['pulxon.widget']['js'][$source]['attributes'] = $attributes + ($definition['attributes'] ?? []);
+  }
+}
