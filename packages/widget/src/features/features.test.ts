@@ -79,6 +79,7 @@ describe('builtinFeatures', () => {
       'read-aloud',
       'reading-mask',
       'reading-guide',
+      'dictionary',
       'big-cursor',
       'pause-animations',
       'hide-images',

@@ -57,6 +57,9 @@ export function mountUI(input: MountUiInput): UiHandle {
   const host = doc.createElement('div');
   host.id = HOST_ID;
   host.setAttribute('data-pulxon-ignore', '');
+  // Read from `document.querySelector`, which never pierces the shadow root below, so this must sit
+  // on the light-DOM host, not on `mountPoint` inside the shadow tree.
+  host.setAttribute('data-pulxon-lang', input.lang ?? 'en');
   if (options.hideOnMobile) host.setAttribute('data-hide-mobile', '');
 
   const shadow = host.attachShadow({ mode: 'open' });

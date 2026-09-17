@@ -29,6 +29,8 @@ export const en = {
   'feature.readingMask': 'Reading mask',
   'feature.readingGuide': 'Reading guide',
   'feature.readAloud': 'Read aloud',
+  'feature.dictionary': 'Dictionary',
+  'feature.dictionaryLookup': 'Look up this word',
   'level.off': 'Off',
   'level.of': 'Level {current} of {total}',
   'level.left': 'Left',

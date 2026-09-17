@@ -1,0 +1,127 @@
+import type { FeatureContext, FeatureDefinition } from '../core/registry';
+import { createTranslator, normalizeLanguage } from '../i18n';
+import { overlayZIndex } from './reading-overlays';
+
+const ID = 'dictionary';
+const ATTR = 'data-pulxon-dictionary';
+const GAP_PX = 8;
+
+const WORD = /^[\p{L}\p{M}'-]{1,40}$/u;
+
+/** The Wiktionary entry for a single selected word, or null when the selection is not one word. */
+export function lookupUrl(selection: string, lang: string): string | null {
+  const word = selection.trim().replace(/^[^\p{L}\p{M}]+|[^\p{L}\p{M}]+$/gu, '');
+  if (!WORD.test(word)) return null;
+  const subdomain = normalizeLanguage(lang) ?? 'en';
+  return `https://${subdomain}.wiktionary.org/wiki/${encodeURIComponent(word)}`;
+}
+
+export function dictionaryCss(zIndex: number): string {
+  return (
+    `[${ATTR}]{position:absolute!important;z-index:${zIndex}!important;` +
+    'background:#111111!important;color:#ffffff!important;border:1px solid #ffffff!important;' +
+    'border-radius:4px!important;padding:6px 10px!important;text-decoration:none!important;' +
+    'box-sizing:border-box!important;font-size:13px!important;line-height:1.4!important;' +
+    'font-family:system-ui,sans-serif!important}' +
+    `[${ATTR}]:focus-visible{outline:3px solid #ffbf00!important;outline-offset:2px!important}`
+  );
+}
+
+/** The widget's resolved language, read from the `data-pulxon-lang` attribute `mountUI` sets on its mount point. */
+function widgetLang(doc: Document): string {
+  return doc.querySelector('[data-pulxon-lang]')?.getAttribute('data-pulxon-lang') ?? 'en';
+}
+
+/**
+ * Like `Element.closest`, but walks out through an open shadow root's host when it runs out of
+ * `parentElement`s — `closest` alone stops at the shadow boundary, which would let a selection
+ * made inside the widget's own (open) shadow-root panel slip past the `[data-pulxon-ignore]` check.
+ */
+function closestAcrossShadow(node: Node | null, selector: string): Element | null {
+  let el: Element | null = node && node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node?.parentElement ?? null;
+  while (el) {
+    if (el.matches(selector)) return el;
+    const parent = el.parentElement;
+    if (parent) {
+      el = parent;
+      continue;
+    }
+    const root = el.getRootNode();
+    el = root instanceof ShadowRoot ? root.host : null;
+  }
+  return null;
+}
+
+const CLEANUPS = new WeakMap<Document, () => void>();
+
+export const dictionary: FeatureDefinition = {
+  id: ID,
+  group: 'reading',
+  labelKey: 'feature.dictionary',
+  levels: 1,
+  apply: (ctx: FeatureContext) => {
+    const { doc, styles } = ctx;
+    styles.set(ID, dictionaryCss(overlayZIndex(ctx.zIndex)));
+    if (CLEANUPS.has(doc) || !doc.body) return;
+
+    const win = doc.defaultView;
+    let link: HTMLAnchorElement | null = null;
+
+    const hide = (): void => {
+      link?.remove();
+      link = null;
+    };
+
+    const show = (rect: DOMRect, href: string, label: string): void => {
+      if (!link) {
+        link = doc.createElement('a');
+        link.setAttribute(ATTR, '');
+        link.setAttribute('data-pulxon-ignore', '');
+        link.setAttribute('target', '_blank');
+        link.setAttribute('rel', 'noopener noreferrer');
+        doc.body.appendChild(link);
+      }
+      link.textContent = label;
+      link.setAttribute('href', href);
+      const scrollX = win?.scrollX ?? 0;
+      const scrollY = win?.scrollY ?? 0;
+      link.style.setProperty('left', `${rect.left + scrollX}px`, 'important');
+      link.style.setProperty('top', `${rect.bottom + scrollY + GAP_PX}px`, 'important');
+    };
+
+    const onSelectionChange = (): void => {
+      const selection = doc.getSelection();
+      if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+        hide();
+        return;
+      }
+      // A selection the visitor made inside the widget's own (open) shadow-root panel must never
+      // offer a lookup for it; `closestAcrossShadow` is required here because a plain `closest()`
+      // call on `selection.anchorNode` cannot walk out past the shadow root to the ignored host.
+      if (closestAcrossShadow(selection.anchorNode, '[data-pulxon-ignore]')) {
+        hide();
+        return;
+      }
+      const lang = widgetLang(doc);
+      const href = lookupUrl(selection.toString(), lang);
+      if (!href) {
+        hide();
+        return;
+      }
+      const range = selection.getRangeAt(0);
+      show(range.getBoundingClientRect(), href, createTranslator(lang)('feature.dictionaryLookup'));
+    };
+
+    doc.addEventListener('selectionchange', onSelectionChange);
+
+    CLEANUPS.set(doc, () => {
+      doc.removeEventListener('selectionchange', onSelectionChange);
+      hide();
+    });
+  },
+  teardown: ({ doc, styles }: FeatureContext) => {
+    CLEANUPS.get(doc)?.();
+    CLEANUPS.delete(doc);
+    styles.remove(ID);
+  },
+};

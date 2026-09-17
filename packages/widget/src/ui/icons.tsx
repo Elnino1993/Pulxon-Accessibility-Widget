@@ -140,6 +140,12 @@ const PATHS: Record<string, JSX.Element> = {
       <path d="M18.3 6.4a8 8 0 0 1 0 11.2" />
     </>
   ),
+  dictionary: (
+    <>
+      <path d="M12 6.5C10.5 5 8.5 4.5 4 4.5v13c4.5 0 6.5.5 8 2 1.5-1.5 3.5-2 8-2v-13c-4.5 0-6.5.5-8 2z" />
+      <path d="M12 6.5v13" />
+    </>
+  ),
 
   // Distractions
   'pause-animations': (

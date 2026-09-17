@@ -31,6 +31,8 @@ export const es: Messages = {
   'feature.readingMask': 'Máscara de lectura',
   'feature.readingGuide': 'Guía de lectura',
   'feature.readAloud': 'Leer en voz alta',
+  'feature.dictionary': 'Diccionario',
+  'feature.dictionaryLookup': 'Buscar esta palabra',
   'level.off': 'Desactivado',
   'level.of': 'Nivel {current} de {total}',
   'level.left': 'Izquierda',

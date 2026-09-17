@@ -1,6 +1,7 @@
 import type { FeatureDefinition } from '../core/registry';
 import { biggerText } from './bigger-text';
 import { contrast, hideImages, saturation } from './color-features';
+import { dictionary } from './dictionary';
 import { dyslexiaFont } from './dyslexia-font';
 import { highlightLinks } from './highlight-links';
 import { bigCursor, focusHighlight, highlightHeadings } from './navigation-features';
@@ -15,6 +16,7 @@ export {
   biggerText,
   boldText,
   contrast,
+  dictionary,
   dyslexiaFont,
   focusHighlight,
   hideImages,
@@ -47,6 +49,7 @@ export const builtinFeatures: FeatureDefinition[] = [
   readAloud,
   readingMask,
   readingGuide,
+  dictionary,
   bigCursor,
   pauseAnimations,
   hideImages,
