@@ -2,5 +2,5 @@ pulxon.settings:
   title: 'Pulxon'
   description: 'Configure the Pulxon accessibility widget: launcher position, size, color, icon, language and more.'
   route_name: pulxon.settings
-  parent: system.admin_config_user-interface
+  parent: system.admin_config_ui
   weight: 0

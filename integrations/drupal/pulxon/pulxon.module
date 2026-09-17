@@ -23,6 +23,14 @@ function pulxon_page_attachments(array &$attachments) {
   }
 
   $attachments['#attached']['library'][] = 'pulxon/pulxon.widget';
+
+  // The library's own <script> tag carries data-* attributes built from
+  // this config (see hook_library_info_alter() below). A page cached
+  // before the config changes — internal page cache, Dynamic Page Cache,
+  // a reverse proxy that honours cache tags — must be invalidated when it
+  // changes, or a visitor keeps being served a page whose script tag has
+  // the stale attributes baked into the rendered HTML.
+  $attachments['#cache']['tags'][] = 'config:pulxon.settings';
 }
 
 /**

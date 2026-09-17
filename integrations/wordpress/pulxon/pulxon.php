@@ -30,7 +30,7 @@ define( 'PULXON_VERSION', '0.4.0' );
 /** Path, relative to this file, to the widget script this plugin serves from the site itself. */
 define( 'PULXON_WIDGET_FILE', 'assets/pulxon.min.js' );
 
-/** The handle used both to enqueue the widget script and to identify it in the script_loader_tag filter. */
+/** The handle used both to enqueue the widget script and to identify it in the wp_script_attributes filter. */
 define( 'PULXON_SCRIPT_HANDLE', 'pulxon-widget' );
 
 if ( is_admin() ) {
@@ -62,43 +62,51 @@ add_action( 'wp_enqueue_scripts', 'pulxon_enqueue_widget' );
 
 /**
  * Adds the saved options to the widget's own script tag as `data-*`
- * attributes. `script_loader_tag` runs once per script on the page, so this
- * returns every other handle's tag completely untouched.
+ * attributes, through the `wp_script_attributes` filter (WordPress 5.7+).
+ * That filter hands over the tag's whole attribute array before it is
+ * rendered to a string, keyed by attribute name, with the script's own id
+ * (`"{$handle}-js"`) already in `$attributes['id']` — so this keys off the
+ * id rather than splicing text into a pre-built `<script ...>` string.
+ * `wp_script_attributes` fires once per script on the page (core's own and
+ * every other plugin's), so every other handle's attributes must pass
+ * through untouched.
  *
- * @param string $tag    The `<script>` tag WordPress generated.
- * @param string $handle The script's registered handle.
- * @return string The tag, with attributes added only when $handle is ours.
+ * WordPress escapes every attribute value in this array when it renders the
+ * tag (`wp_get_script_tag()`), but the values here are still passed through
+ * `esc_attr()`/`esc_url()` on the way in, matching the same defense-in-depth
+ * every other platform's package in this repository uses.
+ *
+ * @param array $attributes Key-value pairs representing `<script>` tag attributes.
+ * @return array The attributes, with ours added only when this is our script.
  */
-function pulxon_add_data_attributes( $tag, $handle ) {
-	if ( PULXON_SCRIPT_HANDLE !== $handle ) {
-		return $tag;
+function pulxon_add_data_attributes( $attributes ) {
+	if ( empty( $attributes['id'] ) || PULXON_SCRIPT_HANDLE . '-js' !== $attributes['id'] ) {
+		return $attributes;
 	}
-
-	$attributes = '';
 
 	$color = get_option( 'pulxon_color', '' );
 	if ( $color ) {
-		$attributes .= ' data-color="' . esc_attr( $color ) . '"';
+		$attributes['data-color'] = esc_attr( $color );
 	}
 
 	$position = get_option( 'pulxon_position', '' );
 	if ( $position ) {
-		$attributes .= ' data-position="' . esc_attr( $position ) . '"';
+		$attributes['data-position'] = esc_attr( $position );
 	}
 
 	$size = get_option( 'pulxon_size', '' );
 	if ( $size ) {
-		$attributes .= ' data-size="' . esc_attr( $size ) . '"';
+		$attributes['data-size'] = esc_attr( $size );
 	}
 
 	$icon = get_option( 'pulxon_icon', '' );
 	if ( $icon ) {
-		$attributes .= ' data-icon="' . esc_attr( $icon ) . '"';
+		$attributes['data-icon'] = esc_attr( $icon );
 	}
 
 	$lang = get_option( 'pulxon_lang', '' );
 	if ( $lang ) {
-		$attributes .= ' data-lang="' . esc_attr( $lang ) . '"';
+		$attributes['data-lang'] = esc_attr( $lang );
 	}
 
 	// esc_url, not esc_attr: a URL saved by one administrator and rendered for
@@ -108,34 +116,22 @@ function pulxon_add_data_attributes( $tag, $handle ) {
 	if ( $statement_url ) {
 		$safe_url = esc_url( $statement_url, array( 'http', 'https' ) );
 		if ( $safe_url ) {
-			$attributes .= ' data-statement-url="' . $safe_url . '"';
+			$attributes['data-statement-url'] = $safe_url;
 		}
 	}
 
 	// The widget reads `data-hide-on-mobile` as the literal string "true" and
 	// defaults to false, so only an explicit true needs the attribute.
 	if ( get_option( 'pulxon_hide_on_mobile', false ) ) {
-		$attributes .= ' data-hide-on-mobile="true"';
+		$attributes['data-hide-on-mobile'] = 'true';
 	}
 
 	// The widget reads `data-branding` as anything but the string "false" and
 	// defaults to true, so only an explicit false needs the attribute.
 	if ( ! get_option( 'pulxon_branding', true ) ) {
-		$attributes .= ' data-branding="false"';
+		$attributes['data-branding'] = 'false';
 	}
 
-	if ( '' === $attributes ) {
-		return $tag;
-	}
-
-	// Insert the attributes before the tag's own ` src`, and only the first
-	// one: str_replace would rewrite every occurrence, including a ` src`
-	// that happened to appear inside the URL itself.
-	$position_of_src = strpos( $tag, ' src' );
-	if ( false === $position_of_src ) {
-		return $tag;
-	}
-
-	return substr_replace( $tag, $attributes, $position_of_src, 0 );
+	return $attributes;
 }
-add_filter( 'script_loader_tag', 'pulxon_add_data_attributes', 10, 2 );
+add_filter( 'wp_script_attributes', 'pulxon_add_data_attributes' );

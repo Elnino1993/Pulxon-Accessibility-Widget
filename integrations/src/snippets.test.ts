@@ -27,6 +27,17 @@ describe('each platform snippet', () => {
       it('carries a comment naming where it goes', () => {
         expect(source).toContain(platform.installLocation);
       });
+
+      it('carries a comment telling the owner to upload the widget files first, since the script now loads from their own site', () => {
+        expect(source).toMatch(/upload/i);
+        expect(source).toContain('/pulxon/');
+        expect(source).toMatch(/fonts/i);
+      });
+
+      it('points at a path on the owner\'s own site, not a third-party CDN', () => {
+        expect(source).not.toMatch(/jsdelivr\.net|unpkg\.com/i);
+        expect(source).toContain(WIDGET_SRC);
+      });
     });
   }
 
@@ -52,6 +63,12 @@ describe('snippets/README.md', () => {
 
   it('makes no compliance or legal claim', () => {
     expect(readmeSource).not.toMatch(/\b(ADA|WCAG compliant|compliance|certified|lawsuit)\b/i);
+  });
+
+  it('tells the owner to self-host by uploading the widget files, not to rely on jsDelivr or unpkg', () => {
+    expect(readmeSource).not.toMatch(/jsdelivr\.net|unpkg\.com/i);
+    expect(readmeSource).toContain('/pulxon/');
+    expect(readmeSource).toMatch(/upload/i);
   });
 });
 

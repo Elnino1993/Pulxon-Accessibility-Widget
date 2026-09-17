@@ -74,6 +74,21 @@ describe('the Joomla module manifest', () => {
     expect(folders).toContain('assets');
   });
 
+  it('names both licence files in <files>, so Joomla installs them instead of discarding them', () => {
+    // Joomla's installer copies only what <files> lists. The build (src/build.ts) ships
+    // LICENSE (this module's own GPL notice) and LICENSE-widget-MIT.txt (the bundled
+    // widget's MIT notice, required by the legal constraints) alongside mod_pulxon.php —
+    // if either is missing from <files>, Joomla silently drops it at install time.
+    const doc = parseXml(manifestSource);
+    const files = doc.getElementsByTagName('files').item(0);
+    expect(files).not.toBeNull();
+    const filenames = Array.from({ length: files?.getElementsByTagName('filename').length ?? 0 }, (_, i) =>
+      files?.getElementsByTagName('filename').item(i)?.textContent?.trim(),
+    );
+    expect(filenames).toContain('LICENSE');
+    expect(filenames).toContain('LICENSE-widget-MIT.txt');
+  });
+
   it('declares a <config> with one field per option, each with name, type and label', () => {
     const doc = parseXml(manifestSource);
     const config = doc.getElementsByTagName('config').item(0);

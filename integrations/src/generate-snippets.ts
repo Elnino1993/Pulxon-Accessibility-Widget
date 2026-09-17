@@ -17,14 +17,15 @@ import { buildScriptTag } from './snippet';
 /**
  * These platforms have no installable-package format (no plugin store, no
  * theme file a build step can zip) — a site owner pastes HTML/Liquid
- * directly into a field the platform gives them. There is nowhere on any of
- * these platforms to upload the widget's own files, so, unlike the
- * WordPress/Joomla/Drupal packages, the script is loaded from jsDelivr
- * (which serves any published version of the `@pulxon/widget` npm package
- * automatically — see the widget's own top-level README "Quick start"),
- * pinned to an exact version.
+ * directly into a field the platform gives them. `@pulxon/widget` has never
+ * been published to npm, so a jsDelivr (or unpkg) URL 404s; there is no
+ * Pulxon-run CDN either. Like the WordPress/Joomla/Drupal packages, these
+ * snippets self-host instead: the owner uploads the widget's built files
+ * (from the widget zip) to a `/pulxon/` folder at their own site's root —
+ * see `integrations/snippets/README.md` — and this path resolves against
+ * that folder, on the owner's own domain.
  */
-export const WIDGET_SRC = 'https://cdn.jsdelivr.net/npm/@pulxon/widget@0.4.0/dist/pulxon.min.js';
+export const WIDGET_SRC = '/pulxon/pulxon.min.js';
 
 export interface SnippetPlatform {
   /** Matches the dashboard's own platform id and the file's basename (without extension). */
@@ -97,6 +98,7 @@ export function renderSnippet(platform: SnippetPlatform): string {
   const tag = buildScriptTag({ src: WIDGET_SRC });
   const lines = [
     `${platform.commentOpen} Pulxon accessibility widget. Paste this into ${platform.installLocation}. ${platform.commentClose}`,
+    `${platform.commentOpen} Before this works, upload the widget's files from the widget zip — pulxon.min.js and its fonts/ folder, kept together — to a /pulxon/ folder at the root of your own site, so this script tag's path resolves. See integrations/snippets/README.md in the Pulxon widget repository. ${platform.commentClose}`,
     `${platform.commentOpen} To set a site key, color, position or the other options this widget accepts, add the matching data-* attribute to the script tag below by hand — see integrations/snippets/README.md and packages/widget/src/config/options.ts in the Pulxon widget repository for the full list. ${platform.commentClose}`,
     tag,
     '',

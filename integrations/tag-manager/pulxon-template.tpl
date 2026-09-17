@@ -12,7 +12,7 @@ ___INFO___
     "displayName": "Pulxon",
     "thumbnail": "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBTAA7"
   },
-  "description": "Loads the Pulxon accessibility widget from a single script URL you provide. Google Tag Manager's injectScript API cannot add data-* attributes to the <script> tag it creates, and the widget currently reads all of its options (site key, color, position, and so on) from those attributes — so this tag does not expose separate fields for them. Until the widget can also read its options from its own script URL, a site installed through this tag runs with the widget's built-in defaults. See this template's Notes, and integrations/tag-manager/README.md in the Pulxon widget repository, for exactly what that means and how to get full configuration today (the WordPress, Joomla and Drupal packages, or a platform snippet).",
+  "description": "Loads the Pulxon accessibility widget from a single script URL you provide — point it at the widget's own script, self-hosted on your own site (for example https://your-site.example/pulxon/pulxon.min.js). Google Tag Manager's injectScript API cannot add data-* attributes to the <script> tag it creates, and the widget currently reads all of its options (site key, color, position, and so on) from those attributes — so this tag does not expose separate fields for them. Until the widget can also read its options from its own script URL, a site installed through this tag runs with the widget's built-in defaults. See this template's Notes, and integrations/tag-manager/README.md in the Pulxon widget repository, for exactly what that means and how to get full configuration today (the WordPress, Joomla and Drupal packages, or a platform snippet).",
   "containerContexts": ["WEB"]
 }
 
@@ -30,11 +30,11 @@ ___TEMPLATE_PARAMETERS___
         "type": "NON_EMPTY"
       },
       {
-        "type": "STARTS_WITH",
-        "args": ["https://cdn.jsdelivr.net/npm/@pulxon/widget@"]
+        "type": "REGEX",
+        "args": ["^https://"]
       }
     ],
-    "help": "The full https:// URL of pulxon.min.js on jsDelivr, pinned to an exact version — for example https://cdn.jsdelivr.net/npm/@pulxon/widget@0.4.0/dist/pulxon.min.js. This is the ONE thing this tag takes. Tag Manager's injectScript API cannot add data-* attributes to the <script> tag it creates, so options such as data-site-key, data-color or data-position cannot be set from this tag the way they can in the WordPress, Joomla or Drupal packages — the widget will run with its built-in defaults until it can also read its options from this URL. See this template's Notes for details."
+    "help": "The full https:// URL of pulxon.min.js, self-hosted on your own site — for example https://your-site.example/pulxon/pulxon.min.js. There is no published npm/CDN build to point at instead, so this must be a path on a domain you control (see integrations/tag-manager/README.md in the Pulxon widget repository for how to upload the widget's files there). This is the ONE thing this tag takes. Tag Manager's injectScript API cannot add data-* attributes to the <script> tag it creates, so options such as data-site-key, data-color or data-position cannot be set from this tag the way they can in the WordPress, Joomla or Drupal packages — the widget will run with its built-in defaults until it can also read its options from this URL. See this template's Notes for details."
   }
 ]
 
@@ -75,7 +75,7 @@ ___WEB_PERMISSIONS___
             "listItem": [
               {
                 "type": 1,
-                "string": "https://cdn.jsdelivr.net/npm/@pulxon/widget@*/dist/pulxon.min.js"
+                "string": "https://*/*"
               }
             ]
           }
@@ -95,7 +95,7 @@ ___TESTS___
 scenarios:
 - name: Injects the configured script URL and reports success to Tag Manager
   code: |-
-    const mockUrl = 'https://cdn.jsdelivr.net/npm/@pulxon/widget@0.4.0/dist/pulxon.min.js';
+    const mockUrl = 'https://your-site.example/pulxon/pulxon.min.js';
 
     mock('injectScript', function(url, onSuccess) {
       assertThat(url).isEqualTo(mockUrl);
@@ -107,7 +107,7 @@ scenarios:
     assertApi('gtmOnSuccess').wasCalled();
 - name: Reports failure to Tag Manager when the script fails to load
   code: |-
-    const mockUrl = 'https://cdn.jsdelivr.net/npm/@pulxon/widget@0.4.0/dist/pulxon.min.js';
+    const mockUrl = 'https://your-site.example/pulxon/pulxon.min.js';
 
     mock('injectScript', function(url, onSuccess, onFailure) {
       onFailure();

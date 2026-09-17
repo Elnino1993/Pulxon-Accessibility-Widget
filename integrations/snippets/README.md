@@ -1,13 +1,34 @@
 # Pulxon — copy-paste snippets
 
 These six platforms have no plugin/module/app format a build step can
-package: there is nowhere to upload a file, only a text field to paste HTML
-or Liquid into. That is different from the WordPress, Joomla and Drupal
-packages elsewhere in this repository, which ship the widget's own files —
-these snippets instead load the widget from jsDelivr, which serves any
-published version of the `@pulxon/widget` npm package with no backend of
-ours involved (the same CDN the widget's own top-level README documents as
-its quick start).
+package: there is nowhere to upload a file through this repository's own
+build, only a text field to paste HTML or Liquid into. That is different
+from the WordPress, Joomla and Drupal packages elsewhere in this repository,
+which ship the widget's own files inside an installable zip — but the
+result is the same: **these snippets are self-hosted, too.** They point at
+`/pulxon/pulxon.min.js`, a path on the *owner's own site*, not at a
+third-party CDN.
+
+`@pulxon/widget` has never been published to any public npm-backed CDN, so a
+URL pointing at one simply 404s — and there is no Pulxon-run CDN to fall
+back to, either. Before a snippet does anything, you must **upload the
+widget's files to your own site first**:
+
+1. Get the widget's built files — `pulxon.min.js` and its `fonts/` folder —
+   from the widget zip (or build them yourself with `pnpm --filter
+   @pulxon/widget build`, which produces `packages/widget/dist/pulxon.min.js`
+   and `packages/widget/dist/fonts/`).
+2. Upload both to a `/pulxon/` folder at the root of your own site (via your
+   host's file manager, FTP, or your platform's own file/theme-asset upload
+   feature — check your platform's own docs for how to add a file at a fixed
+   path), **keeping `fonts/` beside the script**: `/pulxon/pulxon.min.js` and
+   `/pulxon/fonts/...`. The widget loads its own font files relative to its
+   own script, so moving one without the other breaks it.
+3. Confirm `https://<your-domain>/pulxon/pulxon.min.js` loads with a 200 in
+   your browser before pasting the snippet.
+
+Only once that path resolves does pasting the snippet below actually load
+the widget.
 
 | Platform | File | Where it goes |
 |---|---|---|
@@ -42,7 +63,7 @@ the `<script>` tag directly and add the matching `data-*` attribute, for
 example:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@pulxon/widget@0.4.0/dist/pulxon.min.js"
+<script src="/pulxon/pulxon.min.js"
         data-site-key="pk_live_xxxxxxxx" data-color="#1f4bff" data-position="bottom-left" defer></script>
 ```
 
@@ -50,12 +71,13 @@ See `packages/widget/src/config/options.ts` (`parseDataAttributes`) in the
 widget repository for the full list of attributes the widget reads, and the
 top-level `README.md`'s "Data attributes" section for how each one behaves.
 
-## Pin a version
+## Upgrading to a new widget version
 
-Each snippet is generated with an exact version pinned in the URL
-(`@0.4.0`). When the widget publishes a new version, regenerate the
-snippets (see above) rather than editing the version number in six files by
-hand, and re-paste the updated tag into each site.
+There is no version pinned in the URL to update — `/pulxon/pulxon.min.js`
+always resolves to whatever you last uploaded. When the widget publishes a
+new version, download the new build and re-upload it to the same
+`/pulxon/` folder, overwriting the old `pulxon.min.js` and `fonts/`. No
+snippet or script tag needs to change.
 
 ## What this doesn't do
 

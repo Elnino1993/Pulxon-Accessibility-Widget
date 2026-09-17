@@ -62,6 +62,25 @@ describe('the WordPress plugin', () => {
     expect(plugin).toMatch(/'strategy'\s*=>\s*'defer'/);
   });
 
+  it('adds its data-* attributes through the wp_script_attributes filter, keyed by the script id, not by splicing the tag core built', () => {
+    // script_loader_tag hands over a finished HTML string; splicing attributes in before the
+    // first " src" breaks the moment anything else (an inline "before" script, a script
+    // translation) adds markup ahead of that src for our handle. wp_script_attributes (WP
+    // 5.7+) hands over the attribute array itself instead, with no string surgery involved.
+    expect(plugin).toContain("add_filter( 'wp_script_attributes'");
+    expect(plugin).not.toContain('script_loader_tag');
+    expect(plugin).not.toMatch(/strpos\(\s*\$tag\s*,\s*'\s*src'\s*\)/);
+
+    const filterFn = plugin.match(/function\s+pulxon_add_data_attributes[\s\S]*?\n}/);
+    expect(filterFn, 'pulxon_add_data_attributes() not found').not.toBeNull();
+    const body = filterFn![0];
+    // Every script on the page fires this filter, so the handler must key off this script's
+    // own id (`{handle}-js`, per the documented wp_script_attributes contract) before touching
+    // the array, or it would corrupt every other plugin's and core's own script tags too.
+    expect(body).toMatch(/PULXON_SCRIPT_HANDLE\s*\.\s*'-js'/);
+    expect(body).toContain("\$attributes['id']");
+  });
+
   it('documents itself for the plugin directory', () => {
     for (const heading of ['=== Pulxon', 'Stable tag:', '== Description ==', '== Installation ==', '== Changelog ==']) {
       expect(readme, heading).toContain(heading);

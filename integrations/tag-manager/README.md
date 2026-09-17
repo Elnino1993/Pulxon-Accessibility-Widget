@@ -38,6 +38,17 @@ its own script URL's query string, as a lower-priority source than
 `data-*` attributes, so nothing that already relies on attributes would
 change. That change has not been made; this template does not depend on it.
 
+## Before you import: self-host the widget's files
+
+`@pulxon/widget` has never been published to a public npm-backed CDN, so
+there is no ready-made URL to point this template at. Upload the widget's
+built files — `pulxon.min.js` and its `fonts/` folder, kept together — to a
+`/pulxon/` folder at the root of your own site (the same self-hosting
+approach the WordPress, Joomla and Drupal packages and the copy-paste
+snippets in this repository all use). Confirm
+`https://your-domain/pulxon/pulxon.min.js` loads with a 200 in your browser
+before importing the template.
+
 ## Installing the template
 
 1. In Google Tag Manager, open your container, go to **Templates → Tag
@@ -45,19 +56,21 @@ change. That change has not been made; this template does not depend on it.
    search — this template is not published there) and select
    `pulxon-template.tpl` from this folder.
 2. Tag Manager will list the one permission this template requests:
-   `inject_script`, scoped to `https://cdn.jsdelivr.net/npm/@pulxon/widget@*/dist/pulxon.min.js`
-   — the exact host and path the widget is served from, and nothing wider.
-   Review it, then approve.
+   `inject_script`, scoped to `https://*/*` — any https URL. That is wider
+   than a single fixed host on purpose: the widget is self-hosted per site,
+   so the field takes whatever domain you upload it to, and the template has
+   no way to know that domain ahead of time. **After importing, narrow this
+   permission to your own domain** (Tag Manager lets you edit a template's
+   requested permissions from the template's own page) — for example
+   `https://your-domain/*` — so the tag can only inject from the one host
+   you actually use, not from anywhere.
 3. Create a new tag from the imported template, name it (for example
    "Pulxon accessibility widget"), and set **Pulxon widget script URL** to
-   an exact, version-pinned URL, for example:
+   the exact URL you uploaded the widget to, for example:
 
    ```
-   https://cdn.jsdelivr.net/npm/@pulxon/widget@0.4.0/dist/pulxon.min.js
+   https://your-domain/pulxon/pulxon.min.js
    ```
-
-   Pin an exact version rather than a floating tag — an unpinned URL can
-   change under you the next time the widget publishes a release.
 4. Set the trigger to **All Pages** (or your site's equivalent "every page"
    trigger) and publish the container version.
 
@@ -77,15 +90,20 @@ trusting it on a live site:
   panel. It will use the built-in defaults described above; that is
   expected, not a bug.
 
-## Why jsDelivr, and not a Pulxon CDN
+## Why a self-hosted URL, and not a CDN
 
-There is no Pulxon-run CDN yet — the WordPress, Joomla and Drupal packages
-avoid that entirely by shipping the widget's own files inside the package,
-so those sites never depend on a server we have not built. Tag Manager has
-no such option: `injectScript` only loads a remote URL, so this template has
-to point somewhere. jsDelivr serves any version of the `@pulxon/widget` npm
-package automatically, with no backend of ours involved — the same URL
-pattern the widget's own top-level README already documents as its quick
-start. `___WEB_PERMISSIONS___` restricts the template to exactly that host
-and path, so an administrator reviewing the import is not asked to trust an
-open-ended "inject any script" permission.
+There is no Pulxon-run CDN, and `@pulxon/widget` has never been published to
+a public npm-backed CDN either — a URL pointing at one simply 404s. The
+WordPress, Joomla and Drupal packages avoid depending on any CDN entirely by
+shipping the widget's own files inside the package; the copy-paste snippets
+do the same by pointing at a path on the owner's own site. Tag Manager's
+`injectScript` only loads a remote URL, so this template has to point
+somewhere too — at the same self-hosted path the other integrations use,
+which is why the field takes a full URL on your own domain rather than a
+fixed one this template could hard-code.
+
+Because that domain varies per site, `___WEB_PERMISSIONS___` has to be wider
+than a single fixed host (see "Installing the template" above) — it accepts
+any https URL at import time, and the install steps above tell you to narrow
+it to your own domain immediately afterward, so the tag is not left able to
+inject a script from anywhere.

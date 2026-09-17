@@ -24,6 +24,8 @@
 
 	<files>
 		<filename module="mod_pulxon">mod_pulxon.php</filename>
+		<filename>LICENSE</filename>
+		<filename>LICENSE-widget-MIT.txt</filename>
 		<folder>tmpl</folder>
 		<folder>assets</folder>
 	</files>

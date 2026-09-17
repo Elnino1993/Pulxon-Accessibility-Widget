@@ -150,6 +150,15 @@ class PulxonSettingsForm extends ConfigFormBase {
       ->set('branding', (bool) $form_state->getValue('branding'))
       ->save();
 
+    // hook_library_info_alter() (see pulxon.module) reads this config back
+    // to build the library's data-* attributes, but Drupal caches library
+    // discovery behind the `library_info` cache tag, and nothing else
+    // invalidates it when this config changes. Without this call, the
+    // front end keeps serving the library definition that was cached
+    // before this save — on a fresh site, one with no data-* attributes at
+    // all — until something unrelated happens to clear it.
+    \Drupal::service('library.discovery')->clearCachedDefinitions();
+
     parent::submitForm($form, $form_state);
   }
 

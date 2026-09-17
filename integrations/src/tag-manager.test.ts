@@ -89,6 +89,26 @@ describe('___TEMPLATE_PARAMETERS___', () => {
     expect(params.length).toBe(1);
     expect(params[0].name).toBe('scriptUrl');
   });
+
+  it('accepts any https:// URL — the widget is self-hosted per site, not published to a fixed npm/CDN path', () => {
+    const [scriptUrl] = params;
+    const validators = (scriptUrl.valueValidators as Array<Record<string, unknown>>) ?? [];
+    expect(validators.some((v) => v.type === 'NON_EMPTY')).toBe(true);
+
+    const schemeValidator = validators.find((v) => v.type !== 'NON_EMPTY');
+    expect(schemeValidator, JSON.stringify(validators)).toBeDefined();
+    // Must not hard-require a jsDelivr (or any other fixed) prefix any more.
+    expect(JSON.stringify(schemeValidator)).not.toMatch(/jsdelivr\.net|unpkg\.com/i);
+    if (schemeValidator?.type === 'STARTS_WITH') {
+      expect((schemeValidator.args as string[])[0]).toBe('https://');
+    } else if (schemeValidator?.type === 'REGEX') {
+      const pattern = (schemeValidator.args as string[])[0];
+      expect(new RegExp(pattern).test('https://example.com/pulxon/pulxon.min.js')).toBe(true);
+      expect(new RegExp(pattern).test('http://example.com/pulxon/pulxon.min.js')).toBe(false);
+    } else {
+      throw new Error(`unexpected validator type: ${JSON.stringify(schemeValidator)}`);
+    }
+  });
 });
 
 describe('___SANDBOXED_JS_FOR_WEB_TEMPLATE___', () => {
@@ -121,17 +141,19 @@ describe('___WEB_PERMISSIONS___', () => {
     expect(injectScriptPermissions.length).toBe(1);
   });
 
-  it('names the exact host the template injects from, and nothing wider', () => {
+  it('is scoped to https, widened beyond one fixed CDN host since the widget is now self-hosted per site', () => {
+    // The field now takes the owner's own https URL (any host), so the injectScript
+    // permission has to be widened to match — but it must still require https, and must
+    // still stop short of an unrestricted "inject from anywhere" grant.
     const [permission] = permissions.filter((entry) => entry.instance?.key?.publicId === 'inject_script');
     const urlsParam = permission.instance?.param?.find((p) => p.key === 'urls');
     const urls = urlsParam?.value.listItem?.map((item) => item.string) ?? [];
     expect(urls.length).toBeGreaterThan(0);
     for (const url of urls) {
-      expect(url, 'must be scoped to https://cdn.jsdelivr.net, not a wildcard host').toMatch(/^https:\/\/cdn\.jsdelivr\.net\//);
-      // No bare-host or cross-origin wildcard: this must not be able to inject from any domain.
-      expect(url).not.toBe('https://cdn.jsdelivr.net/*');
-      expect(url).not.toMatch(/^https?:\*/);
+      expect(url, 'must not still be scoped to jsDelivr').not.toMatch(/jsdelivr\.net|unpkg\.com/i);
+      expect(url, 'must require https, not any scheme').toMatch(/^https:\/\//);
       expect(url).not.toBe('<all_urls>');
+      expect(url).not.toMatch(/^https?:\*/);
     }
   });
 });
@@ -149,6 +171,10 @@ describe('the Tag Manager template as a whole', () => {
   it('makes no compliance or legal claim', () => {
     expect(templateSource).not.toMatch(/\b(ADA|WCAG compliant|compliance|certified|lawsuit)\b/i);
   });
+
+  it('no longer depends on jsDelivr or unpkg — the widget is self-hosted per site', () => {
+    expect(templateSource).not.toMatch(/jsdelivr\.net|unpkg\.com/i);
+  });
 });
 
 describe('tag-manager/README.md', () => {
@@ -163,5 +189,10 @@ describe('tag-manager/README.md', () => {
 
   it('makes no compliance or legal claim', () => {
     expect(readmeSource).not.toMatch(/\b(ADA|WCAG compliant|compliance|certified|lawsuit)\b/i);
+  });
+
+  it('tells the container administrator to narrow the widened inject_script permission to their own domain after import', () => {
+    expect(readmeSource.toLowerCase()).toContain('narrow');
+    expect(readmeSource).not.toMatch(/jsdelivr\.net|unpkg\.com/i);
   });
 });
