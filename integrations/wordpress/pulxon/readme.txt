@@ -3,7 +3,7 @@ Contributors: pulxon
 Tags: accessibility, widget, toolbar, usability
 Requires at least: 6.3
 Requires PHP: 7.4
-Stable tag: 0.4.0
+Stable tag: 0.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -73,6 +73,13 @@ The toolbar stops loading immediately. Your saved settings are kept so they are 
 you reactivate the plugin.
 
 == Changelog ==
+
+= 0.5.0 =
+
+The widget's default corner is now the bottom LEFT. A site that already saved a position keeps it;
+only sites that never chose one move. The bottom-right corner is where themes and other plugins put
+chat bubbles and back-to-top buttons, and a launcher hidden under one of those is a launcher the
+visitor who needs it cannot reach.
 
 = 0.4.0 =
 * Initial release: front-end toolbar loaded from the site's own domain, Settings → Pulxon options

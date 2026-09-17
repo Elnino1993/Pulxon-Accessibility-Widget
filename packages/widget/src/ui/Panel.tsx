@@ -231,7 +231,7 @@ export function Panel({
           </a>
         )}
         {branding && (
-          <a href="https://pulxon.com/?utm_source=widget" target="_blank" rel="noopener noreferrer">
+          <a data-pulxon-branding href="https://pulxon.com/?utm_source=widget" target="_blank" rel="noopener noreferrer">
             {t('panel.poweredBy')}
             <span class="sr-only"> {t('link.newTab')}</span>
           </a>

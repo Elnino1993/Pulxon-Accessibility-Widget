@@ -67,9 +67,11 @@ describe('PanelSettings', () => {
 
   it('moves the launcher and remembers it', async () => {
     const { host, store } = setup();
-    const corner = host.shadowRoot!.querySelector<HTMLButtonElement>('[data-pulxon-position="bottom-left"]')!;
+    // Not bottom-left: that is where the default already puts it, so clicking it would leave the
+    // launcher exactly where it was and this test would no longer be about moving anything.
+    const corner = host.shadowRoot!.querySelector<HTMLButtonElement>('[data-pulxon-position="top-right"]')!;
     await act(async () => corner.click());
-    expect(store.get().ui.position).toBe('bottom-left');
+    expect(store.get().ui.position).toBe('top-right');
   });
 
   it("shows the launcher's current corner as pressed before the visitor makes any choice", () => {

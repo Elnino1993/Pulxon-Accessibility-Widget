@@ -23,7 +23,7 @@ Pin an exact version and add Subresource Integrity:
 ```html
 <script src="https://cdn.jsdelivr.net/npm/@pulxon/widget@0.3.0/dist/pulxon.min.js"
         integrity="sha384-REPLACE_WITH_HASH" crossorigin="anonymous"
-        data-position="bottom-right" data-color="#1f4bff" defer></script>
+        data-position="bottom-left" data-color="#1f4bff" defer></script>
 ```
 
 Generate the hash for the exact file you ship:
@@ -80,7 +80,7 @@ color), `keyboard`.
 
 | Attribute | Values | Default |
 |---|---|---|
-| `data-position` | `top-left`, `top-center`, `top-right`, `center-left`, `center-right`, `bottom-left`, `bottom-center`, `bottom-right` | `bottom-right` |
+| `data-position` | `top-left`, `top-center`, `top-right`, `center-left`, `center-right`, `bottom-left`, `bottom-center`, `bottom-right` | `bottom-left` |
 | `data-offset` | `x,y` in px | `20,20` |
 | `data-color` | hex color | `#1f4bff` |
 | `data-size` | `small`, `medium`, `large` | `medium` |

@@ -199,7 +199,7 @@ describe('config/install/pulxon.settings.yml', () => {
     const config = parseYaml(source) as Record<string, unknown>;
     expect(config).toEqual({
       site_key: '',
-      position: 'bottom-right',
+      position: 'bottom-left',
       size: 'medium',
       icon: 'person',
       color: '#1f4bff',

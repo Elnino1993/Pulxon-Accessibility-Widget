@@ -1,0 +1,13 @@
+# This repository is checked out on Windows, where git's core.autocrlf rewrites working-tree files
+# to CRLF. Several tests compare a committed file byte for byte against text a generator produces
+# (integrations/src/snippets.test.ts against buildScriptTag, readme.test.ts against the same), and
+# the snippets are also copied verbatim into the platform zips. Both break the moment a checkout
+# silently changes the line endings, so the working tree keeps LF everywhere.
+* text=auto eol=lf
+
+# Binary, never touched.
+*.png binary
+*.jpg binary
+*.woff binary
+*.woff2 binary
+*.zip binary

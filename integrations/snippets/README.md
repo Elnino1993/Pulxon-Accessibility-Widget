@@ -64,7 +64,7 @@ example:
 
 ```html
 <script src="/pulxon/pulxon.min.js"
-        data-site-key="pk_live_xxxxxxxx" data-color="#1f4bff" data-position="bottom-left" defer></script>
+        data-site-key="pk_live_xxxxxxxx" data-color="#1f4bff" data-position="bottom-right" defer></script>
 ```
 
 See `packages/widget/src/config/options.ts` (`parseDataAttributes`) in the

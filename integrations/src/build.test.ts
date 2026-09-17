@@ -12,6 +12,12 @@ const repoRoot = join(integrationsRoot, '..');
 const realWidgetDist = join(repoRoot, 'packages', 'widget', 'dist');
 const realWidgetFile = join(realWidgetDist, 'pulxon.min.js');
 
+/**
+ * The widget's own version, read rather than typed: a hard-coded number here turns every release
+ * into a test failure that says nothing about what actually broke.
+ */
+const WIDGET_VERSION = (JSON.parse(readFileSync(join(repoRoot, 'packages', 'widget', 'package.json'), 'utf8')) as { version: string }).version;
+
 /** Every file under `dir`, relative to `dir`, applying the same filter `build.ts` applies when staging a package's source directory — so this can compute the exact file list a build should produce without duplicating build.ts's own walk logic by hand. */
 function walkFiltered(dir: string, base: string = dir, out: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
@@ -47,7 +53,11 @@ describe('buildPackages', () => {
     const results = await buildPackages({ outDir });
 
     const names = results.map((r) => r.name).sort();
-    expect(names).toEqual(['mod_pulxon-0.4.0.zip', 'pulxon-drupal-0.4.0.zip', 'pulxon-wordpress-0.4.0.zip'].sort());
+    expect(names).toEqual(
+      [`mod_pulxon-${WIDGET_VERSION}.zip`, `pulxon-drupal-${WIDGET_VERSION}.zip`, `pulxon-wordpress-${WIDGET_VERSION}.zip`].sort(),
+    );
+    // A version that never made it into the name would leave every release overwriting the last.
+    expect(WIDGET_VERSION).toMatch(/^\d+\.\d+\.\d+$/);
 
     for (const result of results) {
       expect(result.bytes).toBeGreaterThan(0);

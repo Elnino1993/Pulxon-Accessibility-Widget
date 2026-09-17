@@ -19,7 +19,7 @@
 	<license>GNU General Public License version 2 or later; see https://www.gnu.org/licenses/gpl-2.0.html</license>
 	<authorEmail>dev@pulxon.com</authorEmail>
 	<authorUrl>https://pulxon.com</authorUrl>
-	<version>0.4.0</version>
+	<version>0.5.0</version>
 	<description>Adds an on-page toolbar that lets a visitor adjust text size, color, spacing and other display preferences. The toolbar is served from this site's own files; the module makes no request to a third-party domain.</description>
 
 	<files>
@@ -46,7 +46,7 @@
 				<field
 					name="position"
 					type="list"
-					default="bottom-right"
+					default="bottom-left"
 					label="Launcher position"
 					description="Where the widget's launcher button appears on the page.">
 					<option value="top-left">Top left</option>

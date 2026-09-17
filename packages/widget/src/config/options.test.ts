@@ -58,7 +58,7 @@ describe('resolveOptions', () => {
     const options = resolveOptions({ color: '#000000', lang: undefined });
     expect(options.color).toBe('#000000');
     expect(options.lang).toBe(DEFAULT_OPTIONS.lang);
-    expect(options.position).toBe('bottom-right');
+    expect(options.position).toBe('bottom-left');
   });
 
   it('ignores an invalid color, position or size', () => {

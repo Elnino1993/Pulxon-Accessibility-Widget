@@ -47,7 +47,10 @@ export interface WidgetOptions {
 }
 
 export const DEFAULT_OPTIONS: WidgetOptions = {
-  position: 'bottom-right',
+  // Bottom left by default. The bottom-right corner is where sites put chat bubbles, cookie
+  // banners and back-to-top buttons, and a launcher stacked under one of those is a launcher a
+  // visitor who needs it cannot reach. The panel follows the launcher's side on its own (App.tsx).
+  position: 'bottom-left',
   offsetX: 20,
   offsetY: 20,
   color: '#1f4bff',

@@ -88,7 +88,7 @@ class PulxonSettingsForm extends ConfigFormBase {
       '#title' => $this->t('Launcher position'),
       '#description' => $this->t('Where the widget\'s launcher button appears on the page.'),
       '#options' => self::POSITIONS,
-      '#default_value' => $config->get('position') ?: 'bottom-right',
+      '#default_value' => $config->get('position') ?: 'bottom-left',
     ];
 
     $form['size'] = [

@@ -131,7 +131,7 @@ one of its options (`data-site-key`, `data-color`, `data-position`, and so
 on) from `data-*` attributes on its own `<script>` tag, and from nothing
 else today. That combination means this tag cannot set a site key, a color,
 a position, or any other option: the widget boots with its built-in
-defaults (bottom-right, medium, blue accent, branding on) whenever it is
+defaults (bottom-left, medium, blue accent, branding on) whenever it is
 installed through Tag Manager.
 
 If your site needs those options, use the Pulxon WordPress plugin, Joomla
