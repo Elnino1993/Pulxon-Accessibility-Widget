@@ -5,7 +5,7 @@ import type { Controller } from '../core/controller';
 import type { ProfileDefinition, Registry } from '../core/registry';
 import type { Settings, SettingsStore } from '../core/store';
 import { createStyleEngine, type StyleMode } from '../core/style-engine';
-import { resolveStoredLanguage, type Translator } from '../i18n';
+import { createLocaleLoader, isRtl, resolveStoredLanguage, type LocaleLoader, type Translator } from '../i18n';
 import { App } from './App';
 import css from './styles.css?inline';
 import { createUiState } from './ui-state';
@@ -24,6 +24,10 @@ export interface MountUiInput {
   lang?: string;
   styleMode?: StyleMode;
   onOpenChange?: (open: boolean) => void;
+  /** Where the panel gets its languages other than English; none means English only. */
+  locales?: LocaleLoader;
+  /** Told whenever the panel's language changes (see `App`). */
+  onTranslatorChange?: (t: Translator) => void;
 }
 
 export interface UiHandle {
@@ -91,6 +95,8 @@ export function mountUI(input: MountUiInput): UiHandle {
     mountPoint.style.setProperty('--pulxon-scale', String(scale));
     const lang = resolveStoredLanguage(settings.lang, mountedLang);
     mountPoint.setAttribute('lang', lang);
+    // Arabic, Persian, Hebrew and Urdu lay the panel out mirrored; `dir` inherits into the shadow tree.
+    mountPoint.setAttribute('dir', isRtl(lang) ? 'rtl' : 'ltr');
     host.setAttribute('data-pulxon-lang', lang);
   }
   applyUiSettings(input.store.get());
@@ -152,6 +158,8 @@ export function mountUI(input: MountUiInput): UiHandle {
       t={input.t}
       lang={mountedLang}
       state={state}
+      locales={input.locales ?? createLocaleLoader(null)}
+      onTranslatorChange={input.onTranslatorChange}
     />,
     mountPoint,
   );

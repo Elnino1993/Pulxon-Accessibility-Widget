@@ -45,7 +45,7 @@ script (`dist/fonts/`). When you self-host the script, publish that folder too.
 | Text | `text-align` | 4 (left, right, center, justify) |
 | Text | `dyslexia-font` | 1 |
 | Text | `bold-text` | 1 |
-| Color | `contrast` | 3 (inverted, dark, light) |
+| Color | `contrast` | 4 (inverted, dark, light, high) |
 | Color | `saturation` | 3 (low, high, grayscale) |
 | Navigation | `highlight-links` | 1 |
 | Navigation | `tooltips` | 1 |
@@ -74,7 +74,19 @@ The panel also has a **Page structure** tool that lists headings, landmarks
 and links and moves focus to the one you choose.
 
 Profiles: `low-vision`, `dyslexia`, `adhd`, `seizure-safe` (reduce motion and
-color), `keyboard`.
+color), `keyboard`, `cognitive` (cognitive & learning).
+
+The panel is laid out after Sienna Accessibility Widget: it opens docked to the
+screen edge on the launcher's side, full height, with language and size at the
+top, then cards for profiles (each a switch with a one-line description),
+content adjustments (bigger text as a − 100% + stepper), visual & navigation
+aids, color adjustments (one tile per contrast and saturation mode) and
+additional tools, then position and reset. Every card has an ⓘ that explains it
+in place. The title bar drags the panel off the edge into a floating window.
+
+Deliberately not copied from Sienna: a "blind profile" that "activates the
+screen reader" — a widget cannot stand in for a screen reader, and offering one
+as if it could is the overclaim this product exists to argue against.
 
 ## Data attributes
 
@@ -84,7 +96,7 @@ color), `keyboard`.
 | `data-offset` | `x,y` in px | `20,20` |
 | `data-color` | hex color | `#1f4bff` |
 | `data-size` | `small`, `medium`, `large` | `medium` |
-| `data-lang` | `en`, `es` | auto |
+| `data-lang` | any of the 53 panel languages (`de`, `fr`, `zh-Hant`, …; see `src/i18n/languages.ts`) | auto |
 | `data-hide-on-mobile` | `true` / `false` | `false` |
 | `data-trigger` | CSS selector of your own button | — |
 | `data-nonce` | CSP nonce for the `<style>` fallback | — |
@@ -168,6 +180,12 @@ Copy `node_modules/@pulxon/widget/dist/fonts/` to the URL you pass as
 `fontBaseUrl`. Without it, the dyslexia-friendly option uses locally installed
 fonts only.
 
+The panel speaks 53 languages. English is in the bundle; each other language is
+`dist/locales/<code>.json`, fetched the first time it is used. Copy
+`node_modules/@pulxon/widget/dist/locales/` somewhere and pass it as
+`localeBaseUrl`; without it the panel stays in English. The script-tag embed
+finds both folders next to itself, so there it needs nothing.
+
 Connected mode is automatic only for the script-tag embed above. From npm,
 fetch the dashboard config yourself and pass the result in as options:
 
@@ -192,6 +210,11 @@ only the script, not the font files.
 Connected mode (`data-site-key`) fetches settings over `fetch()`, so its
 `connect-src` must allow the API origin, for example
 `connect-src https://api.pulxon.com`.
+Every panel language but English is a JSON file fetched with `fetch()` from next
+to the script, so `connect-src` must also allow the script's origin (`'self'`
+when you host it yourself). If it does not, the panel simply stays in English.
+Served from another origin, the locale files need `Access-Control-Allow-Origin`,
+the same as the fonts.
 
 ## Development
 

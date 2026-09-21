@@ -1,17 +1,21 @@
-import type { JSX, RefObject } from 'preact';
+import type { JSX } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import type { Position } from '../config/options';
 import type { Controller } from '../core/controller';
-import { GROUP_ORDER, type FeatureDefinition, type ProfileDefinition } from '../core/registry';
+import type { FeatureDefinition, ProfileDefinition } from '../core/registry';
 import type { DragSpot, Settings, SettingsStore } from '../core/store';
 import { voiceCommandsForLang } from '../features/voice-navigation';
-import type { MessageKey, Translator } from '../i18n';
-import { anchorPanel, beginDrag, clampPoint, EDGE, pointToSpot, sizeOf, spotToPoint, viewportOf, type Point } from './drag';
-import { FeatureButton } from './FeatureButton';
+import type { Translator } from '../i18n';
+import { beginDrag, clampPoint, pointToSpot, sizeOf, spotToPoint, viewportOf, type Point } from './drag';
+import { FeatureButton, ModeButton } from './FeatureButton';
+import { FontSizeStepper } from './FontSizeStepper';
 import { handleTrapKeydown } from './focus-trap';
+import { TileIcon, UiIcon } from './icons';
+import { FONT_SIZE_FEATURE, placedFeatures, SECTIONS, type SectionSpec, type TileSpec } from './layout';
 import { PageStructure } from './PageStructure';
-import { PanelSettings } from './PanelSettings';
-import { TileIcon } from './icons';
+import { LanguageAndSize, PositionAndReset } from './PanelSettings';
+import { ProfileCard } from './ProfileCard';
+import { Section } from './Section';
 
 const VOICE_NOTE_ID = 'pulxon-voice-note';
 const DICTIONARY_NOTE_ID = 'pulxon-dictionary-note';
@@ -32,14 +36,14 @@ export interface PanelProps {
   store: SettingsStore;
   lang: string;
   onLangChange: (lang: string | null) => void;
-  /** The embed's configured corner; passed through to PanelSettings for its pressed-state fallback. */
+  /** The embed's configured corner; passed through to the position picker for its pressed state. */
   optionsPosition: Position;
   profiles: ProfileDefinition[];
-  /** Where the visitor dragged the panel, or null to open it beside the launcher. */
+  /** The screen edge the panel docks to while it has no spot of its own: the launcher's side. */
+  side: 'left' | 'right';
+  /** Where the visitor dragged the panel. While set, it floats there instead of docking. */
   spot: DragSpot | null;
-  /** The launcher the panel opens beside while it has no spot of its own. */
-  anchorRef: RefObject<HTMLElement>;
-  /** Called once a drag of the header ends, with where the panel was dropped. */
+  /** Called once a drag of the title bar ends, with where the panel was dropped. */
   onDrop: (spot: DragSpot) => void;
   branding: boolean;
   statementUrl: string | null;
@@ -58,8 +62,8 @@ export function Panel({
   onLangChange,
   optionsPosition,
   profiles,
+  side,
   spot,
-  anchorRef,
   onDrop,
   branding,
   statementUrl,
@@ -71,25 +75,22 @@ export function Panel({
   const toolRef = useRef<HTMLButtonElement>(null);
   const returnToTool = useRef(false);
   const [view, setView] = useState<'main' | 'structure'>('main');
+  // Where the floating panel sits; unused while it is docked.
   const [point, setPoint] = useState<Point | null>(null);
-  // Set only while the header is being dragged: placement leaves the panel wherever the pointer has it.
+  // Set only while the title bar is being dragged: placement leaves the panel wherever the pointer has it.
   const dragPoint = useRef<Point | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const floating = dragging || spot !== null;
 
   const place = (): void => {
     const dialog = dialogRef.current;
-    if (!dialog || dragPoint.current) return;
-    const box = sizeOf(dialog);
-    const viewport = viewportOf(dialog);
-    const anchor = anchorRef.current;
-    let next: Point;
-    if (spot) next = spotToPoint(spot, box, viewport);
-    else if (anchor) next = anchorPanel(anchor.getBoundingClientRect(), box, viewport);
-    else next = clampPoint({ left: EDGE, top: EDGE }, box, viewport);
+    if (!dialog || !spot || dragPoint.current) return;
+    const next = spotToPoint(spot, sizeOf(dialog), viewportOf(dialog));
     setPoint((current) => (current && current.left === next.left && current.top === next.top ? current : next));
   };
 
-  // After every render, not just the first: the panel's height changes with its content (the page
-  // structure view, the size setting), and a panel opened above the launcher has to move up with it.
+  // After every render, not just the first: a floating panel's height changes with its content (the
+  // page structure view, the size setting), and its clamp inside the viewport with it.
   useLayoutEffect(place);
 
   useEffect(() => {
@@ -101,25 +102,27 @@ export function Panel({
 
   const onHeaderPointerDown = (event: PointerEvent): void => {
     if (event.button !== 0) return;
-    // The close button and the Pulxon link sit in the header; pressing them must do what they do,
-    // not start a drag.
+    // The reset and close buttons and the Pulxon link sit in the title bar; pressing them must do
+    // what they do, not start a drag.
     if ((event.target as Element | null)?.closest?.('button, a')) return;
     const dialog = dialogRef.current;
     if (!dialog) return;
     const start = dialog.getBoundingClientRect();
-    const box = { width: start.width, height: start.height };
     // Keeps the drag from selecting the title text instead of moving the panel.
     event.preventDefault();
     beginDrag(event, event.currentTarget as HTMLElement, {
       onMove: (dx, dy) => {
-        const next = clampPoint({ left: start.left + dx, top: start.top + dy }, box, viewportOf(dialog));
+        // Measured on every move: the first move undocks the panel, which makes it shorter.
+        const next = clampPoint({ left: start.left + dx, top: start.top + dy }, sizeOf(dialog), viewportOf(dialog));
         dragPoint.current = next;
+        setDragging(true);
         setPoint(next);
       },
       onEnd: (moved) => {
         const dropped = dragPoint.current;
         dragPoint.current = null;
-        if (moved && dropped) onDrop(pointToSpot(dropped, box, viewportOf(dialog)));
+        if (moved && dropped) onDrop(pointToSpot(dropped, sizeOf(dialog), viewportOf(dialog)));
+        setDragging(false);
       },
     });
   };
@@ -153,21 +156,65 @@ export function Panel({
     handleTrapKeydown(event, dialog, root.activeElement);
   };
 
-  const groups = GROUP_ORDER.map((group) => ({
-    group,
-    items: features.filter((feature) => feature.group === group),
-  })).filter((entry) => entry.items.length > 0);
+  const byId = new Map(features.map((feature) => [feature.id, feature]));
+  const levelOf = (id: string): number => settings.features[id] ?? 0;
+  const fontSize = byId.get(FONT_SIZE_FEATURE);
 
-  const activeProfile = profiles.find((profile) => profile.id === settings.profile);
-  const hasVoiceNavigation = features.some((feature) => feature.id === 'voice-navigation');
-  const hasDictionary = features.some((feature) => feature.id === 'dictionary');
+  // A feature the layout does not place (a future one, or a site's own) still gets a tile, in
+  // Additional tools, rather than silently vanishing from the panel.
+  const placed = placedFeatures();
+  const unplaced: TileSpec[] = features.filter((feature) => !placed.has(feature.id)).map((feature) => ({ kind: 'feature', id: feature.id }));
+  const sections: SectionSpec[] = SECTIONS.map((section) =>
+    section.id === 'tools' ? { ...section, tiles: [...section.tiles, ...unplaced] } : section,
+  );
+
+  const renderTile = (tile: TileSpec) => {
+    if (tile.kind === 'tool') {
+      return (
+        <button key={tile.id} ref={toolRef} type="button" class="tile" data-tool={tile.id} onClick={() => setView('structure')}>
+          <TileIcon id={tile.id} />
+          <span class="tile__label">{t('tool.pageStructure')}</span>
+        </button>
+      );
+    }
+    if (tile.kind === 'mode') {
+      if (!byId.has(tile.feature)) return null;
+      const active = levelOf(tile.feature) === tile.level;
+      return (
+        <ModeButton
+          key={tile.id}
+          id={tile.id}
+          label={t(tile.labelKey)}
+          active={active}
+          onActivate={() => (active ? controller.disable(tile.feature) : controller.enable(tile.feature, tile.level))}
+        />
+      );
+    }
+    const feature = byId.get(tile.id);
+    if (!feature) return null;
+    return (
+      <FeatureButton
+        key={feature.id}
+        feature={feature}
+        level={levelOf(feature.id)}
+        t={t}
+        onActivate={(id) => controller.toggle(id)}
+        describedById={noteIdFor(feature.id)}
+      />
+    );
+  };
+
+  const hasVoiceNavigation = byId.has('voice-navigation');
+  const hasDictionary = byId.has('dictionary');
+
+  const classes = floating ? 'panel panel--floating' : `panel panel--docked panel--${side}`;
 
   return (
     <div
       ref={dialogRef}
       id="pulxon-panel"
-      class="panel"
-      style={point ? { left: `${point.left}px`, top: `${point.top}px` } : undefined}
+      class={classes}
+      style={floating && point ? { left: `${point.left}px`, top: `${point.top}px` } : undefined}
       role="dialog"
       aria-modal="true"
       aria-labelledby="pulxon-title"
@@ -197,12 +244,15 @@ export function Panel({
             </a>
           )}
         </div>
+        <button type="button" class="icon-button" data-pulxon-reset-icon aria-label={t('panel.reset')} onClick={() => controller.reset()}>
+          <UiIcon id="reset" />
+        </button>
         <button ref={closeRef} type="button" class="icon-button" aria-label={t('panel.close')} onClick={onClose}>
           <span aria-hidden="true">×</span>
         </button>
       </div>
 
-      {/* The only part that scrolls: the header, with the close button, stays in view. */}
+      {/* The only part that scrolls: the title bar, with reset and close, stays in view. */}
       <div class="panel__body">
         {view === 'structure' ? (
           <PageStructure
@@ -216,107 +266,75 @@ export function Panel({
           />
         ) : (
           <>
-            {activeProfile && (
-              <p data-pulxon-active-profile class="active-profile">
-                {t('panel.activeProfile', { name: t(activeProfile.labelKey) })}
-              </p>
-            )}
+            <LanguageAndSize t={t} settings={settings} store={store} onLangChange={onLangChange} />
 
             {profiles.length > 0 && (
-              <section aria-labelledby="pulxon-profiles">
-                <h3 id="pulxon-profiles">{t('panel.profiles')}</h3>
-                <div class="grid">
+              <Section id="profiles" title={t('panel.profiles')} info={t('info.profiles')} t={t}>
+                <div class="profile-grid">
                   {profiles.map((profile) => {
                     const active = settings.profile === profile.id;
                     return (
-                      <button
+                      <ProfileCard
                         key={profile.id}
-                        type="button"
-                        class="tile"
-                        data-profile={profile.id}
-                        aria-pressed={active}
-                        onClick={() => controller.setProfile(active ? null : profile.id)}
-                      >
-                        <TileIcon id={profile.id} />
-                        <span class="tile__label">{t(profile.labelKey)}</span>
-                      </button>
+                        profile={profile}
+                        active={active}
+                        t={t}
+                        onToggle={() => controller.setProfile(active ? null : profile.id)}
+                      />
                     );
                   })}
                 </div>
-              </section>
+              </Section>
             )}
 
-            <div class="tools">
-              <button
-                ref={toolRef}
-                type="button"
-                class="tile tile--wide"
-                data-tool="page-structure"
-                onClick={() => setView('structure')}
-              >
-                <TileIcon id="page-structure" />
-                <span class="tile__label">{t('tool.pageStructure')}</span>
-              </button>
-            </div>
-
-            {groups.map(({ group, items }) => (
-              <section key={group} aria-labelledby={`pulxon-group-${group}`}>
-                <h3 id={`pulxon-group-${group}`}>{t(`group.${group}` as MessageKey)}</h3>
-                <div class="grid">
-                  {items.map((feature) => (
-                    <FeatureButton
-                      key={feature.id}
-                      feature={feature}
-                      level={settings.features[feature.id] ?? 0}
+            {sections.map((section) => {
+              const tiles = section.tiles.map(renderTile).filter(Boolean);
+              const stepper = section.id === 'content' && fontSize;
+              if (tiles.length === 0 && !stepper) return null;
+              return (
+                <Section key={section.id} id={section.id} title={t(section.titleKey)} info={t(section.infoKey)} t={t}>
+                  {stepper && (
+                    <FontSizeStepper
+                      level={levelOf(FONT_SIZE_FEATURE)}
                       t={t}
-                      onActivate={(id) => controller.toggle(id)}
-                      describedById={noteIdFor(feature.id)}
+                      onChange={(level) => (level > 0 ? controller.enable(FONT_SIZE_FEATURE, level) : controller.disable(FONT_SIZE_FEATURE))}
                     />
-                  ))}
-                </div>
-                {group === 'navigation' && hasVoiceNavigation && (
-                  <>
-                    <p id={VOICE_NOTE_ID} data-pulxon-voice-note class="feature-note">
-                      {t('feature.voiceNavigationNote')}
+                  )}
+                  {tiles.length > 0 && <div class="grid">{tiles}</div>}
+                  {section.id === 'visual' && hasVoiceNavigation && (
+                    <>
+                      <p id={VOICE_NOTE_ID} data-pulxon-voice-note class="feature-note">
+                        {t('feature.voiceNavigationNote')}
+                      </p>
+                      <ul data-pulxon-voice-commands class="voice-commands">
+                        {voiceCommandsForLang(lang).map((command) => (
+                          <li key={command.id}>{command.phrases[0]}</li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                  {section.id === 'tools' && hasDictionary && (
+                    <p id={DICTIONARY_NOTE_ID} data-pulxon-dictionary-note class="feature-note">
+                      {t('feature.dictionaryNote')}
                     </p>
-                    <ul data-pulxon-voice-commands class="voice-commands">
-                      {voiceCommandsForLang(lang).map((command) => (
-                        <li key={command.id}>{command.phrases[0]}</li>
-                      ))}
-                    </ul>
-                  </>
-                )}
-                {group === 'reading' && hasDictionary && (
-                  <p id={DICTIONARY_NOTE_ID} data-pulxon-dictionary-note class="feature-note">
-                    {t('feature.dictionaryNote')}
-                  </p>
-                )}
-              </section>
-            ))}
+                  )}
+                </Section>
+              );
+            })}
 
-            <PanelSettings
-              t={t}
-              settings={settings}
-              store={store}
-              lang={lang}
-              onLangChange={onLangChange}
-              optionsPosition={optionsPosition}
-            />
+            <PositionAndReset t={t} settings={settings} store={store} optionsPosition={optionsPosition} onReset={() => controller.reset()} />
           </>
         )}
-
-        <div class="panel__footer">
-          <button type="button" class="reset" onClick={() => controller.reset()}>
-            {t('panel.reset')}
-          </button>
-          {statementUrl && (
-            <a data-pulxon-statement href={statementUrl} target="_blank" rel="noopener noreferrer">
-              {t('panel.statement')}
-              <span class="sr-only"> {t('link.newTab')}</span>
-            </a>
-          )}
-        </div>
       </div>
+
+      {statementUrl && (
+        <div class="panel__footer">
+          <a data-pulxon-statement href={statementUrl} target="_blank" rel="noopener noreferrer">
+            {t('panel.statement')}
+            <span class="sr-only"> {t('link.newTab')}</span>
+          </a>
+        </div>
+      )}
     </div>
   );
 }

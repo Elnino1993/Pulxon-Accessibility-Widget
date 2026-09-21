@@ -88,6 +88,10 @@ export function assertWidgetBuilt(widgetDistDir: string): void {
       `The widget has not been built: "${widgetFile}" does not exist. Run "pnpm --filter @pulxon/widget build" first — packaging now would ship a zip with no widget inside it.`,
     );
   }
+  const localesDir = join(widgetDistDir, 'locales');
+  if (!existsSync(localesDir)) {
+    throw new Error(`The widget build is missing "${localesDir}". Rebuild the widget — without it the panel could only ever be in English.`);
+  }
   const noticesFile = join(widgetDistDir, 'THIRD_PARTY_NOTICES.txt');
   if (!existsSync(noticesFile)) {
     throw new Error(
@@ -184,6 +188,8 @@ async function buildOnePackage(pkg: PackageSpec, widgetDistDir: string, widgetLi
     const widgetScript = readFileSync(join(widgetDistDir, 'pulxon.min.js'), 'utf8');
     writeFileSync(join(assetsDir, 'pulxon.min.js'), stripSourceMappingComment(widgetScript));
     cpSync(join(widgetDistDir, 'fonts'), join(assetsDir, 'fonts'), { recursive: true, filter: shouldCopyEntry });
+    // The panel's languages other than English: fetched from next to the script, like the fonts.
+    cpSync(join(widgetDistDir, 'locales'), join(assetsDir, 'locales'), { recursive: true, filter: shouldCopyEntry });
 
     // The widget's own MIT notice, copied from the repo's single canonical copy so it can
     // never drift from what LICENSE actually says, even if a platform directory's own copy

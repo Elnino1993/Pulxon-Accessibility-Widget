@@ -75,7 +75,15 @@ describe('buildPackages', () => {
     const outDir = makeTempDir('pulxon-build-');
     const partialDist = makeTempDir('pulxon-partial-dist-');
     writeFileSync(join(partialDist, 'pulxon.min.js'), '/*! banner */(function(){})();');
+    mkdirSync(join(partialDist, 'locales'));
     await expect(buildPackages({ outDir, widgetDistDir: partialDist })).rejects.toThrow(/THIRD_PARTY_NOTICES/);
+  });
+
+  it('refuses to package a widget build without its languages', async () => {
+    const outDir = makeTempDir('pulxon-build-');
+    const partialDist = makeTempDir('pulxon-partial-dist-');
+    writeFileSync(join(partialDist, 'pulxon.min.js'), '/*! banner */(function(){})();');
+    await expect(buildPackages({ outDir, widgetDistDir: partialDist })).rejects.toThrow(/locales/);
   });
 
   it('fails loudly, and writes nothing, when the widget has not been built', async () => {
@@ -156,6 +164,7 @@ describe('buildPackages', () => {
             `${root}/assets/pulxon.min.js`,
             `${root}/THIRD_PARTY_NOTICES.txt`,
             ...walkFiltered(join(realWidgetDist, 'fonts')).map((rel) => `${root}/assets/fonts/${rel}`),
+            ...walkFiltered(join(realWidgetDist, 'locales')).map((rel) => `${root}/assets/locales/${rel}`),
           ].sort();
 
           expect(fileEntries.sort()).toEqual(expected);

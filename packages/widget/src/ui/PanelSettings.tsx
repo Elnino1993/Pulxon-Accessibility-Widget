@@ -1,23 +1,7 @@
 import type { JSX } from 'preact';
 import type { Position } from '../config/options';
 import type { Settings, SettingsStore, WidgetScale } from '../core/store';
-import { SUPPORTED_LANGUAGES, type MessageKey, type Translator } from '../i18n';
-
-export interface PanelSettingsProps {
-  t: Translator;
-  settings: Settings;
-  store: SettingsStore;
-  lang: string;
-  onLangChange: (lang: string | null) => void;
-  /** The embed's configured corner, used only until the visitor picks one of their own. */
-  optionsPosition: Position;
-}
-
-/** The widget's own name for each language it ships, shown regardless of the panel's current language. */
-const LANGUAGE_NAMES: Record<string, string> = {
-  en: 'English',
-  es: 'Español',
-};
+import { LANGUAGES, SUPPORTED_LANGUAGES, type MessageKey, type Translator } from '../i18n';
 
 /**
  * The spots a visitor can pick: along the bottom edge only, where a launcher that is let go falls to
@@ -30,33 +14,26 @@ const BOTTOM_POSITIONS: ReadonlyArray<{ position: Position; short: MessageKey; f
   { position: 'bottom-right', short: 'position.right', full: 'position.bottomRight' },
 ];
 
-// `lang` (the panel's currently-resolved language) isn't needed here: the select's own value comes
-// straight from `settings.lang`. It stays part of the props contract because the caller (Panel) has
-// it on hand and other consumers of this component may want to display it.
-export function PanelSettings({ t, settings, store, onLangChange, optionsPosition }: PanelSettingsProps) {
+export interface LanguageAndSizeProps {
+  t: Translator;
+  settings: Settings;
+  store: SettingsStore;
+  onLangChange: (lang: string | null) => void;
+}
+
+/** The top card: the panel's language and the widget's size, the two settings about the panel itself. */
+export function LanguageAndSize({ t, settings, store, onLangChange }: LanguageAndSizeProps) {
   const scale: WidgetScale = settings.ui.scale;
-  // Before the visitor picks a corner of their own, `settings.ui.position` is null — the launcher
-  // still sits wherever the embed's own `options.position` put it, so the grid must read that corner
-  // as pressed too, or all eight buttons show unpressed while the launcher plainly sits in one of
-  // them. `onPositionChange` below still always writes an explicit value on click.
-  // A launcher the visitor dragged somewhere sits in no corner at all, so no corner reads as pressed.
-  const position = settings.ui.launcher ? null : (settings.ui.position ?? optionsPosition);
 
   // A `settings.lang` the picker has no matching <option> for (e.g. a value stored by a newer widget
   // version, or a stale/edited value) would otherwise leave the native <select> showing blank — no
   // option matches its `value`. Falling back to "auto" keeps the control always showing something
   // real; `resolveStoredLanguage` (i18n/index.ts) already falls back the same way for the language
   // the panel actually renders in, so this just keeps the picker's own display in sync with that.
-  const selectedLang = settings.lang && (SUPPORTED_LANGUAGES as readonly string[]).includes(settings.lang) ? settings.lang : 'auto';
+  const selectedLang = settings.lang && SUPPORTED_LANGUAGES.includes(settings.lang) ? settings.lang : 'auto';
 
   const onScaleChange = (next: WidgetScale): void => {
     store.update((s) => ({ ...s, ui: { ...s.ui, scale: next } }));
-  };
-
-  // Picking a spot is the non-drag way to move the widget (WCAG 2.5.7), so it overrides a drag: the
-  // launcher goes there and the panel opens beside it again.
-  const onPositionChange = (next: Position): void => {
-    store.update((s) => ({ ...s, ui: { ...s.ui, position: next, launcher: null, panel: null } }));
   };
 
   const onLangSelect = (event: JSX.TargetedEvent<HTMLSelectElement>): void => {
@@ -65,26 +42,25 @@ export function PanelSettings({ t, settings, store, onLangChange, optionsPositio
   };
 
   return (
-    <div class="settings">
-      <div class="settings-row">
-        <label id="pulxon-lang-label" htmlFor="pulxon-lang-select">
-          {t('settings.language')}
-        </label>
-        <select
-          id="pulxon-lang-select"
-          data-pulxon-lang-picker
-          aria-labelledby="pulxon-lang-label"
-          value={selectedLang}
-          onChange={onLangSelect}
-        >
-          <option value="auto">{t('settings.languageAuto')}</option>
-          {SUPPORTED_LANGUAGES.map((code) => (
-            <option key={code} value={code}>
-              {LANGUAGE_NAMES[code] ?? code}
-            </option>
-          ))}
-        </select>
-      </div>
+    <div class="card settings">
+      <label id="pulxon-lang-label" htmlFor="pulxon-lang-select" class="sr-only">
+        {t('settings.language')}
+      </label>
+      <select
+        id="pulxon-lang-select"
+        class="language-select"
+        data-pulxon-lang-picker
+        aria-labelledby="pulxon-lang-label"
+        value={selectedLang}
+        onChange={onLangSelect}
+      >
+        <option value="auto">{t('settings.languageAuto')}</option>
+        {LANGUAGES.map((language) => (
+          <option key={language.code} value={language.code} lang={language.code} dir={language.rtl ? 'rtl' : 'ltr'}>
+            {language.label}
+          </option>
+        ))}
+      </select>
 
       <div class="settings-row">
         <span id="pulxon-size-label">{t('settings.size')}</span>
@@ -109,7 +85,32 @@ export function PanelSettings({ t, settings, store, onLangChange, optionsPositio
           </button>
         </div>
       </div>
+    </div>
+  );
+}
 
+export interface PositionAndResetProps {
+  t: Translator;
+  settings: Settings;
+  store: SettingsStore;
+  /** The embed's configured corner, used only until the visitor picks one of their own. */
+  optionsPosition: Position;
+  onReset: () => void;
+}
+
+/** The bottom card: where the launcher sits, and the button that turns every adjustment off. */
+export function PositionAndReset({ t, settings, store, optionsPosition, onReset }: PositionAndResetProps) {
+  // A launcher the visitor dragged somewhere sits in no corner at all, so no spot reads as pressed.
+  const position = settings.ui.launcher ? null : (settings.ui.position ?? optionsPosition);
+
+  // Picking a spot is the non-drag way to move the widget (WCAG 2.5.7), so it overrides a drag: the
+  // launcher goes there and the panel docks beside it again.
+  const onPositionChange = (next: Position): void => {
+    store.update((s) => ({ ...s, ui: { ...s.ui, position: next, launcher: null, panel: null } }));
+  };
+
+  return (
+    <div class="card settings">
       <div class="settings-row settings-row--position">
         <span id="pulxon-position-label">{t('settings.position')}</span>
         {/* A position the embed code set outside the bottom row (data-position="top-right") shows
@@ -129,6 +130,9 @@ export function PanelSettings({ t, settings, store, onLangChange, optionsPositio
           ))}
         </div>
       </div>
+      <button type="button" class="reset" data-pulxon-reset onClick={onReset}>
+        {t('panel.reset')}
+      </button>
     </div>
   );
 }

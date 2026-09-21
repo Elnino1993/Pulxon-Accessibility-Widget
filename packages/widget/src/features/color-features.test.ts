@@ -16,9 +16,18 @@ afterEach(() => {
 });
 
 describe('contrast', () => {
-  it('has invert, dark and light levels', () => {
-    expect(contrast.levels).toBe(3);
-    expect(contrast.levelLabelKeys).toEqual(['level.invert', 'level.dark', 'level.light']);
+  it('has invert, dark, light and high contrast levels', () => {
+    expect(contrast.levels).toBe(4);
+    expect(contrast.levelLabelKeys).toEqual(['level.invert', 'level.dark', 'level.light', 'level.high']);
+  });
+
+  it('boosts contrast over the whole page at the high level, without undoing it for the widget', () => {
+    const ctx = makeCtx();
+    contrast.apply(ctx, 4);
+    const css = styleText('contrast') ?? '';
+    expect(css).toContain('--pulxon-f-contrast:contrast(1.3)');
+    expect(css).toContain(FILTER_RULE);
+    expect(css).not.toContain('--pulxon-f-undo');
   });
 
   it('inverts the page and re-inverts media', () => {

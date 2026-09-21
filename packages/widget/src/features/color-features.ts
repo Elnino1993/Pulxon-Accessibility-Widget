@@ -8,7 +8,11 @@ const ALL = ['body', 'body *'] as const;
 const INVERT_BACK = ['img', 'video', 'canvas', 'iframe', 'svg image', 'object', 'embed'] as const;
 const MEDIA = ['img', 'picture', 'video', 'canvas', 'iframe', 'svg', 'object', 'embed'] as const;
 
-export const CONTRAST_MODES = ['invert', 'dark', 'light'] as const;
+// Appended, never reordered: a visitor's stored level is an index into this list.
+export const CONTRAST_MODES = ['invert', 'dark', 'light', 'high'] as const;
+
+/** High contrast: a stronger contrast filter over the whole page. */
+const HIGH_CONTRAST = 'contrast(1.3)';
 export const SATURATION_FILTERS = ['saturate(0.5)', 'saturate(2)', 'grayscale(1)'] as const;
 
 const UNDO_INVERT = 'invert(1) hue-rotate(180deg)';
@@ -38,10 +42,13 @@ export const contrast = cssFeature({
   group: 'color',
   labelKey: 'feature.contrast',
   levels: CONTRAST_MODES.length,
-  levelLabelKeys: ['level.invert', 'level.dark', 'level.light'],
+  levelLabelKeys: ['level.invert', 'level.dark', 'level.light', 'level.high'],
   css: (level) => {
     const mode = pick(CONTRAST_MODES, level);
     if (mode === 'invert') return invertCss();
+    // No undo for the widget, unlike invert: the panel is already black, white and one accent, and
+    // a contrast boost leaves those as they are.
+    if (mode === 'high') return `html{--pulxon-f-contrast:${HIGH_CONTRAST}}${FILTER_RULE}`;
     if (mode === 'dark') return paletteCss('#000000', '#ffffff', '#ffeb3b');
     return paletteCss('#ffffff', '#000000', '#0000ee');
   },

@@ -1,5 +1,47 @@
 # Changelog
 
+## 0.7.0
+
+### Changed
+
+- The panel is laid out after Sienna Accessibility Widget. It opens docked to the screen edge on the
+  launcher's side, full height and 340px wide, and the title bar still drags it off the edge into a
+  floating window (picking a position docks it again). Top to bottom: language and size; profiles;
+  content adjustments; visual & navigation aids; color adjustments; additional tools; position and
+  reset. Each section is a card with an ⓘ that explains it in place (`aria-expanded`), and the title
+  bar has a reset button next to close.
+- Profiles are cards with an icon, a one-line description of exactly what they turn on, and a switch
+  (`role="switch"`, `aria-checked`).
+- Bigger text is a − 100% + stepper (120–180%); its ends use `aria-disabled`, so focus stays put.
+- Contrast and saturation modes are one tile each — Monochrome, Low saturation, High saturation, High
+  contrast, Light contrast, Dark contrast, Invert colors — still one feature each underneath, so modes
+  of the same feature replace each other.
+- Tiles sit three to a row; labels follow Sienna's names (Font weight, Letter spacing, Highlight
+  titles, Super focus, Stop animations).
+- The accessibility statement link moves to a footer under the panel.
+
+### Added
+
+- **53 languages.** English is in the bundle; every other language is `dist/locales/<code>.json`,
+  fetched from next to the script the first time it is used, and the panel follows the page's own
+  language on its own. Translations reuse Sienna's where the wording matches (MIT, credited) and were
+  written for the rest. A translation that loses a `{placeholder}` falls back to English for that one
+  string. Arabic, Persian, Hebrew and Urdu lay the panel out right to left. New option
+  `localeBaseUrl` for npm users; the plugin zips and the kit ship `locales/`.
+- A **Cognitive & learning** profile (more line height, a reading guide, highlighted titles).
+- A **High contrast** mode (a stronger contrast filter), contrast's fourth level.
+
+### Not copied
+
+- Sienna's "Blind profile" ("activates the screen reader"): a widget cannot stand in for a screen
+  reader, and offering one as if it could is an overclaim. Read aloud stays, named honestly. "Seizure
+  safe" stays "Reduce motion and color".
+
+### Notes
+
+- A site with a strict CSP needs `connect-src` to allow the script's own origin for any language but
+  English; without it the panel stays in English. Spanish was bundled before and is now fetched too.
+
 ## 0.6.3
 
 ### Fixed

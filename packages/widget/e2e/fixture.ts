@@ -43,6 +43,11 @@ export async function serve(page: Page, html: string, headers: Record<string, st
     const name = new URL(route.request().url()).pathname.split('/').pop() ?? '';
     return route.fulfill({ status: 200, contentType: 'font/woff2', path: fileURLToPath(new URL(`fonts/${name}`, DIST)) });
   });
+  // The panel's languages, fetched next to the script like the fonts.
+  await page.route(`${ORIGIN}/locales/*`, (route) => {
+    const name = new URL(route.request().url()).pathname.split('/').pop() ?? '';
+    return route.fulfill({ status: 200, contentType: 'application/json', path: fileURLToPath(new URL(`locales/${name}`, DIST)) });
+  });
 }
 
 export async function loadWidget(page: Page, attributes: Record<string, string> = {}): Promise<void> {
