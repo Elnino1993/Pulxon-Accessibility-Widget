@@ -63,6 +63,16 @@
 .launcher--bottom-center { bottom: var(--pulxon-oy); left: 50%; transform: translateX(-50%); }
 .launcher--bottom-right { bottom: var(--pulxon-oy); right: var(--pulxon-ox); }
 
+/* Dragged somewhere by the visitor: `left`/`top` come inline from Launcher.tsx. */
+.launcher {
+  /* A finger on the launcher drags it instead of scrolling the page underneath. */
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.launcher--free { right: auto; bottom: auto; transform: none; }
+.launcher--dragging { cursor: grabbing; box-shadow: 0 6px 18px rgb(0 0 0 / 0.4); }
+
 :focus-visible {
   outline: 3px solid #111111;
   outline-offset: 2px;
@@ -72,40 +82,70 @@
 .panel {
   position: fixed;
   z-index: var(--pulxon-z, 2147483000);
-  top: 0;
-  bottom: 0;
-  width: min(420px, 100vw);
-  overflow-y: auto;
-  padding: 0 16px 16px;
+  /* Replaced by Panel.tsx with the spot beside the launcher, or wherever the visitor dragged it. */
+  top: 8px;
+  left: 8px;
+  display: flex;
+  flex-direction: column;
+  width: min(calc(360px * var(--pulxon-scale, 1)), calc(100vw - 16px));
+  /* Tall enough for most of the settings at once, never taller than the screen: the body scrolls. */
+  max-height: min(calc(640px * var(--pulxon-scale, 1)), calc(100vh - 16px));
+  max-height: min(calc(640px * var(--pulxon-scale, 1)), calc(100dvh - 16px));
+  overflow: hidden;
   background: #f4f6fb;
   color: #111111;
+  border-radius: 16px;
   /* Same `--pulxon-scale` the launcher reads. Text throughout the panel is sized in `em`/`%` against
      this base, so it grows with it — and so are the settings block's own controls (`.segmented` and
      `.corner-grid` buttons, below): a visitor who asks for a larger widget wants those bigger too,
      not just the text next to them. */
   font: calc(16px * var(--pulxon-scale, 1)) / 1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  box-shadow: 0 0 24px rgb(0 0 0 / 0.3);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 0.3);
 }
 
-.panel--left { left: 0; }
-.panel--right { right: 0; }
-
+/* The drag handle: the whole title bar except the close button. */
 .panel__header {
-  position: sticky;
-  z-index: 1;
-  top: 0;
+  flex: none;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
-  margin: 0 -16px 12px;
-  padding: 14px 16px;
+  padding: 8px 8px 8px 12px;
   color: var(--pulxon-on-accent, #ffffff);
   background: var(--pulxon-accent, #1f4bff);
+  cursor: grab;
+  /* A finger on the title bar moves the panel instead of scrolling the page. */
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
-h2 { margin: 0; font-size: 1.25em; }
-h3 { margin: 16px 0 8px; font-size: 1em; }
+.panel__header:active { cursor: grabbing; }
+
+.panel__grip {
+  flex: none;
+  width: 10px;
+  height: 16px;
+  fill: currentColor;
+  opacity: 0.8;
+}
+
+.panel__header h2 { flex: 1; }
+
+/* The one scrolling region. `contain` keeps a scroll that reaches the end from carrying on into the
+   page behind, which reads as the panel "not scrolling" once the page starts moving instead. */
+.panel__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 10px 12px 12px;
+  scrollbar-width: thin;
+  scrollbar-color: #9aa3b8 transparent;
+}
+
+h2 { margin: 0; font-size: 1.0625em; }
+h3 { margin: 12px 0 6px; font-size: 0.875em; }
+.panel__body > section:first-child h3 { margin-top: 0; }
 
 /* The language/size/position block. One card per row: label on the left, control on the right,
    like the rest of the panel's white tiles. */
@@ -114,13 +154,14 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
-  margin-bottom: 8px;
-  padding: 10px 12px;
+  margin-bottom: 6px;
+  padding: 6px 10px;
+  font-size: 0.875em;
   background: #ffffff;
   border: 2px solid #e2e6f0;
-  border-radius: 12px;
+  border-radius: 10px;
 }
 
 .settings-row > label,
@@ -129,7 +170,7 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
 }
 
 .settings-row select {
-  min-height: 44px;
+  min-height: 36px;
   padding: 6px 10px;
   font: inherit;
   color: #111111;
@@ -154,11 +195,11 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
 }
 
 .segmented button {
-  /* 2.75em == 44px at the panel's base font size (16px * --pulxon-scale) — the shared touch-target
-     minimum — and grows from there with --pulxon-scale, same as .corner-grid button below. */
-  min-width: 2.75em;
-  min-height: 2.75em;
-  padding: 0.5em 0.875em;
+  /* 2.5em of the row's 14px (0.875em) text is 35px, comfortably over the 24px WCAG 2.5.8 target
+     minimum, and grows from there with --pulxon-scale, same as .corner-grid button below. */
+  min-width: 2.5em;
+  min-height: 2.5em;
+  padding: 0.375em 0.75em;
   font: inherit;
   font-weight: 600;
   color: #111111;
@@ -186,19 +227,19 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
      the panel's controls. Nine 2.75em cells plus their gaps still fit inside the 420px-wide panel
      at a 320px viewport (the narrowest supported): 3 * 44px + 2 * 6px = 144px, well under the
      ~260px left once the panel's and settings-row's own padding are subtracted. */
-  grid-template-columns: repeat(3, 2.75em);
-  grid-auto-rows: 2.75em;
-  gap: 6px;
+  grid-template-columns: repeat(3, 2.25em);
+  grid-auto-rows: 2.25em;
+  gap: 4px;
 }
 
 .corner-grid__spacer {
-  width: 2.75em;
-  height: 2.75em;
+  width: 2.25em;
+  height: 2.25em;
 }
 
 .corner-grid button {
-  width: 2.75em;
-  height: 2.75em;
+  width: 2.25em;
+  height: 2.25em;
   padding: 0;
   background: #ffffff;
   border: 2px solid #e2e6f0;
@@ -227,9 +268,9 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
   flex: none;
   align-items: center;
   justify-content: center;
-  min-width: 44px;
-  min-height: 44px;
-  font-size: 24px;
+  min-width: 36px;
+  min-height: 36px;
+  font-size: 22px;
   line-height: 1;
   color: inherit;
   background: transparent;
@@ -240,15 +281,10 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
 
 .grid {
   display: grid;
-  /* Three columns at the panel's full width, two when a narrow phone shrinks it. */
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-
-@media (max-width: 380px) {
-  .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  /* Four small tiles a row at the panel's normal width; three once the Large size (or a narrow phone)
+     leaves less than 4.75em for each. In em, so the column count follows the text size. */
+  grid-template-columns: repeat(auto-fill, minmax(4.75em, 1fr));
+  gap: 6px;
 }
 
 .tile {
@@ -257,16 +293,21 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-height: 92px;
-  padding: 12px 8px;
+  gap: 4px;
+  min-width: 0;
+  min-height: 4.5em;
+  padding: 8px 4px 6px;
   font: inherit;
-  font-size: 0.9375em;
+  font-size: 0.75em;
+  line-height: 1.2;
   text-align: center;
+  /* Long words ("Encabezados") wrap inside a narrow tile instead of overflowing it. */
+  overflow-wrap: anywhere;
+  hyphens: auto;
   color: #111111;
   background: #ffffff;
   border: 2px solid #e2e6f0;
-  border-radius: 12px;
+  border-radius: 10px;
   cursor: pointer;
 }
 
@@ -279,15 +320,15 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
 /* A shape, not just a colour: the check tells a colour-blind or greyscale reader the tile is on. */
 .tile[aria-pressed="true"]::after {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 3px;
+  right: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   color: var(--pulxon-on-accent, #ffffff);
-  font-size: 12px;
+  font-size: 10px;
   line-height: 1;
   background: var(--pulxon-accent, #1f4bff);
   border-radius: 50%;
@@ -299,28 +340,26 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
    needs no palette of its own. Fixed size keeps every tile's label on the same baseline. */
 .tile__icon {
   flex: none;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
 }
 
-.tile__status { font-size: 0.875em; }
-
-.tile__dots { display: flex; justify-content: center; gap: 4px; }
-.dot { width: 8px; height: 8px; border: 1px solid currentColor; border-radius: 50%; }
+.tile__dots { display: flex; justify-content: center; gap: 3px; }
+.dot { width: 6px; height: 6px; border: 1px solid currentColor; border-radius: 50%; }
 .dot--on { background: currentColor; }
 
 .panel__footer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  margin-top: 20px;
+  gap: 6px;
+  margin-top: 12px;
 }
 
 .reset {
   width: 100%;
-  min-height: 48px;
-  padding: 10px 16px;
+  min-height: 40px;
+  padding: 8px 16px;
   font: inherit;
   font-weight: 600;
   color: var(--pulxon-on-accent, #ffffff);
@@ -355,12 +394,13 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
   white-space: nowrap;
 }
 
-.tools { margin-top: 16px; }
+.tools { margin-top: 10px; }
 
 /* The active-profile row: a plain white card, same family as `.settings-row`, sitting above the tiles. */
 .active-profile {
   margin: 0 0 8px;
-  padding: 10px 12px;
+  padding: 6px 10px;
+  font-size: 0.875em;
   font-weight: 600;
   background: #ffffff;
   border: 2px solid #e2e6f0;
@@ -372,16 +412,16 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
    text color, so its contrast against the panel background is the same already-checked contrast as
    the rest of the copy. */
 .feature-note {
-  margin: 8px 0 0;
-  font-size: 0.875em;
+  margin: 6px 0 0;
+  font-size: 0.8125em;
 }
 
 /* The phrases a visitor can say, right under the voice note so turning the tile on tells them what
    to do next instead of leaving them guessing. */
 .voice-commands {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   padding: 0 0 0 20px;
-  font-size: 0.875em;
+  font-size: 0.8125em;
 }
 
 /* The page-structure tool spans the row and reads as a row, not a square card. */
@@ -389,7 +429,10 @@ h3 { margin: 16px 0 8px; font-size: 1em; }
   width: 100%;
   flex-direction: row;
   justify-content: flex-start;
-  min-height: 56px;
+  gap: 8px;
+  min-height: 40px;
+  padding: 6px 10px;
+  font-size: 0.875em;
   text-align: start;
 }
 

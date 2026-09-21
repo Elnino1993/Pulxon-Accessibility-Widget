@@ -184,7 +184,8 @@ test('panel text size does not depend on the host root font size', async ({ page
   await page.goto(`${ORIGIN}/`);
   await page.waitForFunction(() => 'Pulxon' in window);
   await page.getByRole('button', { name: 'Open accessibility menu' }).click();
-  await expect(page.locator('#pulxon-title')).toHaveCSS('font-size', '20px');
+  // 1.0625em of the panel's own 16px base: 17px whatever the host's root font size is.
+  await expect(page.locator('#pulxon-title')).toHaveCSS('font-size', '17px');
 });
 
 test('host page CSS can hide the widget root', async ({ page }) => {

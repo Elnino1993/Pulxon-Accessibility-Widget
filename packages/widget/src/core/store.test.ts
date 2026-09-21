@@ -73,22 +73,38 @@ describe('ui settings', () => {
   it('defaults the ui settings and keeps them across a reload', () => {
     const storage = createMemoryStorage();
     const store = createSettingsStore(storage);
-    expect(store.get().ui).toEqual({ scale: 'normal', position: null });
+    expect(store.get().ui).toEqual({ scale: 'normal', position: null, launcher: null, panel: null });
 
-    store.update((settings) => ({ ...settings, ui: { scale: 'large', position: 'bottom-left' } }));
-    expect(createSettingsStore(storage).get().ui).toEqual({ scale: 'large', position: 'bottom-left' });
+    store.update((settings) => ({ ...settings, ui: { scale: 'large', position: 'bottom-left', launcher: null, panel: null } }));
+    expect(createSettingsStore(storage).get().ui).toEqual({ scale: 'large', position: 'bottom-left', launcher: null, panel: null });
   });
 
   it('ignores a stored ui object with unknown values', () => {
     const storage = createMemoryStorage();
     storage.set(SETTINGS_KEY, JSON.stringify({ v: 1, features: {}, profile: null, lang: null, ui: { scale: 'huge', position: 'orbit' } }));
-    expect(createSettingsStore(storage).get().ui).toEqual({ scale: 'normal', position: null });
+    expect(createSettingsStore(storage).get().ui).toEqual({ scale: 'normal', position: null, launcher: null, panel: null });
   });
 
   it('falls back per field rather than discarding the whole ui object', () => {
     const storage = createMemoryStorage();
     storage.set(SETTINGS_KEY, JSON.stringify({ v: 1, features: {}, profile: null, lang: null, ui: { scale: 'large', position: 'orbit' } }));
-    expect(createSettingsStore(storage).get().ui).toEqual({ scale: 'large', position: null });
+    expect(createSettingsStore(storage).get().ui).toEqual({ scale: 'large', position: null, launcher: null, panel: null });
+  });
+
+  it('keeps where the visitor dragged the launcher and the panel across a reload', () => {
+    const storage = createMemoryStorage();
+    const store = createSettingsStore(storage);
+    store.update((settings) => ({ ...settings, ui: { ...settings.ui, launcher: { x: 0.25, y: 1 }, panel: { x: 0, y: 0.5 } } }));
+    expect(createSettingsStore(storage).get().ui).toEqual({ scale: 'normal', position: null, launcher: { x: 0.25, y: 1 }, panel: { x: 0, y: 0.5 } });
+  });
+
+  it('drops a stored drag spot that is not two fractions between 0 and 1', () => {
+    const storage = createMemoryStorage();
+    storage.set(
+      SETTINGS_KEY,
+      JSON.stringify({ v: 1, features: {}, profile: null, lang: null, ui: { scale: 'normal', position: null, launcher: { x: 2, y: 0.5 }, panel: { x: '0.1', y: 0 } } }),
+    );
+    expect(createSettingsStore(storage).get().ui).toEqual({ scale: 'normal', position: null, launcher: null, panel: null });
   });
 });
 

@@ -34,7 +34,9 @@ export function FeatureButton({ feature, level, t, onActivate, describedById }: 
     >
       <TileIcon id={feature.id} />
       <span class="tile__label">{t(feature.labelKey)}</span>
-      {status && <span class="tile__status">{status}</span>}
+      {/* Off / 2 of 4 stays in the button's accessible name, but only the dots show it on screen: a
+          compact tile has no room for a third line of text, and the dots already carry it. */}
+      {status && <span class="tile__status sr-only">{status}</span>}
       {multiLevel && (
         <span class="tile__dots" aria-hidden="true">
           {Array.from({ length: feature.levels }, (_, index) => (

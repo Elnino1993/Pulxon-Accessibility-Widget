@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.6.0
+
+### Added
+
+- The launcher can be dragged anywhere on the page, with a mouse or a finger. The spot is kept in the
+  visitor's own settings as a fraction of the screen, so it survives a reload, a resized window and a
+  rotated phone without ending up off screen. A press that barely moves is still a click.
+- The panel can be dragged by its title bar and remembers where it was put. Until the visitor moves
+  it, it opens beside the launcher, on the side facing the middle of the screen.
+- Picking a corner in the panel's position grid puts a dragged launcher back in that corner. That grid
+  is the non-drag way to move the widget (WCAG 2.5.7 Dragging Movements).
+
+### Changed
+
+- The panel is a compact floating window (360px wide, at most 640px tall) instead of a full-height
+  side sheet. Only its content scrolls; the title bar with the close button stays in view, and
+  `overscroll-behavior: contain` keeps a scroll that reaches the end from moving the page behind.
+- Tiles are smaller and sit four to a row at the default size (three at Large, or on a narrow phone).
+  The "Off" / "2 of 4" status text is no longer shown on the tile, only read out; the dots already
+  show the level on screen.
+
 ## 0.5.0
 
 ### Changed
