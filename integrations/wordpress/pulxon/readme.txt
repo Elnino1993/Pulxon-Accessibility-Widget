@@ -3,7 +3,7 @@ Contributors: pulxon
 Tags: accessibility, widget, toolbar, usability
 Requires at least: 6.3
 Requires PHP: 7.4
-Stable tag: 0.7.0
+Stable tag: 0.7.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -73,6 +73,12 @@ The toolbar stops loading immediately. Your saved settings are kept so they are 
 you reactivate the plugin.
 
 == Changelog ==
+
+= 0.7.1 =
+
+The panel scrolls again on sites that use a smooth-scroll library (Lenis, Locomotive Scroll, GSAP
+ScrollSmoother). Those libraries take over the mouse wheel for the whole page, so the page moved
+instead of the panel.
 
 = 0.7.0 =
 

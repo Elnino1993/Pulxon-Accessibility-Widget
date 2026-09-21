@@ -67,6 +67,9 @@ export function mountUI(input: MountUiInput): UiHandle {
   // also keeps both in sync once the visitor changes language from the panel.
   if (options.hideOnMobile) host.setAttribute('data-hide-mobile', '');
 
+  // Lenis (a smooth-scroll library many sites use) leaves an element carrying this attribute to scroll
+  // natively; on the host it covers the whole widget, whatever its version reads from the event path.
+  host.setAttribute('data-lenis-prevent', '');
   const shadow = host.attachShadow({ mode: 'open' });
   const styles = createStyleEngine(shadow, { nonce: options.nonce, mode: input.styleMode ?? 'auto' });
   styles.set('ui', css);
