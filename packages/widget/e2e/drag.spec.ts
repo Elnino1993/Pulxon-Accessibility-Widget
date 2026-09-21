@@ -10,6 +10,13 @@ async function loadLongPage(page: Page): Promise<void> {
   await page.waitForFunction(() => 'Pulxon' in window);
 }
 
+/** Resolves once the launcher has finished falling, so its box is where it came to rest. */
+async function settled(page: Page): Promise<void> {
+  await expect
+    .poll(() => page.getByRole('button', { name: 'Open accessibility menu' }).evaluate((el) => el.getAnimations().length))
+    .toBe(0);
+}
+
 /** Presses at the centre of `from`, drags in steps to (x, y) and releases. */
 async function dragTo(page: Page, from: { x: number; y: number; width: number; height: number }, x: number, y: number): Promise<void> {
   await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
@@ -18,15 +25,25 @@ async function dragTo(page: Page, from: { x: number; y: number; width: number; h
   await page.mouse.up();
 }
 
-test('the launcher can be dragged anywhere, stays there after a reload, and the drag does not open the panel', async ({ page }) => {
+test('the launcher can be lifted anywhere, falls back to the bottom when let go, and stays there after a reload', async ({ page }) => {
   await loadWidget(page);
   const launcher = page.getByRole('button', { name: 'Open accessibility menu' });
+  const viewport = page.viewportSize()!;
   const start = (await launcher.boundingBox())!;
 
-  await dragTo(page, start, 600, 250);
+  // While held it goes wherever the pointer takes it, high up included.
+  await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(600, 250, { steps: 12 });
+  const held = (await launcher.boundingBox())!;
+  expect(Math.round(held.y + held.height / 2)).toBe(250);
+  await page.mouse.up();
+
+  // Let go, it falls straight down to the bottom edge and keeps its place across.
+  await settled(page);
   const dropped = (await launcher.boundingBox())!;
   expect(Math.round(dropped.x + dropped.width / 2)).toBe(600);
-  expect(Math.round(dropped.y + dropped.height / 2)).toBe(250);
+  expect(Math.round(dropped.y + dropped.height)).toBe(viewport.height - 8);
   await expect(page.getByRole('dialog')).toHaveCount(0);
 
   await page.reload();
@@ -46,6 +63,7 @@ test('the launcher cannot be dragged off screen', async ({ page }) => {
   const launcher = page.getByRole('button', { name: 'Open accessibility menu' });
   const viewport = page.viewportSize()!;
   await dragTo(page, (await launcher.boundingBox())!, viewport.width + 300, -300);
+  await settled(page);
   const box = (await launcher.boundingBox())!;
   expect(box.x).toBeGreaterThanOrEqual(0);
   expect(box.y).toBeGreaterThanOrEqual(0);
@@ -75,6 +93,7 @@ test('choosing a corner puts a dragged launcher back in that corner', async ({ p
   await loadWidget(page);
   const launcher = page.getByRole('button', { name: 'Open accessibility menu' });
   await dragTo(page, (await launcher.boundingBox())!, 600, 300);
+  await settled(page);
   await launcher.click();
   await page.locator('[data-pulxon-position="top-right"]').click();
   const box = (await launcher.boundingBox())!;
@@ -122,4 +141,26 @@ test('the panel fits a 320px-wide phone without scrolling sideways', async ({ pa
   expect(dialog.x).toBeGreaterThanOrEqual(0);
   expect(dialog.x + dialog.width).toBeLessThanOrEqual(320);
   expect(await page.locator('.panel__body').evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+});
+
+test('the launcher lands without the falling animation when the visitor asked for less motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await loadWidget(page);
+  const launcher = page.getByRole('button', { name: 'Open accessibility menu' });
+  await dragTo(page, (await launcher.boundingBox())!, 600, 200);
+  expect(await launcher.evaluate((el) => el.getAnimations().length)).toBe(0);
+  const box = (await launcher.boundingBox())!;
+  expect(Math.round(box.y + box.height)).toBe(page.viewportSize()!.height - 8);
+});
+
+test('the Powered by Pulxon link sits at the top of the panel and can be followed, not dragged', async ({ page }) => {
+  await loadWidget(page);
+  await page.getByRole('button', { name: 'Open accessibility menu' }).click();
+  const link = page.getByRole('link', { name: /Powered by Pulxon/ });
+  const header = (await page.locator('[data-pulxon-drag-handle]').boundingBox())!;
+  const box = (await link.boundingBox())!;
+  expect(box.y).toBeGreaterThanOrEqual(header.y);
+  expect(box.y + box.height).toBeLessThanOrEqual(header.y + header.height);
+  expect(box.height).toBeGreaterThanOrEqual(24);
+  await expect(link).toHaveAttribute('href', 'https://pulxon.com/?utm_source=widget');
 });

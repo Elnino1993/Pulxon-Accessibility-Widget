@@ -129,7 +129,33 @@
   opacity: 0.8;
 }
 
-.panel__header h2 { flex: 1; }
+.panel__heading {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+/* The signature, right under the title. Underlined, not colour alone, and in the header's own
+   foreground, which mount.tsx picks for contrast against whatever accent the site chose. The
+   padding brings it to the 24px WCAG 2.5.8 target. */
+.panel__brand {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  margin: -2px -4px -4px;
+  padding: 0 4px;
+  font-size: 0.75em;
+  font-weight: 600;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.panel__brand:hover { text-decoration-thickness: 2px; }
 
 /* The one scrolling region. `contain` keeps a scroll that reaches the end from carrying on into the
    page behind, which reads as the panel "not scrolling" once the page starts moving instead. */

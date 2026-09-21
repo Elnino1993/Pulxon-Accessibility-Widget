@@ -2,7 +2,7 @@ import type { RefObject } from 'preact';
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import type { LauncherIcon, Position, WidgetOptions } from '../config/options';
 import type { DragSpot, WidgetScale } from '../core/store';
-import { beginDrag, clampPoint, pointToSpot, sizeOf, spotToPoint, viewportOf, type Point } from './drag';
+import { beginDrag, clampPoint, fallDuration, fallKeyframes, landingPoint, pointToSpot, sizeOf, spotToPoint, viewportOf, type Point } from './drag';
 
 const ICON_PATHS: Record<LauncherIcon, string> = {
   person: 'M12 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM4 7.5 12 9l8-1.5.5 2L15 11v4l1.5 7h-2.2L12 16l-2.3 6H7.5L9 15v-4L3.5 9.5z',
@@ -33,18 +33,22 @@ export interface LauncherProps {
   label: string;
   expanded: boolean;
   onToggle: () => void;
-  /** Called once a drag ends, with where the launcher was dropped. */
+  /** Called once a drag ends, with where the launcher landed. */
   onDrop: (spot: DragSpot) => void;
+  /** Land without the falling animation: the visitor asked the OS or the widget for less motion. */
+  reduceMotion: boolean;
   buttonRef: RefObject<HTMLButtonElement>;
 }
 
-export function Launcher({ options, position, mobilePosition, spot, scale, label, expanded, onToggle, onDrop, buttonRef }: LauncherProps) {
+export function Launcher({ options, position, mobilePosition, spot, scale, label, expanded, onToggle, onDrop, reduceMotion, buttonRef }: LauncherProps) {
   // Where a stored spot lands in this viewport; recomputed on resize.
   const [placed, setPlaced] = useState<Point | null>(null);
   // Where the launcher is while a drag is in progress.
   const [dragging, setDragging] = useState<Point | null>(null);
   const lastDragPoint = useRef<Point | null>(null);
   const suppressClickUntil = useRef(0);
+  // How far the launcher has to fall once it is let go; played after the render that lands it.
+  const pendingFall = useRef(0);
 
   useLayoutEffect(() => {
     const button = buttonRef.current;
@@ -58,6 +62,15 @@ export function Launcher({ options, position, mobilePosition, spot, scale, label
     win?.addEventListener('resize', place);
     return () => win?.removeEventListener('resize', place);
   }, [spot?.x, spot?.y, scale, options.size]);
+
+  // The launcher is already drawn at its landing spot; the animation only shows it getting there.
+  useLayoutEffect(() => {
+    const distance = pendingFall.current;
+    pendingFall.current = 0;
+    const button = buttonRef.current;
+    if (distance < 2 || reduceMotion || typeof button?.animate !== 'function') return;
+    button.animate(fallKeyframes(distance), { duration: fallDuration(distance) });
+  }, [placed]);
 
   const onPointerDown = (event: PointerEvent): void => {
     // A new press is a new gesture: its click is the visitor's, whatever the last drag did.
@@ -77,11 +90,16 @@ export function Launcher({ options, position, mobilePosition, spot, scale, label
         lastDragPoint.current = null;
         if (!moved || !dropped) return;
         suppressClickUntil.current = Date.now() + CLICK_AFTER_DRAG_MS;
-        // The stored spot takes over from the live drag position in the same render, so the launcher
-        // does not jump back to its corner for a frame in between.
-        setPlaced(dropped);
+        // It can be lifted anywhere, but let go it falls back to the bottom edge, where it keeps the
+        // horizontal spot it was dropped at.
+        const viewport = viewportOf(button);
+        const landed = landingPoint(dropped, box, viewport);
+        pendingFall.current = landed.top - dropped.top;
+        // The landing spot takes over from the live drag position in the same render, so the
+        // launcher does not jump back to its corner for a frame in between.
+        setPlaced(landed);
         setDragging(null);
-        onDrop(pointToSpot(dropped, box, viewportOf(button)));
+        onDrop(pointToSpot(landed, box, viewport));
       },
     });
   };
