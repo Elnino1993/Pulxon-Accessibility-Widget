@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.6.1
+
+### Changed
+
+- The launcher can still be lifted anywhere, but when it is let go it falls back to the bottom edge,
+  keeping the horizontal spot it was dropped at: an accelerating fall, a small bounce (never more than
+  24px) and rest. It lands at once, with no fall, when the visitor's OS asks for reduced motion or
+  "Pause animations" is on in the widget.
+- "Powered by Pulxon" moved from the panel footer to the top, in the title bar under the title, in the
+  bar's own contrast-checked foreground, underlined and padded to a 24px target. Pressing it follows
+  the link; it does not start a drag of the panel.
+
 ## 0.6.0
 
 ### Added

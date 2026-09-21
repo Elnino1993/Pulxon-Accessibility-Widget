@@ -4,4 +4,4 @@ description: 'Adds an on-page toolbar that lets a visitor adjust text size, colo
 package: Pulxon
 core_version_requirement: ^10 || ^11
 configure: pulxon.settings
-version: '0.6.0'
+version: '0.6.1'

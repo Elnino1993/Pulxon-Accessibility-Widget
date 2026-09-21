@@ -145,3 +145,32 @@ export function beginDrag(down: PointerEvent, element: HTMLElement, handlers: Dr
   element.addEventListener('pointerup', finish);
   element.addEventListener('pointercancel', finish);
 }
+
+/**
+ * The launcher's landing spot once it is let go: it falls straight down to the bottom edge, keeping
+ * the horizontal position it was dropped at.
+ */
+export function landingPoint(dropped: Point, box: Size, viewport: Size): Point {
+  return clampPoint({ left: dropped.left, top: viewport.height }, box, viewport);
+}
+
+/** How long a fall of `distance` px takes: longer for a longer drop, like gravity, but never slow. */
+export function fallDuration(distance: number): number {
+  return Math.round(Math.min(900, 250 + Math.sqrt(Math.max(0, distance)) * 18));
+}
+
+/**
+ * Keyframes for a fall of `distance` px onto the launcher's final position: it accelerates down,
+ * lands, bounces a little and settles. Animated as a transform on top of the final `top`, so the
+ * layout is already where it ends up and only the picture moves.
+ */
+export function fallKeyframes(distance: number): Keyframe[] {
+  const bounce = Math.round(Math.min(distance * 0.12, 24));
+  return [
+    { transform: `translateY(${-distance}px)`, easing: 'cubic-bezier(0.55, 0, 1, 0.45)' },
+    { transform: 'translateY(0)', offset: 0.7, easing: 'cubic-bezier(0, 0.55, 0.45, 1)' },
+    { transform: `translateY(${-bounce}px)`, offset: 0.85, easing: 'cubic-bezier(0.55, 0, 1, 0.45)' },
+    { transform: 'translateY(0)' },
+  ];
+}
+

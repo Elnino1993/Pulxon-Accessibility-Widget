@@ -3,7 +3,7 @@ Contributors: pulxon
 Tags: accessibility, widget, toolbar, usability
 Requires at least: 6.3
 Requires PHP: 7.4
-Stable tag: 0.6.0
+Stable tag: 0.6.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -73,6 +73,12 @@ The toolbar stops loading immediately. Your saved settings are kept so they are 
 you reactivate the plugin.
 
 == Changelog ==
+
+= 0.6.1 =
+
+The accessibility button can still be picked up and lifted anywhere, but let go it falls back to the
+bottom of the screen, where it keeps its place across. Visitors who asked for less motion see it land
+without the fall. The "Powered by Pulxon" link moved to the top of the panel, under its title.
 
 = 0.6.0 =
 

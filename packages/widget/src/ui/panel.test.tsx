@@ -426,6 +426,13 @@ describe('Panel chrome', () => {
     expect(link?.textContent).toMatch(/new tab/i);
   });
 
+  it('puts the signature at the top, in the title bar under the title, not in the footer', () => {
+    const { host } = setup([highlightLinks], []);
+    const root = host.shadowRoot!;
+    expect(root.querySelector('.panel__header [data-pulxon-branding]')).not.toBeNull();
+    expect(root.querySelector('.panel__footer [data-pulxon-branding]')).toBeNull();
+  });
+
   it('drops the signature when the site turns branding off', () => {
     const { host } = setup([highlightLinks], [], { branding: false });
     expect(host.shadowRoot!.querySelector('[data-pulxon-branding]')).toBeNull();

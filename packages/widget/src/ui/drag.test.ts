@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { anchorPanel, beginDrag, clampPoint, EDGE, pointToSpot, spotToPoint } from './drag';
+import { anchorPanel, beginDrag, clampPoint, EDGE, fallDuration, fallKeyframes, landingPoint, pointToSpot, spotToPoint } from './drag';
 
 const viewport = { width: 1000, height: 800 };
 
@@ -110,3 +110,33 @@ describe('beginDrag', () => {
     el.remove();
   });
 });
+
+describe('falling', () => {
+  const box = { width: 52, height: 52 };
+
+  it('lands on the bottom edge, straight below where it was let go', () => {
+    expect(landingPoint({ left: 300, top: 120 }, box, viewport)).toEqual({ left: 300, top: 800 - 52 - EDGE });
+  });
+
+  it('keeps a launcher dropped against a side edge on screen', () => {
+    expect(landingPoint({ left: 5000, top: 120 }, box, viewport).left).toBe(1000 - 52 - EDGE);
+  });
+
+  it('takes longer for a longer drop, within bounds', () => {
+    expect(fallDuration(50)).toBeLessThan(fallDuration(600));
+    expect(fallDuration(0)).toBe(250);
+    expect(fallDuration(100000)).toBe(900);
+  });
+
+  it('starts at the height it was dropped from and settles at its landing spot', () => {
+    const frames = fallKeyframes(400);
+    expect(frames[0]!.transform).toBe('translateY(-400px)');
+    expect(frames[frames.length - 1]!.transform).toBe('translateY(0)');
+  });
+
+  it('never bounces more than 24px, however far it falls', () => {
+    const bounce = fallKeyframes(5000).find((frame) => frame.offset === 0.85)!;
+    expect(bounce.transform).toBe('translateY(-24px)');
+  });
+});
+

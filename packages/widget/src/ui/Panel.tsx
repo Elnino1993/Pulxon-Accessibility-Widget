@@ -101,8 +101,9 @@ export function Panel({
 
   const onHeaderPointerDown = (event: PointerEvent): void => {
     if (event.button !== 0) return;
-    // The close button sits in the header; pressing it must close the panel, not start a drag.
-    if ((event.target as Element | null)?.closest?.('button')) return;
+    // The close button and the Pulxon link sit in the header; pressing them must do what they do,
+    // not start a drag.
+    if ((event.target as Element | null)?.closest?.('button, a')) return;
     const dialog = dialogRef.current;
     if (!dialog) return;
     const start = dialog.getBoundingClientRect();
@@ -181,7 +182,21 @@ export function Panel({
           <circle cx="2" cy="14" r="1.5" />
           <circle cx="8" cy="14" r="1.5" />
         </svg>
-        <h2 id="pulxon-title">{t('panel.title')}</h2>
+        <div class="panel__heading">
+          <h2 id="pulxon-title">{t('panel.title')}</h2>
+          {branding && (
+            <a
+              data-pulxon-branding
+              class="panel__brand"
+              href="https://pulxon.com/?utm_source=widget"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {t('panel.poweredBy')}
+              <span class="sr-only"> {t('link.newTab')}</span>
+            </a>
+          )}
+        </div>
         <button ref={closeRef} type="button" class="icon-button" aria-label={t('panel.close')} onClick={onClose}>
           <span aria-hidden="true">×</span>
         </button>
@@ -297,12 +312,6 @@ export function Panel({
           {statementUrl && (
             <a data-pulxon-statement href={statementUrl} target="_blank" rel="noopener noreferrer">
               {t('panel.statement')}
-              <span class="sr-only"> {t('link.newTab')}</span>
-            </a>
-          )}
-          {branding && (
-            <a data-pulxon-branding href="https://pulxon.com/?utm_source=widget" target="_blank" rel="noopener noreferrer">
-              {t('panel.poweredBy')}
               <span class="sr-only"> {t('link.newTab')}</span>
             </a>
           )}

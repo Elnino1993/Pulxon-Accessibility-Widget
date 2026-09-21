@@ -8,6 +8,7 @@ import { createSettingsStore } from '../core/store';
 import { createStyleEngine } from '../core/style-engine';
 import { highlightLinks, pauseAnimations } from '../features';
 import { createTranslator } from '../i18n';
+import { EDGE, sizeOf, viewportOf } from './drag';
 import { mountUI, type UiHandle } from './mount';
 
 const handles: UiHandle[] = [];
@@ -66,7 +67,25 @@ afterEach(() => {
 });
 
 describe('dragging the launcher', () => {
-  it('moves it off its corner and remembers where it was dropped', () => {
+  it('follows the pointer while it is held, lifted as high as the visitor likes', () => {
+    const { launcher } = setup();
+    act(() => {
+      launcher().dispatchEvent(pointer('pointerdown', 20, 20));
+    });
+    act(() => {
+      launcher().dispatchEvent(pointer('pointermove', 400, 300));
+    });
+    expect(launcher().classList.contains('launcher--dragging')).toBe(true);
+    // It moves by the pointer's travel (380, 280) from where it started, which happy-dom, laying
+    // nothing out, reports as 0,0.
+    expect(launcher().style.left).toBe('380px');
+    expect(launcher().style.top).toBe('280px');
+    act(() => {
+      launcher().dispatchEvent(pointer('pointerup', 400, 300));
+    });
+  });
+
+  it('falls to the bottom edge when let go, keeping where it was across, and remembers it', () => {
     const { launcher, store } = setup();
     expect(launcher().classList.contains('launcher--bottom-left')).toBe(true);
 
@@ -74,14 +93,12 @@ describe('dragging the launcher', () => {
 
     expect(launcher().classList.contains('launcher--free')).toBe(true);
     expect(launcher().classList.contains('launcher--bottom-left')).toBe(false);
-    // It moves by the pointer's travel (380, 280) from where it started, which happy-dom, laying
-    // nothing out, reports as 0,0.
     expect(launcher().style.left).toBe('380px');
-    expect(launcher().style.top).toBe('280px');
+    const bottom = viewportOf(launcher()).height - sizeOf(launcher()).height - EDGE;
+    expect(launcher().style.top).toBe(`${bottom}px`);
     const spot = store.get().ui.launcher;
-    expect(spot).not.toBeNull();
     expect(spot!.x).toBeGreaterThan(0);
-    expect(spot!.y).toBeGreaterThan(0);
+    expect(spot!.y).toBe(1);
   });
 
   it('does not open the panel with the click that follows the drag', () => {

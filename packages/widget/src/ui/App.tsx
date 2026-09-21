@@ -83,6 +83,11 @@ export function App({ doc, options, controller, features, store, profiles, t, la
     if (!focusElement(element)) focusOpenerOrLauncher();
   };
 
+  // The falling launcher is motion the visitor did not ask for: skip it when they asked their OS, or
+  // this widget, for less motion.
+  const reduceMotion =
+    (settings.features['pause-animations'] ?? 0) > 0 || (doc.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false);
+
   const onLauncherDrop = (spot: DragSpot): void => {
     store.update((s) => ({ ...s, ui: { ...s.ui, launcher: spot } }));
   };
@@ -103,6 +108,7 @@ export function App({ doc, options, controller, features, store, profiles, t, la
         expanded={open}
         onToggle={onToggle}
         onDrop={onLauncherDrop}
+        reduceMotion={reduceMotion}
         buttonRef={launcherRef}
       />
       {open && (
