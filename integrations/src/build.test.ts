@@ -71,6 +71,13 @@ describe('buildPackages', () => {
     }
   });
 
+  it('refuses to package a widget build that lost its third-party notices', async () => {
+    const outDir = makeTempDir('pulxon-build-');
+    const partialDist = makeTempDir('pulxon-partial-dist-');
+    writeFileSync(join(partialDist, 'pulxon.min.js'), '/*! banner */(function(){})();');
+    await expect(buildPackages({ outDir, widgetDistDir: partialDist })).rejects.toThrow(/THIRD_PARTY_NOTICES/);
+  });
+
   it('fails loudly, and writes nothing, when the widget has not been built', async () => {
     const outDir = makeTempDir('pulxon-build-');
     const emptyDistDir = makeTempDir('pulxon-empty-dist-');
@@ -105,6 +112,15 @@ describe('buildPackages', () => {
           const widgetLicenseEntry = zip.getEntry(`${root}/LICENSE-widget-MIT.txt`);
           expect(widgetLicenseEntry!.getData().toString('utf8')).toBe(readFileSync(join(repoRoot, 'LICENSE'), 'utf8'));
 
+          // The third-party notices the script's banner points at travel in the zip as well.
+          const noticesEntry = zip.getEntry(`${root}/THIRD_PARTY_NOTICES.txt`);
+          expect(noticesEntry, entryNames.join('\n')).not.toBeNull();
+          const notices = noticesEntry!.getData().toString('utf8');
+          expect(notices).toBe(readFileSync(join(realWidgetDist, 'THIRD_PARTY_NOTICES.txt'), 'utf8'));
+          expect(notices).toContain('Copyright 2025 Benny Luk');
+          expect(notices).toContain('Copyright (c) 2015-present Jason Miller');
+          expect(shippedScript.startsWith('/*!')).toBe(true);
+
           for (const own of pkg.ownFiles) {
             expect(entryNames, `must contain the platform's own file ${own}`).toContain(`${root}/${own}`);
           }
@@ -138,6 +154,7 @@ describe('buildPackages', () => {
           const expected = [
             ...walkFiltered(pkg.sourceDir).map((rel) => `${root}/${rel}`),
             `${root}/assets/pulxon.min.js`,
+            `${root}/THIRD_PARTY_NOTICES.txt`,
             ...walkFiltered(join(realWidgetDist, 'fonts')).map((rel) => `${root}/assets/fonts/${rel}`),
           ].sort();
 

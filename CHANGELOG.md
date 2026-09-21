@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.6.3
+
+### Fixed
+
+- Licence notices. The widget is partly based on Sienna Accessibility Widget (MIT, copyright 2025
+  Benny Luk) and bundles Preact (MIT, copyright 2015-present Jason Miller); MIT's one condition is that
+  those notices travel with every copy, and the built script carried none.
+  - Every build (`pulxon.min.js` and the npm `index.js`) now starts with a `/*!` banner naming the
+    authors and linking the full notices. It is added with Rolldown's `postBanner`, after
+    minification, so it is always the first thing in the file.
+  - `THIRD_PARTY_NOTICES.txt` (Sienna, Preact, OpenDyslexic) is copied into `dist/` by the build and
+    ships in every WordPress, Joomla and Drupal zip; packaging refuses a build without it.
+  - `packages/widget/LICENSE` and the root `LICENSE` read Copyright 2026 Pulxon and Copyright 2025
+    Benny Luk. The README has a License / Credits section.
+- The widget's behaviour is unchanged.
+
 ## 0.6.2
 
 ### Changed

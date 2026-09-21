@@ -1,6 +1,6 @@
 {
   "name": "@pulxon/widget",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "Open-source accessibility preferences widget by Pulxon",
   "license": "MIT",
   "type": "module",
@@ -23,7 +23,7 @@
     "./dist/pulxon.min.js"
   ],
   "scripts": {
-    "build": "vite build && vite build --config vite.iife.config.ts && tsc -p tsconfig.build.json && node scripts/copy-fonts.mjs",
+    "build": "vite build && vite build --config vite.iife.config.ts && tsc -p tsconfig.build.json && node scripts/copy-fonts.mjs && node scripts/copy-notices.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",

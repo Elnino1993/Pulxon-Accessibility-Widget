@@ -88,6 +88,12 @@ export function assertWidgetBuilt(widgetDistDir: string): void {
       `The widget has not been built: "${widgetFile}" does not exist. Run "pnpm --filter @pulxon/widget build" first — packaging now would ship a zip with no widget inside it.`,
     );
   }
+  const noticesFile = join(widgetDistDir, 'THIRD_PARTY_NOTICES.txt');
+  if (!existsSync(noticesFile)) {
+    throw new Error(
+      `The widget build is missing "${noticesFile}". Rebuild the widget — the script bundles third-party code whose licences require these notices to travel with it.`,
+    );
+  }
   const fontsDir = join(widgetDistDir, 'fonts');
   if (!existsSync(fontsDir)) {
     throw new Error(`The widget has not been built: "${fontsDir}" does not exist. Run "pnpm --filter @pulxon/widget build" first.`);
@@ -183,6 +189,10 @@ async function buildOnePackage(pkg: PackageSpec, widgetDistDir: string, widgetLi
     // never drift from what LICENSE actually says, even if a platform directory's own copy
     // goes stale.
     copyFileSync(widgetLicensePath, join(pkgStagingDir, 'LICENSE-widget-MIT.txt'));
+
+    // The notices for the third-party code inside pulxon.min.js (Sienna, Preact) and the font. The
+    // script's own banner points at the published copy; this one travels in the zip itself.
+    copyFileSync(join(widgetDistDir, 'THIRD_PARTY_NOTICES.txt'), join(pkgStagingDir, 'THIRD_PARTY_NOTICES.txt'));
 
     const zipName = `${pkg.zipBaseName}-${version}.zip`;
     const zipPath = join(outDir, zipName);

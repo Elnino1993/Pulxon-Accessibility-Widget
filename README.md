@@ -201,4 +201,20 @@ cd packages/widget
 pnpm test && pnpm lint && pnpm typecheck && pnpm build && pnpm size && pnpm publint && pnpm e2e
 ```
 
-See `THIRD_PARTY_NOTICES.md` for third-party licenses.
+## License / Credits
+
+MIT, see [`LICENSE`](LICENSE). Copyright 2026 Pulxon.
+
+Portions of this widget are based on
+[Sienna Accessibility Widget](https://github.com/bennyluk/Sienna-Accessibility-Widget),
+copyright 2025 Benny Luk, used under the MIT License.
+
+The built script bundles [Preact](https://preactjs.com/) (MIT, copyright 2015-present Jason Miller),
+and the dyslexia-friendly font is [OpenDyslexic](https://opendyslexic.org) by Abbie Gonzalez (SIL
+Open Font License 1.1).
+
+The full notices ship with every build as `dist/THIRD_PARTY_NOTICES.txt` (source:
+[`packages/widget/THIRD_PARTY_NOTICES.txt`](packages/widget/THIRD_PARTY_NOTICES.txt)) and are
+published at https://www.pulxon.com/widget/THIRD_PARTY_NOTICES.txt. Every built file also starts
+with a short `/*!` banner naming these authors and pointing at that file. The older
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) at the repository root covers the same ground.

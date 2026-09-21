@@ -3,7 +3,7 @@ Contributors: pulxon
 Tags: accessibility, widget, toolbar, usability
 Requires at least: 6.3
 Requires PHP: 7.4
-Stable tag: 0.6.2
+Stable tag: 0.6.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -73,6 +73,12 @@ The toolbar stops loading immediately. Your saved settings are kept so they are 
 you reactivate the plugin.
 
 == Changelog ==
+
+= 0.6.3 =
+
+Licence notices only; the widget works exactly as before. The script now starts with a short
+copyright banner, and the plugin ships THIRD_PARTY_NOTICES.txt with the licences of the third-party
+code inside it: Sienna Accessibility Widget and Preact (MIT) and the OpenDyslexic font (OFL 1.1).
 
 = 0.6.2 =
 
