@@ -99,16 +99,16 @@ test("a visitor's chosen corner overrides the owner's mobile position at narrow 
   expect(beforeCenterX).toBeGreaterThanOrEqual(390 / 2 - 2);
   expect(beforeCenterX).toBeLessThanOrEqual(390 / 2 + 2);
 
-  // The visitor picks their own corner from the panel — an explicit act about their own need.
+  // The visitor picks their own spot from the panel — an explicit act about their own need.
   await launcher.click();
-  await page.getByRole('button', { name: 'Top left' }).click();
+  await page.getByRole('button', { name: 'Bottom left' }).click();
   await page.keyboard.press('Escape');
 
   // Their choice now wins over the owner's mobile-position default, still at a narrow viewport.
   const afterBox = await launcher.boundingBox();
   expect(afterBox).not.toBeNull();
   expect(afterBox!.x).toBeLessThanOrEqual(OFFSET + 2);
-  expect(afterBox!.y).toBeLessThanOrEqual(OFFSET + 2);
+  expect(afterBox!.y + afterBox!.height).toBeGreaterThanOrEqual(844 - OFFSET - 2);
 });
 
 test('the in-panel language picker switches the panel heading', async ({ page }) => {
@@ -132,24 +132,28 @@ test('the large size button grows the rendered launcher', async ({ page }) => {
   expect(after!.width).toBeGreaterThan(before!.width);
 });
 
-test('pressing a corner in the position grid moves the launcher there', async ({ page }) => {
+test('picking a spot in the position picker moves the launcher along the bottom', async ({ page }) => {
   await loadWidget(page); // default position is bottom-left
   const launcher = page.getByRole('button', { name: 'Open accessibility menu' });
+  const viewport = page.viewportSize()!;
 
   const start = await launcher.boundingBox();
   expect(start).not.toBeNull();
   expect(start!.x, 'the default launcher sits on the left').toBeLessThan(100);
 
-  // The opposite corner, so both axes have to move: from the default, a move to top LEFT would
-  // leave x where it already was and the assertion would prove half of what it claims.
   await launcher.click();
-  await page.getByRole('button', { name: 'Top right' }).click();
+  await page.getByRole('button', { name: 'Bottom right' }).click();
   await page.keyboard.press('Escape');
+  const right = (await launcher.boundingBox())!;
+  expect(right.x + right.width).toBeGreaterThan(viewport.width - 100);
+  expect(right.y).toBeGreaterThan(viewport.height - 100);
 
-  const box = await launcher.boundingBox();
-  expect(box).not.toBeNull();
-  expect(box!.x).toBeGreaterThan(start!.x);
-  expect(box!.y).toBeLessThan(100);
+  await launcher.click();
+  await page.getByRole('button', { name: 'Bottom center' }).click();
+  await page.keyboard.press('Escape');
+  const center = (await launcher.boundingBox())!;
+  expect(Math.abs(center.x + center.width / 2 - viewport.width / 2)).toBeLessThanOrEqual(2);
+  expect(center.y).toBeGreaterThan(viewport.height - 100);
 });
 
 test('shows the accessibility statement link when the embed provides a data-statement-url', async ({ page }) => {

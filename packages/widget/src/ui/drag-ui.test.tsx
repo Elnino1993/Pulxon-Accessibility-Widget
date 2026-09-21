@@ -137,7 +137,7 @@ describe('dragging the launcher', () => {
     expect(launcher().style.left).not.toBe('');
   });
 
-  it('goes back to a corner, and no corner reads as pressed until it does, when a corner is picked', () => {
+  it('goes back to a fixed spot, and no spot reads as pressed until it does, when one is picked', () => {
     const { launcher, root, store, ui } = setup();
     drag(launcher(), 20, 20, 400, 300);
     act(() => ui.open());
@@ -145,9 +145,9 @@ describe('dragging the launcher', () => {
     const pressed = root.querySelectorAll('[data-pulxon-position][aria-pressed="true"]');
     expect(pressed.length).toBe(0);
 
-    act(() => root.querySelector<HTMLButtonElement>('[data-pulxon-position="top-right"]')!.click());
-    expect(store.get().ui).toMatchObject({ position: 'top-right', launcher: null, panel: null });
-    expect(launcher().classList.contains('launcher--top-right')).toBe(true);
+    act(() => root.querySelector<HTMLButtonElement>('[data-pulxon-position="bottom-right"]')!.click());
+    expect(store.get().ui).toMatchObject({ position: 'bottom-right', launcher: null, panel: null });
+    expect(launcher().classList.contains('launcher--bottom-right')).toBe(true);
     expect(launcher().classList.contains('launcher--free')).toBe(false);
   });
 });

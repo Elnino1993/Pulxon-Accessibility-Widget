@@ -1,6 +1,6 @@
 {
   "name": "@pulxon/widget",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Open-source accessibility preferences widget by Pulxon",
   "license": "MIT",
   "type": "module",

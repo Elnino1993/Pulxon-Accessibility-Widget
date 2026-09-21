@@ -89,16 +89,16 @@ test('the panel can be dragged by its title bar and stays put when reopened', as
   expect(Math.abs(reopened.y - after.y)).toBeLessThanOrEqual(1);
 });
 
-test('choosing a corner puts a dragged launcher back in that corner', async ({ page }) => {
+test('picking a spot puts a dragged launcher back there', async ({ page }) => {
   await loadWidget(page);
   const launcher = page.getByRole('button', { name: 'Open accessibility menu' });
   await dragTo(page, (await launcher.boundingBox())!, 600, 300);
   await settled(page);
   await launcher.click();
-  await page.locator('[data-pulxon-position="top-right"]').click();
+  await page.getByRole('button', { name: 'Bottom right' }).click();
   const box = (await launcher.boundingBox())!;
   const viewport = page.viewportSize()!;
-  expect(box.y).toBeLessThan(100);
+  expect(box.y).toBeGreaterThan(viewport.height - 100);
   expect(box.x + box.width).toBeGreaterThan(viewport.width - 100);
 });
 

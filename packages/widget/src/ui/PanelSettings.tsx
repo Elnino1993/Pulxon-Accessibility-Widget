@@ -19,28 +19,15 @@ const LANGUAGE_NAMES: Record<string, string> = {
   es: 'Español',
 };
 
-const POSITION_LABELS: Record<Position, MessageKey> = {
-  'top-left': 'position.topLeft',
-  'top-center': 'position.topCenter',
-  'top-right': 'position.topRight',
-  'center-left': 'position.centerLeft',
-  'center-right': 'position.centerRight',
-  'bottom-left': 'position.bottomLeft',
-  'bottom-center': 'position.bottomCenter',
-  'bottom-right': 'position.bottomRight',
-};
-
-// Row-major layout for a 3x3 grid; `null` is the empty middle cell — `Position` has no true center.
-const GRID_CELLS: Array<Position | null> = [
-  'top-left',
-  'top-center',
-  'top-right',
-  'center-left',
-  null,
-  'center-right',
-  'bottom-left',
-  'bottom-center',
-  'bottom-right',
+/**
+ * The spots a visitor can pick: along the bottom edge only, where a launcher that is let go falls to
+ * anyway. The short word is what shows; the full name ("Bottom left") is what a screen reader hears,
+ * and it contains the short word, so a voice-control user can say what they see (WCAG 2.5.3).
+ */
+const BOTTOM_POSITIONS: ReadonlyArray<{ position: Position; short: MessageKey; full: MessageKey }> = [
+  { position: 'bottom-left', short: 'position.left', full: 'position.bottomLeft' },
+  { position: 'bottom-center', short: 'position.center', full: 'position.bottomCenter' },
+  { position: 'bottom-right', short: 'position.right', full: 'position.bottomRight' },
 ];
 
 // `lang` (the panel's currently-resolved language) isn't needed here: the select's own value comes
@@ -66,8 +53,8 @@ export function PanelSettings({ t, settings, store, onLangChange, optionsPositio
     store.update((s) => ({ ...s, ui: { ...s.ui, scale: next } }));
   };
 
-  // Picking a corner is the non-drag way to move the widget (WCAG 2.5.7), so it overrides a drag:
-  // the launcher goes to that corner and the panel opens beside it again.
+  // Picking a spot is the non-drag way to move the widget (WCAG 2.5.7), so it overrides a drag: the
+  // launcher goes there and the panel opens beside it again.
   const onPositionChange = (next: Position): void => {
     store.update((s) => ({ ...s, ui: { ...s.ui, position: next, launcher: null, panel: null } }));
   };
@@ -125,21 +112,21 @@ export function PanelSettings({ t, settings, store, onLangChange, optionsPositio
 
       <div class="settings-row settings-row--position">
         <span id="pulxon-position-label">{t('settings.position')}</span>
-        <div class="corner-grid" role="group" aria-labelledby="pulxon-position-label">
-          {GRID_CELLS.map((cell, index) => {
-            if (!cell) return <span key={`spacer-${index}`} class="corner-grid__spacer" aria-hidden="true" />;
-            const active = position === cell;
-            return (
-              <button
-                key={cell}
-                type="button"
-                data-pulxon-position={cell}
-                aria-label={t(POSITION_LABELS[cell])}
-                aria-pressed={active}
-                onClick={() => onPositionChange(cell)}
-              />
-            );
-          })}
+        {/* A position the embed code set outside the bottom row (data-position="top-right") shows
+            none of these as pressed: the launcher is honestly in none of them. */}
+        <div class="segmented" role="group" aria-labelledby="pulxon-position-label">
+          {BOTTOM_POSITIONS.map(({ position: spot, short, full }) => (
+            <button
+              key={spot}
+              type="button"
+              data-pulxon-position={spot}
+              aria-label={t(full)}
+              aria-pressed={position === spot}
+              onClick={() => onPositionChange(spot)}
+            >
+              {t(short)}
+            </button>
+          ))}
         </div>
       </div>
     </div>

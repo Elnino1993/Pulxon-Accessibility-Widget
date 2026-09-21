@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.2
+
+### Changed
+
+- The panel's position setting offers three spots along the bottom edge, Left / Center / Right, as
+  one segmented control like the size setting, instead of a 3x3 grid of eight corners. A launcher that
+  is let go falls to the bottom anyway, so the top and middle spots only fought it. Screen readers hear
+  the full names ("Bottom left"), which contain the words on screen. The embed code's `data-position`
+  still accepts every position; the picker shows none pressed when the launcher sits outside the
+  bottom row.
+
 ## 0.6.1
 
 ### Changed
