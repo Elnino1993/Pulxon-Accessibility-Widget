@@ -1,5 +1,6 @@
 import preact from '@preact/preset-vite';
 import { defineConfig } from 'vite';
+import { LEGAL_BANNER } from './build-banner.ts';
 
 export default defineConfig({
   plugins: [preact()],
@@ -14,5 +15,6 @@ export default defineConfig({
       formats: ['iife'],
       fileName: () => 'pulxon.min.js',
     },
+    rolldownOptions: { output: { postBanner: LEGAL_BANNER } },
   },
 });

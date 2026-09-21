@@ -1,9 +1,11 @@
-# Third-party notices
+Pulxon Accessibility Widget — Third-Party Notices
+https://www.pulxon.com/
 
-## Sienna Accessibility Widget
+Portions of this software are based on Sienna Accessibility Widget
+https://github.com/bennyluk/Sienna-Accessibility-Widget
 
-Portions of this project (translations and icons, when included) are derived from
-https://github.com/bennyluk/Sienna-Accessibility-Widget, licensed under the MIT License:
+--------------------------------------------------------------------------
+MIT License
 
 Copyright 2025 Benny Luk
 
@@ -13,10 +15,12 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-## Preact
+--------------------------------------------------------------------------
+Preact
+https://preactjs.com/
+Bundled into pulxon.min.js.
 
-The IIFE build (`dist/pulxon.min.js`) bundles Preact (https://preactjs.com/), licensed under the MIT
-License:
+The MIT License (MIT)
 
 Copyright (c) 2015-present Jason Miller
 
@@ -26,12 +30,9 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-## OpenDyslexic
-
-The files in `dist/fonts/opendyslexic-*.woff2` are the OpenDyslexic typeface as packaged by
-Fontsource (https://fontsource.org), licensed under the SIL Open Font License, Version 1.1.
-The complete license text ships as `dist/fonts/OpenDyslexic-LICENSE.txt`.
-
-Copyright (c) 2019-07-29, Abbie Gonzalez (https://abbiecod.es|support@abbiecod.es),
-with Reserved Font Name OpenDyslexic.
-Copyright (c) 12/2012 - 2019
+--------------------------------------------------------------------------
+OpenDyslexic font
+Copyright (c) Abbie Gonzalez (https://opendyslexic.org), with Reserved Font Name "OpenDyslexic".
+Licensed under the SIL Open Font License, Version 1.1: https://openfontlicense.org
+The complete license text, with the font's own copyright statement, ships next to the font files:
+https://www.pulxon.com/widget/fonts/OpenDyslexic-LICENSE.txt
