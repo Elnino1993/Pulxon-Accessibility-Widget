@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from 'preact/hooks';
 import type { WidgetOptions } from '../config/options';
 import type { Controller } from '../core/controller';
 import type { FeatureDefinition, ProfileDefinition } from '../core/registry';
-import type { SettingsStore } from '../core/store';
+import type { DragSpot, SettingsStore } from '../core/store';
 import { createTranslator, resolveStoredLanguage, type Translator } from '../i18n';
 import { Launcher } from './Launcher';
 import { Panel } from './Panel';
@@ -83,7 +83,13 @@ export function App({ doc, options, controller, features, store, profiles, t, la
     if (!focusElement(element)) focusOpenerOrLauncher();
   };
 
-  const side = position.endsWith('left') ? 'left' : 'right';
+  const onLauncherDrop = (spot: DragSpot): void => {
+    store.update((s) => ({ ...s, ui: { ...s.ui, launcher: spot } }));
+  };
+
+  const onPanelDrop = (spot: DragSpot): void => {
+    store.update((s) => ({ ...s, ui: { ...s.ui, panel: spot } }));
+  };
 
   return (
     <>
@@ -91,9 +97,12 @@ export function App({ doc, options, controller, features, store, profiles, t, la
         options={options}
         position={position}
         mobilePosition={mobilePosition}
+        spot={settings.ui.launcher}
+        scale={settings.ui.scale}
         label={activeT('widget.open')}
         expanded={open}
         onToggle={onToggle}
+        onDrop={onLauncherDrop}
         buttonRef={launcherRef}
       />
       {open && (
@@ -108,7 +117,9 @@ export function App({ doc, options, controller, features, store, profiles, t, la
           onLangChange={onLangChange}
           optionsPosition={options.position}
           profiles={profiles}
-          side={side}
+          spot={settings.ui.panel}
+          anchorRef={launcherRef}
+          onDrop={onPanelDrop}
           branding={options.branding}
           statementUrl={options.statementUrl}
           onClose={() => state.setOpen(false)}

@@ -143,9 +143,12 @@ test('inverted contrast keeps the widget and the reading mask in their real colo
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
   expect(await page.locator('.panel').evaluate((el) => getComputedStyle(el).filter)).toContain('invert(1)');
+  // Still laid out against the viewport, not the inverted document: the floating panel sits wholly
+  // on screen, opened above the launcher it belongs to.
   const panelBox = await page.locator('.panel').boundingBox();
-  expect(panelBox?.y).toBe(0);
-  expect(panelBox?.height).toBe(viewport?.height);
+  expect(panelBox!.y).toBeGreaterThanOrEqual(0);
+  expect(panelBox!.y + panelBox!.height).toBeLessThanOrEqual(viewport!.height);
+  expect(panelBox!.y + panelBox!.height).toBeLessThanOrEqual(box!.y);
   await page.keyboard.press('Escape');
 
   await page.evaluate(() => window.Pulxon?.disable('contrast'));

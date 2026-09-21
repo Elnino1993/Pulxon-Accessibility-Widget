@@ -3,7 +3,7 @@ Contributors: pulxon
 Tags: accessibility, widget, toolbar, usability
 Requires at least: 6.3
 Requires PHP: 7.4
-Stable tag: 0.5.0
+Stable tag: 0.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -73,6 +73,12 @@ The toolbar stops loading immediately. Your saved settings are kept so they are 
 you reactivate the plugin.
 
 == Changelog ==
+
+= 0.6.0 =
+
+Visitors can drag the accessibility button anywhere on the page, and drag the panel by its title bar;
+both stay where they were put on the next visit. The panel is now a compact floating window with
+four small tiles to a row, and only its content scrolls, so the close button never scrolls away.
 
 = 0.5.0 =
 

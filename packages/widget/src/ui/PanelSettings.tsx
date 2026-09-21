@@ -52,7 +52,8 @@ export function PanelSettings({ t, settings, store, onLangChange, optionsPositio
   // still sits wherever the embed's own `options.position` put it, so the grid must read that corner
   // as pressed too, or all eight buttons show unpressed while the launcher plainly sits in one of
   // them. `onPositionChange` below still always writes an explicit value on click.
-  const position = settings.ui.position ?? optionsPosition;
+  // A launcher the visitor dragged somewhere sits in no corner at all, so no corner reads as pressed.
+  const position = settings.ui.launcher ? null : (settings.ui.position ?? optionsPosition);
 
   // A `settings.lang` the picker has no matching <option> for (e.g. a value stored by a newer widget
   // version, or a stale/edited value) would otherwise leave the native <select> showing blank — no
@@ -65,8 +66,10 @@ export function PanelSettings({ t, settings, store, onLangChange, optionsPositio
     store.update((s) => ({ ...s, ui: { ...s.ui, scale: next } }));
   };
 
+  // Picking a corner is the non-drag way to move the widget (WCAG 2.5.7), so it overrides a drag:
+  // the launcher goes to that corner and the panel opens beside it again.
   const onPositionChange = (next: Position): void => {
-    store.update((s) => ({ ...s, ui: { ...s.ui, position: next } }));
+    store.update((s) => ({ ...s, ui: { ...s.ui, position: next, launcher: null, panel: null } }));
   };
 
   const onLangSelect = (event: JSX.TargetedEvent<HTMLSelectElement>): void => {

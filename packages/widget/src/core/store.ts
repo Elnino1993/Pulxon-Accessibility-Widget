@@ -6,13 +6,27 @@ export type FeatureLevels = Record<string, number>;
 
 export type WidgetScale = 'normal' | 'large';
 
+/**
+ * Where the visitor dragged something, as fractions of the room it has to move in: 0 is flush with
+ * the left/top edge, 1 with the right/bottom one. Fractions, not pixels, so the spot survives a
+ * resized window or a rotated phone (see `spotToPoint` in ui/drag.ts).
+ */
+export interface DragSpot {
+  x: number;
+  y: number;
+}
+
 export interface WidgetUiSettings {
   scale: WidgetScale;
   /** null means "keep whatever the embed code chose". */
   position: Position | null;
+  /** Where the visitor dragged the launcher. Wins over `position` until they pick a corner again. */
+  launcher: DragSpot | null;
+  /** Where the visitor dragged the open panel. null opens it beside the launcher. */
+  panel: DragSpot | null;
 }
 
-export const DEFAULT_UI_SETTINGS: WidgetUiSettings = Object.freeze({ scale: 'normal', position: null });
+export const DEFAULT_UI_SETTINGS: WidgetUiSettings = Object.freeze({ scale: 'normal', position: null, launcher: null, panel: null });
 
 export interface Settings {
   v: 1;
@@ -44,11 +58,23 @@ function emptySettings(): Settings {
   return freezeSettings({ v: 1, features: {}, profile: null, lang: null, ui: DEFAULT_UI_SETTINGS });
 }
 
+function isFraction(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1;
+}
+
+/** A stored spot, or null when it is missing or anything but two fractions in [0, 1]. */
+function parseSpot(value: unknown): DragSpot | null {
+  if (!isRecord(value) || !isFraction(value.x) || !isFraction(value.y)) return null;
+  return Object.freeze({ x: value.x, y: value.y });
+}
+
 function parseUiSettings(value: unknown): WidgetUiSettings {
   if (!isRecord(value)) return DEFAULT_UI_SETTINGS;
   return {
     scale: value.scale === 'normal' || value.scale === 'large' ? value.scale : DEFAULT_UI_SETTINGS.scale,
     position: isPosition(value.position) ? value.position : DEFAULT_UI_SETTINGS.position,
+    launcher: parseSpot(value.launcher),
+    panel: parseSpot(value.panel),
   };
 }
 
