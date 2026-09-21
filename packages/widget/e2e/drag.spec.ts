@@ -175,3 +175,25 @@ test('the Powered by Pulxon link sits at the top of the panel and can be followe
   expect(box.height).toBeGreaterThanOrEqual(24);
   await expect(link).toHaveAttribute('href', 'https://pulxon.com/?utm_source=widget');
 });
+
+test('the panel still scrolls on a site whose smooth-scroll library takes over the wheel', async ({ page }) => {
+  // What Lenis and similar libraries do: listen for the wheel on the whole page, cancel it and move
+  // the page themselves. Left alone, the panel under the pointer never scrolls.
+  const hijack = `<script>
+    window.addEventListener('wheel', (event) => { event.preventDefault(); window.scrollBy(0, event.deltaY); }, { passive: false });
+    window.addEventListener('touchmove', (event) => { event.preventDefault(); }, { passive: false });
+  </script>`;
+  await serve(page, pageHtml(`${hijack}<script src="/pulxon.min.js"></script>`, '', LONG_BODY));
+  await page.goto(`${ORIGIN}/`);
+  await page.waitForFunction(() => 'Pulxon' in window);
+  await page.getByRole('button', { name: 'Open accessibility menu' }).click();
+
+  const body = page.locator('.panel__body');
+  const box = (await body.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.wheel(0, 400);
+  await expect.poll(() => body.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  // Lenis's own marker for "leave this to scroll natively" is on the widget too.
+  await expect(page.locator('#pulxon-root')).toHaveAttribute('data-lenis-prevent', '');
+});

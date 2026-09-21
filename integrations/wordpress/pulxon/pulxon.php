@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Pulxon Accessibility Widget
  * Description: Adds an on-page toolbar that lets a visitor adjust text size, color, spacing and other display preferences.
- * Version: 0.7.0
+ * Version: 0.7.1
  * Requires at least: 6.3
  * Requires PHP: 7.4
  * Author: Pulxon
@@ -25,7 +25,7 @@
 defined( 'ABSPATH' ) || exit;
 
 /** The plugin version, reused as the enqueued script's cache-busting version. */
-define( 'PULXON_VERSION', '0.7.0' );
+define( 'PULXON_VERSION', '0.7.1' );
 
 /** Path, relative to this file, to the widget script this plugin serves from the site itself. */
 define( 'PULXON_WIDGET_FILE', 'assets/pulxon.min.js' );

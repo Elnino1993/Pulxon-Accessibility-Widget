@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.1
+
+### Fixed
+
+- The panel did not scroll on sites that use a smooth-scroll library (found on a site running Lenis):
+  the library listens for the wheel and touch on the whole page, cancels them and moves the page
+  itself, so the page scrolled under a panel that never moved. Wheel and touch-move events now stay
+  inside the panel, where the browser scrolls it natively, and the widget carries `data-lenis-prevent`,
+  Lenis's own marker for the same thing. An e2e test reproduces the hijack; verified on the site too.
+
 ## 0.7.0
 
 ### Changed

@@ -17,6 +17,11 @@ import { LanguageAndSize, PositionAndReset } from './PanelSettings';
 import { ProfileCard } from './ProfileCard';
 import { Section } from './Section';
 
+/** Keeps a scroll gesture over the panel from reaching the page's own scroll handlers. */
+function stopScrollHijack(event: Event): void {
+  event.stopPropagation();
+}
+
 const VOICE_NOTE_ID = 'pulxon-voice-note';
 const DICTIONARY_NOTE_ID = 'pulxon-dictionary-note';
 
@@ -219,6 +224,13 @@ export function Panel({
       aria-modal="true"
       aria-labelledby="pulxon-title"
       onKeyDown={onKeyDown}
+      // Smooth-scroll libraries (Lenis, Locomotive, GSAP ScrollSmoother) listen for the wheel and
+      // touch on the whole page, cancel it and scroll the page themselves, so the panel never
+      // scrolls. Kept inside the panel, those events never reach them and the browser scrolls the
+      // panel as normal; `data-lenis-prevent` is Lenis's own marker for the same thing.
+      onWheel={stopScrollHijack}
+      onTouchMove={stopScrollHijack}
+      data-lenis-prevent
     >
       <div class="panel__header" data-pulxon-drag-handle onPointerDown={onHeaderPointerDown}>
         <svg class="panel__grip" viewBox="0 0 10 16" aria-hidden="true" focusable="false">
