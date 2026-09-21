@@ -69,28 +69,42 @@ describe('PanelSettings', () => {
     const { host, store } = setup();
     // Not bottom-left: that is where the default already puts it, so clicking it would leave the
     // launcher exactly where it was and this test would no longer be about moving anything.
-    const corner = host.shadowRoot!.querySelector<HTMLButtonElement>('[data-pulxon-position="top-right"]')!;
-    await act(async () => corner.click());
-    expect(store.get().ui.position).toBe('top-right');
+    const spot = host.shadowRoot!.querySelector<HTMLButtonElement>('[data-pulxon-position="bottom-right"]')!;
+    await act(async () => spot.click());
+    expect(store.get().ui.position).toBe('bottom-right');
+  });
+
+  it('offers the three spots along the bottom, and only those', () => {
+    const { host } = setup();
+    const buttons = [...host.shadowRoot!.querySelectorAll<HTMLButtonElement>('[data-pulxon-position]')];
+    expect(buttons.map((button) => button.dataset.pulxonPosition)).toEqual(['bottom-left', 'bottom-center', 'bottom-right']);
+    expect(buttons.map((button) => button.textContent)).toEqual(['Left', 'Center', 'Right']);
+    // What a screen reader hears contains what is on screen, so a voice-control user can say it.
+    expect(buttons.map((button) => button.getAttribute('aria-label'))).toEqual(['Bottom left', 'Bottom center', 'Bottom right']);
+  });
+
+  it('shows none of the spots as pressed when the embed put the launcher somewhere else', () => {
+    const { host } = setup([highlightLinks, pauseAnimations], [], { position: 'top-right' });
+    expect(host.shadowRoot!.querySelectorAll('[data-pulxon-position][aria-pressed="true"]').length).toBe(0);
   });
 
   it("shows the launcher's current corner as pressed before the visitor makes any choice", () => {
     // No stored `settings.ui.position` yet — the launcher still sits wherever the embed's own
-    // `data-position` (here, "top-left") put it, so the grid must read that corner as pressed too,
-    // not leave all eight buttons unpressed while the launcher plainly sits in one of them.
-    const { host } = setup([highlightLinks, pauseAnimations], [], { position: 'top-left' });
-    const pressed = host.shadowRoot!.querySelector<HTMLButtonElement>('[data-pulxon-position="top-left"]')!;
+    // `data-position` (here, "bottom-right") put it, so the picker must read that spot as pressed
+    // too, not leave every button unpressed while the launcher plainly sits at one of them.
+    const { host } = setup([highlightLinks, pauseAnimations], [], { position: 'bottom-right' });
+    const pressed = host.shadowRoot!.querySelector<HTMLButtonElement>('[data-pulxon-position="bottom-right"]')!;
     expect(pressed.getAttribute('aria-pressed')).toBe('true');
-    const other = host.shadowRoot!.querySelector<HTMLButtonElement>('[data-pulxon-position="bottom-right"]')!;
+    const other = host.shadowRoot!.querySelector<HTMLButtonElement>('[data-pulxon-position="bottom-left"]')!;
     expect(other.getAttribute('aria-pressed')).toBe('false');
   });
 
   it('still writes an explicit position on click even when the embed default was already showing as pressed', async () => {
-    const { host, store } = setup([highlightLinks, pauseAnimations], [], { position: 'top-left' });
+    const { host, store } = setup([highlightLinks, pauseAnimations], [], { position: 'bottom-right' });
     expect(store.get().ui.position).toBeNull();
-    const corner = host.shadowRoot!.querySelector<HTMLButtonElement>('[data-pulxon-position="top-left"]')!;
-    await act(async () => corner.click());
-    expect(store.get().ui.position).toBe('top-left');
+    const spot = host.shadowRoot!.querySelector<HTMLButtonElement>('[data-pulxon-position="bottom-right"]')!;
+    await act(async () => spot.click());
+    expect(store.get().ui.position).toBe('bottom-right');
   });
 
   it('re-renders the panel in the selected language, and reverts on auto', async () => {
