@@ -8,7 +8,18 @@ import { createSettingsStore } from '../core/store';
 import { createStyleEngine } from '../core/style-engine';
 import { highlightLinks, pauseAnimations } from '../features';
 import { createTranslator } from '../i18n';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { createLocaleLoader, LANGUAGES } from '../i18n';
 import { mountUI, type UiHandle } from './mount';
+
+/** Serves `locales/<code>.json` from the package, the way the built widget fetches them. */
+const localLocales = () =>
+  createLocaleLoader('https://widget.test/locales/', (url) => {
+    const code = url.slice(url.lastIndexOf('/') + 1);
+    const body = JSON.parse(readFileSync(join(__dirname, '..', '..', 'locales', code), 'utf8')) as unknown;
+    return Promise.resolve({ ok: true, json: () => Promise.resolve(body) });
+  });
 
 const handles: UiHandle[] = [];
 
@@ -33,6 +44,7 @@ function setup(
       profiles,
       t: createTranslator('en'),
       styleMode: 'style-tag',
+      locales: localLocales(),
     });
   });
   const ui = holder.ui;
@@ -51,10 +63,33 @@ afterEach(() => {
 });
 
 describe('PanelSettings', () => {
+  it('lays the panel out right to left in Arabic, Persian, Hebrew and Urdu', async () => {
+    const { host } = setup();
+    const select = host.shadowRoot!.querySelector<HTMLSelectElement>('[data-pulxon-lang-picker]')!;
+    await act(async () => {
+      select.value = 'ar';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    // The mount point inside the shadow root carries the panel's lang and dir; the panel inherits it.
+    const mountPoint = () => host.shadowRoot!.querySelector('div[lang]')!;
+    expect(mountPoint().getAttribute('lang')).toBe('ar');
+    expect(mountPoint().getAttribute('dir')).toBe('rtl');
+    await act(async () => {
+      select.value = 'de';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    expect(mountPoint().getAttribute('lang')).toBe('de');
+    expect(mountPoint().getAttribute('dir')).toBe('ltr');
+  });
+
   it('offers the languages the widget ships', async () => {
     const { host } = setup();
     const select = host.shadowRoot!.querySelector<HTMLSelectElement>('[data-pulxon-lang-picker]')!;
-    expect([...select.options].map((option) => option.value)).toEqual(['auto', 'en', 'es']);
+    expect([...select.options].map((option) => option.value)).toEqual(['auto', ...LANGUAGES.map((language) => language.code)]);
+    expect(select.options.length).toBe(54);
+    // Each language in its own name first, then in English, so a visitor finds theirs whatever
+    // language the panel is showing.
+    expect([...select.options].find((option) => option.value === 'de')?.textContent).toBe('Deutsch (German)');
   });
 
   it('makes the widget larger and remembers it', async () => {
@@ -117,6 +152,10 @@ describe('PanelSettings', () => {
       select.value = 'es';
       select.dispatchEvent(new Event('change', { bubbles: true }));
     });
+    // Spanish is a file fetched on first use; the panel switches once it has arrived.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
     expect(title()).toBe('Accesibilidad');
 
     await act(async () => {
@@ -133,10 +172,10 @@ describe('PanelSettings', () => {
     const storage = createMemoryStorage();
     storage.set(
       'pulxon:settings',
-      JSON.stringify({ v: 1, features: {}, profile: null, lang: 'fr', ui: { scale: 'normal', position: null } }),
+      JSON.stringify({ v: 1, features: {}, profile: null, lang: 'xx', ui: { scale: 'normal', position: null } }),
     );
     const { host, store } = setup([highlightLinks, pauseAnimations], [], {}, storage);
-    expect(store.get().lang).toBe('fr');
+    expect(store.get().lang).toBe('xx');
     const select = host.shadowRoot!.querySelector<HTMLSelectElement>('[data-pulxon-lang-picker]')!;
     expect(select.value).toBe('auto');
   });

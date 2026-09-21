@@ -82,34 +82,42 @@
 .panel {
   position: fixed;
   z-index: var(--pulxon-z, 2147483000);
-  /* Replaced by Panel.tsx with the spot beside the launcher, or wherever the visitor dragged it. */
-  top: 8px;
-  left: 8px;
   display: flex;
   flex-direction: column;
-  width: min(calc(360px * var(--pulxon-scale, 1)), calc(100vw - 16px));
-  /* Tall enough for most of the settings at once, never taller than the screen: the body scrolls. */
-  max-height: min(calc(640px * var(--pulxon-scale, 1)), calc(100vh - 16px));
-  max-height: min(calc(640px * var(--pulxon-scale, 1)), calc(100dvh - 16px));
+  width: min(calc(340px * var(--pulxon-scale, 1)), 100vw);
   overflow: hidden;
-  background: #f4f6fb;
+  background: #f1f3f7;
   color: #111111;
-  border-radius: 16px;
   /* Same `--pulxon-scale` the launcher reads. Text throughout the panel is sized in `em`/`%` against
-     this base, so it grows with it — and so are the settings block's own controls (the `.segmented`
-     size and position buttons, below): a visitor who asks for a larger widget wants those bigger
-     too, not just the text next to them. */
+     this base, so it grows with it — and so do the panel's own controls: a visitor who asks for a
+     larger widget wants those bigger too, not just the text next to them. */
   font: calc(16px * var(--pulxon-scale, 1)) / 1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   box-shadow: 0 8px 32px rgb(0 0 0 / 0.3);
 }
 
-/* The drag handle: the whole title bar except the close button. */
+/* Docked: the full height of the screen, on the launcher's side, as Sienna's panel opens. */
+.panel--docked {
+  top: 0;
+  bottom: 0;
+}
+.panel--left { left: 0; }
+.panel--right { right: 0; }
+
+/* Floating: dragged off the edge by its title bar. `left`/`top` come inline from Panel.tsx. */
+.panel--floating {
+  max-height: min(calc(640px * var(--pulxon-scale, 1)), calc(100vh - 16px));
+  max-height: min(calc(640px * var(--pulxon-scale, 1)), calc(100dvh - 16px));
+  width: min(calc(340px * var(--pulxon-scale, 1)), calc(100vw - 16px));
+  border-radius: 16px;
+}
+
+/* The drag handle: the whole title bar except its buttons and link. */
 .panel__header {
   flex: none;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 8px 8px 12px;
+  padding: 10px 10px 10px 12px;
   color: var(--pulxon-on-accent, #ffffff);
   background: var(--pulxon-accent, #1f4bff);
   cursor: grab;
@@ -164,55 +172,105 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 10px 12px 12px;
+  padding: 12px;
   scrollbar-width: thin;
   scrollbar-color: #9aa3b8 transparent;
 }
 
 h2 { margin: 0; font-size: 1.0625em; }
-h3 { margin: 12px 0 6px; font-size: 0.875em; }
-.panel__body > section:first-child h3 { margin-top: 0; }
 
-/* The language/size/position block. One card per row: label on the left, control on the right,
-   like the rest of the panel's white tiles. */
+/* A white card per section, on the panel's grey. */
+.card {
+  margin-bottom: 12px;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #e3e6ee;
+  border-radius: 12px;
+}
+
+.card:last-child { margin-bottom: 0; }
+
+.card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.card__title {
+  margin: 0;
+  font-size: 0.75em;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #1d2433;
+}
+
+.info-button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: #4b5563;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.info-button[aria-expanded="true"] {
+  color: var(--pulxon-on-accent, #ffffff);
+  background: var(--pulxon-accent, #1f4bff);
+}
+
+.card__info {
+  margin: -4px 0 10px;
+  font-size: 0.8125em;
+  color: #374151;
+}
+
+.card__info[hidden] { display: none; }
+
+.ui-icon {
+  flex: none;
+  width: 1.125em;
+  height: 1.125em;
+}
+
+/* Language and size, and position and reset. */
+.language-select {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 0.875em;
+  color: #111111;
+  background: #ffffff;
+  border: 1px solid #c5cad6;
+  border-radius: 10px;
+}
+
 .settings-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  width: 100%;
-  margin-bottom: 6px;
-  padding: 6px 10px;
+  margin-top: 10px;
   font-size: 0.875em;
-  background: #ffffff;
-  border: 2px solid #e2e6f0;
-  border-radius: 10px;
 }
 
-.settings-row > label,
+.settings-row:first-child { margin-top: 0; }
+
 .settings-row > span {
   font-weight: 600;
 }
 
-.settings-row select {
-  min-height: 36px;
-  padding: 6px 10px;
-  font: inherit;
-  color: #111111;
-  background: #ffffff;
-  border: 2px solid #e2e6f0;
-  border-radius: 8px;
-}
-
-@media (max-width: 320px) {
-  .settings-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-
-/* The size toggle: two buttons sharing one pill. */
+/* Two or three buttons sharing one pill. */
 .segmented {
   display: inline-flex;
   border: 2px solid #e2e6f0;
@@ -235,7 +293,7 @@ h3 { margin: 12px 0 6px; font-size: 0.875em; }
 }
 
 .segmented button + button {
-  border-left: 2px solid #e2e6f0;
+  border-inline-start: 2px solid #e2e6f0;
 }
 
 /* Border, not just fill, changes too: state is never colour alone. */
@@ -249,8 +307,9 @@ h3 { margin: 12px 0 6px; font-size: 0.875em; }
   flex: none;
   align-items: center;
   justify-content: center;
-  min-width: 36px;
-  min-height: 36px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
   font-size: 22px;
   line-height: 1;
   color: inherit;
@@ -260,12 +319,153 @@ h3 { margin: 12px 0 6px; font-size: 0.875em; }
   cursor: pointer;
 }
 
+/* Profiles: two cards a row, each a switch. */
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.profile-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px;
+  font: inherit;
+  text-align: start;
+  color: #111111;
+  background: #ffffff;
+  border: 1px solid #e3e6ee;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.profile-card[aria-checked="true"] {
+  border: 2px solid var(--pulxon-accent, #1f4bff);
+  padding: 9px;
+  background: #f5f7ff;
+}
+
+.profile-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.profile-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: var(--pulxon-accent, #1f4bff);
+  background: #eef2ff;
+  border-radius: 8px;
+}
+
+.profile-card__name {
+  font-size: 0.8125em;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.profile-card__desc {
+  font-size: 0.6875em;
+  line-height: 1.35;
+  color: #4b5563;
+  overflow-wrap: anywhere;
+}
+
+/* The switch is a picture of the card's state; the card itself is the control. The knob moves, so
+   on and off differ by shape and position, not colour alone. */
+.switch {
+  position: relative;
+  flex: none;
+  width: 30px;
+  height: 18px;
+  background: #e5e7eb;
+  border: 1.5px solid #6b7280;
+  border-radius: 999px;
+}
+
+.switch__knob {
+  position: absolute;
+  top: 2px;
+  inset-inline-start: 2px;
+  width: 11px;
+  height: 11px;
+  background: #6b7280;
+  border-radius: 50%;
+}
+
+.profile-card[aria-checked="true"] .switch {
+  background: var(--pulxon-accent, #1f4bff);
+  border-color: var(--pulxon-accent, #1f4bff);
+}
+
+.profile-card[aria-checked="true"] .switch__knob {
+  inset-inline-start: auto;
+  inset-inline-end: 2px;
+  background: var(--pulxon-on-accent, #ffffff);
+}
+
+/* Font size: − 100% +. */
+.stepper {
+  margin-bottom: 10px;
+  padding: 10px;
+  background: #f7f8fb;
+  border: 1px solid #e3e6ee;
+  border-radius: 10px;
+}
+
+.stepper__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.8125em;
+  font-weight: 600;
+}
+
+.stepper__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stepper__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: #111111;
+  background: #e7eaf1;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.stepper__button[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.stepper__value {
+  font-size: 0.9375em;
+  font-weight: 700;
+}
+
+/* Tiles: three a row, as in Sienna. */
 .grid {
   display: grid;
-  /* Four small tiles a row at the panel's normal width; three once the Large size (or a narrow phone)
-     leaves less than 4.75em for each. In em, so the column count follows the text size. */
-  grid-template-columns: repeat(auto-fill, minmax(4.75em, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .tile {
@@ -274,10 +474,10 @@ h3 { margin: 12px 0 6px; font-size: 0.875em; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
-  min-height: 4.5em;
-  padding: 8px 4px 6px;
+  min-height: 5.25em;
+  padding: 10px 4px 8px;
   font: inherit;
   font-size: 0.75em;
   line-height: 1.2;
@@ -287,22 +487,23 @@ h3 { margin: 12px 0 6px; font-size: 0.875em; }
   hyphens: auto;
   color: #111111;
   background: #ffffff;
-  border: 2px solid #e2e6f0;
+  border: 1px solid #e3e6ee;
   border-radius: 10px;
   cursor: pointer;
 }
 
 .tile[aria-pressed="true"] {
+  padding: 9px 3px 7px;
   color: #111111;
   background: #eef2ff;
-  border-color: var(--pulxon-accent, #1f4bff);
+  border: 2px solid var(--pulxon-accent, #1f4bff);
 }
 
 /* A shape, not just a colour: the check tells a colour-blind or greyscale reader the tile is on. */
 .tile[aria-pressed="true"]::after {
   position: absolute;
   top: 3px;
-  right: 3px;
+  inset-inline-end: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -321,48 +522,51 @@ h3 { margin: 12px 0 6px; font-size: 0.875em; }
    needs no palette of its own. Fixed size keeps every tile's label on the same baseline. */
 .tile__icon {
   flex: none;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
 }
 
 .tile__dots { display: flex; justify-content: center; gap: 3px; }
 .dot { width: 6px; height: 6px; border: 1px solid currentColor; border-radius: 50%; }
 .dot--on { background: currentColor; }
 
-.panel__footer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  margin-top: 12px;
-}
-
 .reset {
   width: 100%;
-  min-height: 40px;
+  min-height: 42px;
+  margin-top: 12px;
   padding: 8px 16px;
   font: inherit;
-  font-weight: 600;
+  font-size: 0.875em;
+  font-weight: 700;
   color: var(--pulxon-on-accent, #ffffff);
   background: var(--pulxon-accent, #1f4bff);
   border: 2px solid transparent;
-  border-radius: 999px;
+  border-radius: 8px;
   cursor: pointer;
 }
 
-/* Underlined, not colour alone: these two are the only links in the panel, and a visitor who
-   cannot separate blue text from black text has nothing else to go on (WCAG 1.4.1). The padding
-   also gives them a target of at least 24px, which the plain text line did not have. */
+/* The footer stays under the scrolling body, like Sienna's: the accessibility statement. */
+.panel__footer {
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  font-size: 0.8125em;
+  background: #ffffff;
+  border-top: 1px solid #e3e6ee;
+}
+
+/* Underlined, not colour alone (WCAG 1.4.1); padded to a 24px target. */
 .panel__footer a {
-  color: #1f4bff;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 4px;
+  color: #111111;
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 3px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  min-height: 24px;
-  display: inline-flex;
-  align-items: center;
+  border-radius: 6px;
 }
 .panel__footer a:hover { text-decoration-thickness: 2px; }
 
@@ -375,25 +579,10 @@ h3 { margin: 12px 0 6px; font-size: 0.875em; }
   white-space: nowrap;
 }
 
-.tools { margin-top: 10px; }
-
-/* The active-profile row: a plain white card, same family as `.settings-row`, sitting above the tiles. */
-.active-profile {
-  margin: 0 0 8px;
-  padding: 6px 10px;
-  font-size: 0.875em;
-  font-weight: 600;
-  background: #ffffff;
-  border: 2px solid #e2e6f0;
-  border-radius: 12px;
-}
-
 /* Always shown beside the voice-navigation and dictionary tiles, never behind a disclosure — it is
-   the whole reason those features are allowed to send anything anywhere. Inherits the panel's own
-   text color, so its contrast against the panel background is the same already-checked contrast as
-   the rest of the copy. */
+   the whole reason those features are allowed to send anything anywhere. */
 .feature-note {
-  margin: 6px 0 0;
+  margin: 8px 0 0;
   font-size: 0.8125em;
 }
 
@@ -401,20 +590,8 @@ h3 { margin: 12px 0 6px; font-size: 0.875em; }
    to do next instead of leaving them guessing. */
 .voice-commands {
   margin: 4px 0 0;
-  padding: 0 0 0 20px;
+  padding-inline-start: 20px;
   font-size: 0.8125em;
-}
-
-/* The page-structure tool spans the row and reads as a row, not a square card. */
-.tile--wide {
-  width: 100%;
-  flex-direction: row;
-  justify-content: flex-start;
-  gap: 8px;
-  min-height: 40px;
-  padding: 6px 10px;
-  font-size: 0.875em;
-  text-align: start;
 }
 
 .back {
@@ -422,7 +599,7 @@ h3 { margin: 12px 0 6px; font-size: 0.875em; }
   padding: 8px 12px;
   font: inherit;
   color: inherit;
-  background: transparent;
+  background: #ffffff;
   border: 1px solid #767676;
   border-radius: 8px;
   cursor: pointer;
@@ -440,7 +617,7 @@ h3 { margin: 12px 0 6px; font-size: 0.875em; }
   padding: 8px;
   font: inherit;
   color: #111111;
-  background: #f3f4f6;
+  background: #ffffff;
   border: 2px solid transparent;
   border-radius: 8px;
   cursor: pointer;
@@ -471,7 +648,7 @@ h3 { margin: 12px 0 6px; font-size: 0.875em; }
   font: inherit;
   text-align: start;
   color: #111111;
-  background: #f3f4f6;
+  background: #ffffff;
   border: 0;
   border-radius: 8px;
   cursor: pointer;

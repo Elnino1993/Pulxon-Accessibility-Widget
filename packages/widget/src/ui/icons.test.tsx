@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { builtinFeatures } from '../features';
 import { builtinProfiles } from '../profiles';
 import { hasIcon, ICON_IDS, TileIcon } from './icons';
+import { MODE_TILE_IDS } from './layout';
 
 describe('tile icons', () => {
   it('covers every built-in feature', () => {
@@ -14,12 +15,21 @@ describe('tile icons', () => {
     expect(missing).toEqual([]);
   });
 
+  it('covers every color mode tile', () => {
+    expect(MODE_TILE_IDS.filter((id) => !hasIcon(id))).toEqual([]);
+  });
+
   it('covers the page structure tool', () => {
     expect(hasIcon('page-structure')).toBe(true);
   });
 
   it('ships no icon nothing renders', () => {
-    const known = new Set([...builtinFeatures.map((feature) => feature.id), ...builtinProfiles.map((profile) => profile.id), 'page-structure']);
+    const known = new Set([
+      ...builtinFeatures.map((feature) => feature.id),
+      ...builtinProfiles.map((profile) => profile.id),
+      ...MODE_TILE_IDS,
+      'page-structure',
+    ]);
     const orphans = ICON_IDS.filter((id) => !known.has(id));
     expect(orphans).toEqual([]);
   });

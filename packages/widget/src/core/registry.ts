@@ -1,4 +1,4 @@
-import type { MessageKey } from '../i18n';
+import type { MessageKey, Translator } from '../i18n';
 import type { StyleEngine } from './style-engine';
 
 export type FeatureGroup = 'text' | 'color' | 'navigation' | 'reading' | 'distraction';
@@ -12,6 +12,8 @@ export interface FeatureContext {
   fontBaseUrl?: string | null;
   /** z-index of the widget UI; page overlays must stay below it. */
   zIndex?: number;
+  /** The panel's current translator, for text a feature puts on the page (the dictionary link). */
+  getTranslator?: () => Translator;
 }
 
 /**

@@ -27,6 +27,14 @@ function boot(doc: Document): void {
       // Invalid script URL: the dyslexia font falls back to locally installed fonts.
     }
   }
+  // The panel's languages sit next to the script too, like the fonts.
+  if (!options.localeBaseUrl && script?.src) {
+    try {
+      options.localeBaseUrl = new URL('locales/', script.src).href;
+    } catch {
+      // Invalid script URL: the panel stays in English.
+    }
+  }
   doc.documentElement.setAttribute(LOADED_ATTR, '');
 
   const start = (remote: Partial<WidgetOptions>): void => {

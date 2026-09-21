@@ -207,7 +207,125 @@ const PATHS: Record<string, JSX.Element> = {
       <path d="M8 14h8" />
     </>
   ),
+  cognitive: (
+    <>
+      <path d="M9 18h6" />
+      <path d="M10 21h4" />
+      <path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z" />
+    </>
+  ),
+
+  // Color modes: one tile per mode of the contrast and saturation features.
+  monochrome: (
+    <>
+      <path d="M4 4h16v16H4z" />
+      <path d="M4 20 20 4" />
+      <path d="M12 12 20 4v16h-8z" fill="currentColor" stroke="none" />
+    </>
+  ),
+  'low-saturation': (
+    <>
+      <path d="M12 3.5c3.5 4 6 6.8 6 9.8a6 6 0 0 1-12 0c0-3 2.5-5.8 6-9.8z" />
+      <path d="M9 14h6" />
+    </>
+  ),
+  'high-saturation': (
+    <>
+      <path d="M12 3.5c3.5 4 6 6.8 6 9.8a6 6 0 0 1-12 0c0-3 2.5-5.8 6-9.8z" />
+      <path d="M9 14h6" />
+      <path d="M12 11v6" />
+    </>
+  ),
+  'high-contrast': (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none" />
+      <path d="M12 1v2" />
+      <path d="M12 21v2" />
+    </>
+  ),
+  'light-contrast': (
+    <>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2" />
+      <path d="M12 20v2" />
+      <path d="m4.9 4.9 1.4 1.4" />
+      <path d="m17.7 17.7 1.4 1.4" />
+      <path d="M2 12h2" />
+      <path d="M20 12h2" />
+      <path d="m4.9 19.1 1.4-1.4" />
+      <path d="m17.7 6.3 1.4-1.4" />
+    </>
+  ),
+  'dark-contrast': (
+    <>
+      <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z" fill="currentColor" />
+    </>
+  ),
+  invert: (
+    <>
+      <path d="M4 4h16v16H4z" />
+      <path d="M4 4h8v16H4z" fill="currentColor" stroke="none" />
+    </>
+  ),
 };
+
+/** Small glyphs the panel's own controls use (info, reset, the font size stepper). */
+const UI_PATHS: Record<string, JSX.Element> = {
+  info: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5" />
+      <path d="M12 8h.01" />
+    </>
+  ),
+  reset: (
+    <>
+      <path d="M4 12a8 8 0 1 0 2.3-5.7" />
+      <path d="M4 4v4h4" />
+    </>
+  ),
+  minus: <path d="M5 12h14" />,
+  plus: (
+    <>
+      <path d="M5 12h14" />
+      <path d="M12 5v14" />
+    </>
+  ),
+  'font-size': (
+    <>
+      <path d="M3 7V5h11v2" />
+      <path d="M8.5 5v14" />
+      <path d="M6.5 19h4" />
+      <path d="M14 12v-1h7v1" />
+      <path d="M17.5 11v8" />
+      <path d="M16 19h3" />
+    </>
+  ),
+};
+
+/** A control glyph, sized by its container's font size and hidden from assistive technology. */
+export function UiIcon({ id }: { id: string }): JSX.Element | null {
+  const paths = UI_PATHS[id];
+  if (!paths) return null;
+  return (
+    <svg
+      class="ui-icon"
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      {paths}
+    </svg>
+  );
+}
 
 /** Every tile id this set covers. A tile without an icon simply renders none. */
 export const ICON_IDS: readonly string[] = Object.keys(PATHS);

@@ -106,7 +106,9 @@ test('works under a strict CSP that allows the config API', async ({ page }) => 
   await serve(
     page,
     pageHtml(`<script src="/pulxon.min.js" data-site-key="${SITE_KEY}" data-api="${API}"></script>`),
-    { 'Content-Security-Policy': `default-src 'self'; script-src 'self'; style-src 'self'; connect-src ${API}` },
+    // connect-src needs the widget's own origin too: every language but English is a JSON file
+    // fetched from next to the script (here Spanish, which the dashboard config asks for).
+    { 'Content-Security-Policy': `default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' ${API}` },
   );
   await page.goto(`${ORIGIN}/`);
   await expect(launcher(page, 'Abrir menú de accesibilidad')).toHaveCSS('background-color', 'rgb(15, 118, 110)');

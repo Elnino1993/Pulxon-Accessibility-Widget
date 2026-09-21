@@ -38,6 +38,8 @@ export interface WidgetOptions {
   siteKey: string | null;
   zIndex: number;
   fontBaseUrl: string | null;
+  /** Folder of the panel's `<code>.json` language files; null means English only. */
+  localeBaseUrl: string | null;
   mobilePosition: Position | null;
   icon: LauncherIcon;
   disabledFeatures: string[];
@@ -62,6 +64,7 @@ export const DEFAULT_OPTIONS: WidgetOptions = {
   siteKey: null,
   zIndex: 2147483000,
   fontBaseUrl: null,
+  localeBaseUrl: null,
   mobilePosition: null,
   icon: 'person',
   disabledFeatures: [],
@@ -197,6 +200,7 @@ function isValidOption(key: string, value: unknown): boolean {
     case 'apiBase':
       return typeof value === 'string' && isHttpUrl(value);
     case 'fontBaseUrl':
+    case 'localeBaseUrl':
       return value === null || typeof value === 'string';
     case 'statementUrl':
       return value === null || (typeof value === 'string' && isHttpUrl(value));

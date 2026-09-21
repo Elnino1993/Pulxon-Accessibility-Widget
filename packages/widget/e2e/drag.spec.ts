@@ -123,14 +123,25 @@ test('the panel content scrolls with the wheel and the page behind it does not',
   await expect(page.getByRole('button', { name: 'Close accessibility menu' })).toBeInViewport();
 });
 
-test('the tiles are compact: four to a row at the default size', async ({ page }) => {
+test('the tiles sit three to a row, as in Sienna', async ({ page }) => {
   await loadWidget(page);
   await page.getByRole('button', { name: 'Open accessibility menu' }).click();
-  const tops = await page.locator('section[aria-labelledby="pulxon-group-text"] .tile').evaluateAll((tiles) =>
+  const tops = await page.locator('[data-pulxon-section="content"] .tile').evaluateAll((tiles) =>
     tiles.map((tile) => Math.round(tile.getBoundingClientRect().top)),
   );
   const firstRow = tops.filter((top) => top === tops[0]).length;
-  expect(firstRow).toBe(4);
+  expect(firstRow).toBe(3);
+});
+
+test('the panel opens docked to the screen edge on the launcher side, full height', async ({ page }) => {
+  await loadWidget(page);
+  await page.getByRole('button', { name: 'Open accessibility menu' }).click();
+  const box = (await page.getByRole('dialog').boundingBox())!;
+  const viewport = page.viewportSize()!;
+  expect(box.x).toBe(0);
+  expect(box.y).toBe(0);
+  expect(Math.round(box.height)).toBe(viewport.height);
+  expect(Math.round(box.width)).toBe(340);
 });
 
 test('the panel fits a 320px-wide phone without scrolling sideways', async ({ page }) => {

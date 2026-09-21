@@ -3,7 +3,7 @@ Contributors: pulxon
 Tags: accessibility, widget, toolbar, usability
 Requires at least: 6.3
 Requires PHP: 7.4
-Stable tag: 0.6.3
+Stable tag: 0.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -73,6 +73,14 @@ The toolbar stops loading immediately. Your saved settings are kept so they are 
 you reactivate the plugin.
 
 == Changelog ==
+
+= 0.7.0 =
+
+A new panel, laid out like Sienna Accessibility Widget: it opens docked to the side of the screen,
+with language and size at the top, then cards for profiles, content, visual and navigation aids,
+colors and tools, each with a short explanation. The panel now speaks 53 languages and follows your
+site's language on its own; Arabic, Persian, Hebrew and Urdu are laid out right to left. New: a
+Cognitive & learning profile, a High contrast mode, and a font size control (- 100% +).
 
 = 0.6.3 =
 

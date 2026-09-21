@@ -250,7 +250,7 @@ describe('connected-mode rendering', () => {
 
   it('keeps profiles consistent with disabled features', () => {
     const profiles = filterProfiles(builtinProfiles, ['pause-animations', 'bigger-text']);
-    expect(profiles.map((p) => p.id)).toEqual(['dyslexia', 'keyboard']);
+    expect(profiles.map((p) => p.id)).toEqual(['dyslexia', 'keyboard', 'cognitive']);
     expect(profiles.find((p) => p.id === 'seizure-safe')).toBeUndefined();
     expect(profiles.find((p) => p.id === 'adhd')).toBeUndefined();
     expect(profiles.find((p) => p.id === 'low-vision')).toBeUndefined();

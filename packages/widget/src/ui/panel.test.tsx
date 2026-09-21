@@ -50,10 +50,6 @@ function setup(
   return { ui, host: ui.host, root, controller, store };
 }
 
-function buttonByText(root: ShadowRoot, text: string): HTMLButtonElement | undefined {
-  return Array.from(root.querySelectorAll('button')).find((b) => b.textContent?.trim() === text);
-}
-
 afterEach(() => {
   for (const handle of handles.splice(0)) handle.destroy();
   document.body.innerHTML = '';
@@ -68,7 +64,8 @@ describe('Panel', () => {
     expect(dialog?.getAttribute('aria-modal')).toBe('true');
     expect(dialog?.getAttribute('aria-labelledby')).toBe('pulxon-title');
     expect(root.querySelector('#pulxon-title')?.textContent).toBe('Accessibility');
-    expect(Array.from(root.querySelectorAll('h3')).map((h) => h.textContent)).toEqual(['Navigation', 'Distractions']);
+    // Sections that have something in them, in Sienna's order; the rest are left out.
+    expect(Array.from(root.querySelectorAll('h3')).map((h) => h.textContent)).toEqual(['Content adjustments', 'Visual & navigation aids', 'Additional tools']);
     expect(root.querySelectorAll('[data-feature]')).toHaveLength(2);
     expect(root.querySelector('[aria-label="Close accessibility menu"]')).not.toBeNull();
   });
@@ -133,21 +130,22 @@ describe('Panel', () => {
     expect(ui.isOpen()).toBe(false);
   });
 
-  it('puts the settings controls after the feature tiles, not in front of the product', () => {
+  it('puts language and size first and position and reset last, around the feature tiles', () => {
     const { root } = setup();
     const picker = root.querySelector('[data-pulxon-lang-picker]')!;
     const tile = root.querySelector('[data-feature="highlight-links"]')!;
-    // DOCUMENT_POSITION_FOLLOWING (4): `tile` comes before `picker` in the DOM, so a keyboard or
-    // screen-reader visitor reaches the accessibility tiles before the language/size/position block.
-    const position = tile.compareDocumentPosition(picker);
-    expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const position = root.querySelector('[data-pulxon-position]')!;
+    // The founder moved language and size to the top (2026-09-21), as in Sienna; where the launcher
+    // sits and the reset button stay after every tile.
+    expect(picker.compareDocumentPosition(tile) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(tile.compareDocumentPosition(position) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('reset clears all features', () => {
     const { root, store } = setup();
     act(() => root.querySelector<HTMLButtonElement>('[data-feature="pause-animations"]')?.click());
     expect(store.get().features).toEqual({ 'pause-animations': 1 });
-    act(() => buttonByText(root, 'Reset page adjustments')?.click());
+    act(() => root.querySelector<HTMLButtonElement>('[data-pulxon-reset]')?.click());
     expect(store.get().features).toEqual({});
     expect(root.querySelector('[data-feature="pause-animations"]')?.getAttribute('aria-pressed')).toBe('false');
   });
@@ -159,11 +157,13 @@ describe('Panel', () => {
       features: { 'pause-animations': 1 },
     };
     const { root, store } = setup([highlightLinks, pauseAnimations], [profile]);
-    expect(root.querySelector('#pulxon-profiles')?.textContent).toBe('Profiles');
+    expect(root.querySelector('#pulxon-section-profiles')?.textContent).toBe('Accessibility profiles');
     const profileButton = () => root.querySelector<HTMLButtonElement>('[data-profile="calm"]');
+    // A switch, as in Sienna: on/off is aria-checked.
+    expect(profileButton()?.getAttribute('role')).toBe('switch');
     act(() => profileButton()?.click());
     expect(store.get().profile).toBe('calm');
-    expect(profileButton()?.getAttribute('aria-pressed')).toBe('true');
+    expect(profileButton()?.getAttribute('aria-checked')).toBe('true');
     act(() => profileButton()?.click());
     expect(store.get()).toMatchObject({ profile: null, features: {} });
   });
@@ -338,18 +338,16 @@ describe('Page structure view', () => {
 });
 
 describe('Panel chrome', () => {
-  it('names the active profile above the tiles', async () => {
+  it('shows the active profile on its own card, with what it turns on', async () => {
     const { host, controller } = setup([highlightLinks], [lowVision]);
+    const card = () => host.shadowRoot!.querySelector<HTMLElement>('[data-profile="low-vision"]')!;
+    expect(card().getAttribute('aria-checked')).toBe('false');
     await act(async () => {
       controller.setProfile('low-vision');
     });
-    const row = host.shadowRoot!.querySelector('[data-pulxon-active-profile]');
-    expect(row?.textContent).toContain('Low vision');
-  });
-
-  it('says nothing about a profile when none is active', () => {
-    const { host } = setup([highlightLinks], [lowVision]);
-    expect(host.shadowRoot!.querySelector('[data-pulxon-active-profile]')).toBeNull();
+    expect(card().getAttribute('aria-checked')).toBe('true');
+    const description = host.shadowRoot!.getElementById(card().getAttribute('aria-describedby')!);
+    expect(description?.textContent).toBe('Bigger text, stronger contrast and a big cursor.');
   });
 
   it('explains where voice navigation sends what you say, lists the commands, and describes the tile for screen readers', () => {

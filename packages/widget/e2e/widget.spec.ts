@@ -13,10 +13,15 @@ test('opens from the keyboard, traps focus, closes with Escape and restores focu
   const close = page.getByRole('button', { name: 'Close accessibility menu' });
   await expect(close).toBeFocused();
 
+  // Backwards through the title bar: reset, then the Pulxon link, then round to the last control.
+  await page.keyboard.press('Shift+Tab');
+  await expect(page.getByRole('button', { name: 'Reset settings' }).first()).toBeFocused();
   await page.keyboard.press('Shift+Tab');
   await expect(page.getByRole('link', { name: /Powered by Pulxon/ })).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(page.locator('[data-pulxon-reset]')).toBeFocused();
   await page.keyboard.press('Tab');
-  await expect(close).toBeFocused();
+  await expect(page.getByRole('link', { name: /Powered by Pulxon/ })).toBeFocused();
 
   await page.keyboard.press('Escape');
   await expect(dialog).toBeHidden();

@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef } from 'preact/hooks';
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { WidgetOptions } from '../config/options';
 import type { Controller } from '../core/controller';
 import type { FeatureDefinition, ProfileDefinition } from '../core/registry';
 import type { DragSpot, SettingsStore } from '../core/store';
-import { createTranslator, resolveStoredLanguage, type Translator } from '../i18n';
+import { createTranslator, resolveStoredLanguage, type LocaleLoader, type Translator } from '../i18n';
 import { Launcher } from './Launcher';
 import { Panel } from './Panel';
 import { focusElement } from './page-structure';
@@ -21,9 +21,13 @@ export interface AppProps {
   /** The language the widget was mounted with (embed code / dashboard config / browser default). */
   lang: string;
   state: UiState;
+  /** Fetches the panel's languages other than English, the first time each is used. */
+  locales: LocaleLoader;
+  /** Told whenever the panel's language changes, so text the widget puts on the page follows it. */
+  onTranslatorChange?: (t: Translator) => void;
 }
 
-export function App({ doc, options, controller, features, store, profiles, t, lang, state }: AppProps) {
+export function App({ doc, options, controller, features, store, profiles, t, lang, state, locales, onTranslatorChange }: AppProps) {
   const open = useExternal(state.subscribe, state.isOpen);
   const settings = useExternal(store.subscribe, store.get);
   const launcherRef = useRef<HTMLButtonElement>(null);
@@ -34,14 +38,29 @@ export function App({ doc, options, controller, features, store, profiles, t, la
   // once at mount time in create-widget.ts, is what makes the picker actually re-render the panel:
   // without this, `t` stays frozen to the initial language forever.
   const resolvedLang = resolveStoredLanguage(settings.lang, lang);
-  // `t` was built for whatever language first resolved to (create-widget.ts's stored-language-aware
-  // `initialLang`), which is this render's `resolvedLang` value the very first time this component
-  // runs and never again after — `lang` alone (the page language) is a different thing and, once the
-  // visitor's stored choice happens to equal it again after being something else, would wrongly
-  // reuse a `t` built for a language that render's `resolvedLang` no longer matches. Capturing that
-  // first value once, rather than comparing against `lang`, is what keeps the reuse correct.
-  const tHomeLang = useRef(resolvedLang).current;
-  const activeT = useMemo(() => (resolvedLang === tHomeLang ? t : createTranslator(resolvedLang)), [resolvedLang, tHomeLang, t]);
+
+  // Every language but English is a file fetched on first use. Until it arrives the panel keeps the
+  // language it was showing, rather than flashing English in between; if it never arrives (the site
+  // does not host the locales) the panel simply stays in that language.
+  const [, setLoadedCount] = useState(0);
+  const messages = locales.get(resolvedLang);
+  useEffect(() => {
+    if (messages) return;
+    let current = true;
+    void locales.load(resolvedLang).then((loaded) => {
+      if (current && loaded) setLoadedCount((count) => count + 1);
+    });
+    return () => {
+      current = false;
+    };
+  }, [resolvedLang, messages, locales]);
+  const lastT = useRef(t);
+  const activeT = useMemo(() => (messages ? createTranslator(resolvedLang, messages) : lastT.current), [resolvedLang, messages]);
+  lastT.current = activeT;
+
+  useEffect(() => {
+    onTranslatorChange?.(activeT);
+  }, [activeT, onTranslatorChange]);
 
   const onLangChange = (next: string | null): void => {
     store.update((s) => ({ ...s, lang: next }));
@@ -96,6 +115,16 @@ export function App({ doc, options, controller, features, store, profiles, t, la
     store.update((s) => ({ ...s, ui: { ...s.ui, panel: spot } }));
   };
 
+  // The panel docks to the launcher's side of the screen: where it was dragged to, or its corner. A
+  // launcher in the middle of the bottom edge docks the panel on the left, where reading starts.
+  const side: 'left' | 'right' = settings.ui.launcher
+    ? settings.ui.launcher.x > 0.5
+      ? 'right'
+      : 'left'
+    : position.endsWith('right')
+      ? 'right'
+      : 'left';
+
   return (
     <>
       <Launcher
@@ -123,8 +152,8 @@ export function App({ doc, options, controller, features, store, profiles, t, la
           onLangChange={onLangChange}
           optionsPosition={options.position}
           profiles={profiles}
+          side={side}
           spot={settings.ui.panel}
-          anchorRef={launcherRef}
           onDrop={onPanelDrop}
           branding={options.branding}
           statementUrl={options.statementUrl}

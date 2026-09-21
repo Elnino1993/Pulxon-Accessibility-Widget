@@ -150,7 +150,7 @@ export const dictionary: FeatureDefinition = {
         return;
       }
       const range = selection.getRangeAt(0);
-      const t = createTranslator(lang);
+      const t = ctx.getTranslator?.() ?? createTranslator(lang);
       show(range.getBoundingClientRect(), href, t('feature.dictionaryLookup'), t('link.newTab'), insertionAnchor(range.endContainer));
     };
 

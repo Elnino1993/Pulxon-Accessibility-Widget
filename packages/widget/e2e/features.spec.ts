@@ -143,12 +143,11 @@ test('inverted contrast keeps the widget and the reading mask in their real colo
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
   expect(await page.locator('.panel').evaluate((el) => getComputedStyle(el).filter)).toContain('invert(1)');
-  // Still laid out against the viewport, not the inverted document: the floating panel sits wholly
-  // on screen, opened above the launcher it belongs to.
+  // Still laid out against the viewport, not the inverted document: the panel docks to the edge
+  // and spans exactly the screen's height.
   const panelBox = await page.locator('.panel').boundingBox();
-  expect(panelBox!.y).toBeGreaterThanOrEqual(0);
-  expect(panelBox!.y + panelBox!.height).toBeLessThanOrEqual(viewport!.height);
-  expect(panelBox!.y + panelBox!.height).toBeLessThanOrEqual(box!.y);
+  expect(panelBox?.y).toBe(0);
+  expect(panelBox?.height).toBe(viewport?.height);
   await page.keyboard.press('Escape');
 
   await page.evaluate(() => window.Pulxon?.disable('contrast'));
@@ -340,9 +339,10 @@ test('profiles apply their feature sets and the panel stays axe-clean with every
   const errors = collectConsoleErrors(page);
   await load(page);
   await page.getByRole('button', { name: 'Open accessibility menu' }).click();
-  const adhd = page.getByRole('button', { name: 'ADHD friendly' });
+  // Profiles are switches, as in Sienna.
+  const adhd = page.getByRole('switch', { name: 'ADHD friendly' });
   await adhd.click();
-  await expect(adhd).toHaveAttribute('aria-pressed', 'true');
+  await expect(adhd).toHaveAttribute('aria-checked', 'true');
   await expect(page.locator('.pulxon-reading-mask')).toHaveCount(2);
   expect(await htmlFilter(page)).toContain('saturate(0.5)');
 

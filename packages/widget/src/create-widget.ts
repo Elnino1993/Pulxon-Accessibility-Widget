@@ -7,7 +7,7 @@ import { createSafeStorage, type KeyValueStorage } from './core/storage';
 import { createSettingsStore } from './core/store';
 import { createStyleEngine, type StyleMode } from './core/style-engine';
 import { builtinFeatures } from './features';
-import { createTranslator, resolveLanguage } from './i18n';
+import { createLocaleLoader, createTranslator, resolveLanguage, type Translator } from './i18n';
 import { builtinProfiles } from './profiles';
 import { mountUI } from './ui/mount';
 import { VERSION } from './version';
@@ -43,10 +43,13 @@ export function createWidget(input: CreateWidgetInput = {}): PulxonApi {
   const styles = createStyleEngine(doc, { nonce: options.nonce, mode: input.styleMode ?? 'auto' });
   const registry = createRegistry(filterFeatures(input.features ?? builtinFeatures, options.disabledFeatures));
   const profiles = filterProfiles(input.profiles ?? builtinProfiles, options.disabledFeatures);
+  // Whatever language the panel is in right now, for text features put on the page. Starts in
+  // English; the panel replaces it as soon as it has its language.
+  const translation: { current: Translator } = { current: createTranslator('en') };
   const controller = createController({
     registry,
     store,
-    ctx: { doc, styles, fontBaseUrl: options.fontBaseUrl, zIndex: options.zIndex },
+    ctx: { doc, styles, fontBaseUrl: options.fontBaseUrl, zIndex: options.zIndex, getTranslator: () => translation.current },
     profiles,
   });
   const emitter = new Emitter<PulxonEvents>();
@@ -70,6 +73,10 @@ export function createWidget(input: CreateWidgetInput = {}): PulxonApi {
     profiles,
     t: createTranslator(initialLang),
     lang: pageLang,
+    locales: createLocaleLoader(options.localeBaseUrl),
+    onTranslatorChange: (t) => {
+      translation.current = t;
+    },
     styleMode: input.styleMode,
     onOpenChange: (open) => emitter.emit(open ? 'open' : 'close', undefined),
   });

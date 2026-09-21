@@ -47,3 +47,25 @@ export function FeatureButton({ feature, level, t, onActivate, describedById }: 
     </button>
   );
 }
+
+export interface ModeButtonProps {
+  /** The tile's own id, for its icon and `data-mode`. */
+  id: string;
+  label: string;
+  /** Whether the feature is at exactly this tile's level. */
+  active: boolean;
+  onActivate: () => void;
+}
+
+/**
+ * One level of a feature as its own tile (Monochrome is saturation's grayscale level). Its state is
+ * simply on or off, so it has no level text or dots.
+ */
+export function ModeButton({ id, label, active, onActivate }: ModeButtonProps) {
+  return (
+    <button type="button" class="tile" data-mode={id} aria-pressed={active} onClick={onActivate}>
+      <TileIcon id={id} />
+      <span class="tile__label">{label}</span>
+    </button>
+  );
+}

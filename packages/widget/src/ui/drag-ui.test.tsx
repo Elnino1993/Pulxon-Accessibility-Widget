@@ -177,7 +177,7 @@ describe('dragging the panel', () => {
 
   it('closes, and does not start a drag, from the close button in the title bar', () => {
     const { root, panel, store } = setup({ open: true });
-    const close = root.querySelector<HTMLButtonElement>('.panel__header button')!;
+    const close = root.querySelector<HTMLButtonElement>('.panel__header [aria-label="Close accessibility menu"]')!;
     act(() => {
       close.dispatchEvent(pointer('pointerdown', 10, 10));
       close.dispatchEvent(pointer('pointermove', 300, 300));
